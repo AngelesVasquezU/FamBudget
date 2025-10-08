@@ -1,16 +1,23 @@
-# React + Vite
+# FamBudget
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+_FamBudget es una aplicación web diseñada para ayudarte a gestionar el presupuesto familiar de forma sencilla, moderna y colaborativa.  
+Cada miembro de la familia puede registrarse, iniciar sesión y participar según su rol (administrador o miembro familiar)_
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Instalación 
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+_Clona el repositorio_
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+    git clone https://github.com/tuusuario/fambudget.git
+```
+_Instala las dependencias necesarias_
+```bash
+    npm install
+    npm install react react-dom
+    npm install vite @vitejs/plugin-react --save-dev
+    npm install @supabase/supabase-js
+    npm install react-router-dom
+    npm install react-icons
+```
