@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import { FaLock, FaCheckCircle } from 'react-icons/fa';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -45,26 +46,33 @@ const ResetPassword = () => {
 
   return (
     <div className="login-container">
-      <h2>Establecer nueva contraseña</h2>
+      <div className="login-box">
+      <h2>Restablecer contraseña</h2>
       <form className="login-form" onSubmit={handleSubmit}>
         <label>Nueva contraseña</label>
-        <input
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
+        <div className="input-icon">
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
+          <FaLock className="input-icon-symbol" />
+        </div>
 
         <label>Confirmar contraseña</label>
-        <input
-          type="password"
-          placeholder="••••••••"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
+        <div className="input-icon">
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+          <FaCheckCircle className="input-icon-symbol" />
+        </div>
 
         <button type="submit" disabled={loading}>
           {loading ? 'Actualizando...' : 'Actualizar contraseña'}
@@ -76,6 +84,8 @@ const ResetPassword = () => {
       <button className="link-button" onClick={() => navigate('/login')}>
         Volver al login
       </button>
+
+      </div>
     </div>
   );
 };

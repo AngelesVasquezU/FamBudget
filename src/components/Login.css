@@ -115,6 +115,7 @@
   padding: 0.7rem;
   border-left: 4px solid #3056d3;
 }
+
 /* ======= RECUPERAR CONTRASEÑA ======= */
 
 .header-line {
@@ -148,22 +149,34 @@
 
 .input-icon {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-icon-symbol {
   position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 12px;
   color: #607b96;
   font-size: 0.95rem;
+  pointer-events: none;
+  transition: color 0.3s ease;
 }
 
-.input-icon input {
-  padding-left: 2.3rem;
+.input-icon input {  
+  width: 100%;
+  padding-right: 1.2rem;
+  padding-left: 0.8rem;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  height: 25px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
-/* Mensaje de confirmación */
+.input-icon-right input:focus + .input-icon-right-symbol {
+  color: #3056d3;
+}
+
 .message {
   margin-top: 1rem;
   color: #1e2a44;
@@ -174,4 +187,28 @@
   text-align: center;
   font-weight: 500;
   font-size: 0.95rem;
+}
+
+/* ======== RESET PASSWORD STYLES ======== */
+.login-box h2 {
+  color: #1e2a44;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.link-button {
+  display: block;
+  margin: 1.2rem auto 0;
+  background: none;
+  border: none;
+  color: #3056d3;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.link-button:hover {
+  color: #1e2a44;
 }

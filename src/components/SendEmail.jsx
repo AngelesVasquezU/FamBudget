@@ -4,7 +4,7 @@ import './Login.css';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
-const Recuperar = () => {
+const SendEmail = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const Recuperar = () => {
     e.preventDefault();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:5173/reset-password', // 👈 cambia esta URL según tu app
+      redirectTo: 'http://localhost:5173/reset-password', 
     });
 
     if (error) {
@@ -36,7 +36,6 @@ const Recuperar = () => {
         <form className="login-form" onSubmit={handleSubmit}>
           <label htmlFor="email">Correo electrónico</label>
           <div className="input-icon">
-            <FaEnvelope className="input-icon-symbol" />
             <input
               id="email"
               type="email"
@@ -45,6 +44,7 @@ const Recuperar = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            <FaEnvelope className="input-icon-symbol" />
           </div>
 
           <button type="submit">Enviar enlace</button>
@@ -56,4 +56,4 @@ const Recuperar = () => {
   );
 };
 
-export default Recuperar;
+export default SendEmail;
