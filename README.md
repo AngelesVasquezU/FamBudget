@@ -10,7 +10,7 @@ Cada miembro de la familia puede registrarse, iniciar sesión y participar segú
 _Clona el repositorio_
 
 ```bash
-    git clone https://github.com/AngelesVasquezU/FamBudget
+    git clone https://github.com/AngelesVasquezU/FamBudget.git
 ```
 _Instala las dependencias necesarias_
 ```bash
