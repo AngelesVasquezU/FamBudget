@@ -21,3 +21,8 @@ _Instala las dependencias necesarias_
     npm install react-router-dom
     npm install react-icons
 ```
+_Ejecutar el proyecto_
+
+```bash
+   npm run dev
+```
