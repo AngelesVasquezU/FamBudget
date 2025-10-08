@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import './Register.css';
+import { FaArrowLeft } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
+import fondoInicio from '../assets/fondoInicio.png'; 
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -56,8 +60,22 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container">
-      <h2>Crear cuenta</h2>
+    <div className="register-container"style={{
+        backgroundImage: `url(${fondoInicio})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        minHeight: '100vh',
+      }}>
+      <div className="logo">FamBudget</div>
+      <div className="register-box">
+      <div className='header-container'>
+        <button className="back-button" onClick={() => navigate("/login")}>
+          <FaArrowLeft />
+        </button>
+        <h2>Crear cuenta</h2>
+      </div>
       <form className="register-form" onSubmit={handleSubmit}>
         <label>Nombre completo</label>
         <input
@@ -85,6 +103,8 @@ const Register = () => {
           onChange={handleChange}
           required
         />
+        <label>Confirmar Contraseña</label>
+          <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required />
 
         <div className="checkbox">
           <input
@@ -96,10 +116,11 @@ const Register = () => {
           <span>¿Registrar como administrador?</span>
         </div>
 
-        <button type="submit">Registrarse</button>
+        <button type="submit">Crear Cuenta</button>
       </form>
 
       {message && <p className="message">{message}</p>}
+      </div>
     </div>
   );
 };

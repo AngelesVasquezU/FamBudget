@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 
 const SendEmail = () => {
   const [email, setEmail] = useState('');
@@ -24,25 +25,33 @@ const SendEmail = () => {
 
   return (
     <div className="login-container">
-      <h2>Recuperar contraseña</h2>
-      <form className="login-form" onSubmit={handleSubmit}>
-        <label>Correo electrónico</label>
-        <input
-          type="email"
-          placeholder="tu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+      <div className="login-box">
+        <div className="header-line">
+          <button className="back-button" onClick={() => navigate('/login')}>
+            <FaArrowLeft />
+          </button>
+          <h2>Recuperar contraseña</h2>
+        </div>
 
-        <button type="submit">Enviar enlace</button>
-      </form>
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label htmlFor="email">Correo electrónico</label>
+          <div className="input-icon">
+            <input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <FaEnvelope className="input-icon-symbol" />
+          </div>
 
-      {message && <p className="message">{message}</p>}
+          <button type="submit">Enviar enlace</button>
+        </form>
 
-      <button className="link-button" onClick={() => navigate('/login')}>
-        Volver al login
-      </button>
+        {message && <p className="message">{message}</p>}
+      </div>
     </div>
   );
 };
