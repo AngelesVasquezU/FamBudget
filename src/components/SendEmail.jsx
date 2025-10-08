@@ -12,7 +12,7 @@ const SendEmail = () => {
     e.preventDefault();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:5173/reset-password', // 👈 cambia esta URL según tu app
+      redirectTo: 'http://localhost:5173/reset-password',
     });
 
     if (error) {
