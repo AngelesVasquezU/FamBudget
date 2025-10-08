@@ -16,8 +16,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { email, password } = formData;
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -70,7 +70,7 @@ const Login = () => {
       <div className="bottom-text">
         ¿No tienes una cuenta? <span onClick={() => navigate('/register')}>Regístrate</span>
         <br />
-        <a href="#" className="forgot-password">¿Olvidó su contraseña?</a>
+        <a href="/recuperar" className="forgot-password">¿Olvidó su contraseña?</a>
       </div>
       </div>
       {message && <p className="message">{message}</p>}

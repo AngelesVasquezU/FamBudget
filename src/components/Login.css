@@ -115,3 +115,63 @@
   padding: 0.7rem;
   border-left: 4px solid #3056d3;
 }
+/* ======= RECUPERAR CONTRASEÑA ======= */
+
+.header-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.header-line h2 {
+  text-align: center;
+  color: #1e2a44;
+  margin: 0 auto;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #1e2a44;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+  color: #2f4b8c;
+  transform: translateX(-2px);
+}
+
+.input-icon {
+  position: relative;
+}
+
+.input-icon-symbol {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #607b96;
+  font-size: 0.95rem;
+}
+
+.input-icon input {
+  padding-left: 2.3rem;
+}
+
+/* Mensaje de confirmación */
+.message {
+  margin-top: 1rem;
+  color: #1e2a44;
+  background: #eaf0ff;
+  border-left: 4px solid #3056d3;
+  border-radius: 10px;
+  padding: 0.8rem;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+}

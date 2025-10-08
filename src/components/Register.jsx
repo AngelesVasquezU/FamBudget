@@ -71,7 +71,7 @@ const Register = () => {
       <div className="logo">FamBudget</div>
       <div className="register-box">
       <div className='header-container'>
-        <button className="back-button" onClick={() => navigate("/")}>
+        <button className="back-button" onClick={() => navigate("/login")}>
           <FaArrowLeft />
         </button>
         <h2>Crear cuenta</h2>
