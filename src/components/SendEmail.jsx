@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
 
-const Recuperar = () => {
+const SendEmail = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
@@ -47,4 +47,4 @@ const Recuperar = () => {
   );
 };
 
-export default Recuperar;
+export default SendEmail;

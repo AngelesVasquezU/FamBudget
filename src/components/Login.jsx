@@ -68,7 +68,7 @@ const Login = () => {
 
       <p className="forgot-text">
         ¿Olvidaste tu contraseña?{' '}
-        <button className="link-button" onClick={() => navigate('/recuperar')}>
+        <button className="link-button" onClick={() => navigate('/send-email')}>
           Recuperar
         </button>
       </p>
