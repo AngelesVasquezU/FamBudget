@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
+import fondoInicio from '../assets/fondoInicio.png'; 
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -15,8 +16,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { email, password } = formData;
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -31,8 +32,17 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Iniciar sesión</h2>
+    <div className="login-container" style={{
+        backgroundImage: `url(${fondoInicio})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        minHeight: '100vh',
+      }}>
+      <div className="logo">FamBudget</div>
+      <div className="login-box">
+        <h2>¡Hola, Bienvenido!</h2>
       <form className="login-form" onSubmit={handleSubmit}>
         <label>Correo electrónico</label>
         <input
@@ -57,14 +67,13 @@ const Login = () => {
         <button type="submit">Ingresar</button>
       </form>
 
+      <div className="bottom-text">
+        ¿No tienes una cuenta? <span onClick={() => navigate('/register')}>Regístrate</span>
+        <br />
+        <a href="/send-email" className="forgot-password">¿Olvidó su contraseña?</a>
+      </div>
+      </div>
       {message && <p className="message">{message}</p>}
-
-      <p className="register-text">
-        ¿No tienes cuenta?
-        <button className="link-button" onClick={() => navigate('/register')}>
-          Regístrate
-        </button>
-      </p>
     </div>
   );
 };
