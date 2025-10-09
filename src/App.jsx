@@ -5,6 +5,7 @@ import Register from './components/Register';
 import SendEmail from './components/SendEmail';
 import ResetPassword from './components/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import Concepts from './pages/Concepts';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -26,6 +27,13 @@ function App() {
                 <Dashboard />
               </Layout>
             </ProtectedRoute>
+          } />
+          <Route path="/configuracion" element={
+          <ProtectedRoute>
+            <Layout>
+              <Concepts />
+            </Layout>
+          </ProtectedRoute>
           } />
         </Routes>
       </Router>

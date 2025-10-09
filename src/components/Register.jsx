@@ -10,6 +10,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     isAdmin: false
   });
@@ -27,7 +28,11 @@ const Register = () => {
     e.preventDefault();
     setMessage('');
 
-    const { email, password, fullName, isAdmin } = formData;
+    const { email, password, confirmPassword, fullName, isAdmin } = formData;
+    
+    if (password !== confirmPassword) {
+      return setMessage('Las contraseñas no coinciden.');
+    }
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -45,8 +50,8 @@ const Register = () => {
       {
         nombre: fullName,
         correo: email,
-        password,
         rol,
+        auth_id : userId
       }
     ]);
 
@@ -56,7 +61,7 @@ const Register = () => {
     }
 
     setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar.`);
-    setFormData({ email: '', password: '', fullName: '', isAdmin: false });
+    setFormData({ email: '', password: '', confirmPassword : '', fullName: '', isAdmin: false });
   };
 
   return (
