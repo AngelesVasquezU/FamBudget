@@ -34,34 +34,31 @@ const Register = () => {
       return setMessage("Las contraseñas no coinciden.");
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (authError) {
-      return setMessage(`Error al registrar usuario: ${authError.message}`);
-    }
-
-    const userId = authData.user?.id;
-    if (!userId) {
-      return setMessage("No se pudo obtener el ID del usuario de Supabase.");
-    }
-
     const rol = isAdmin ? 'administrador' : 'miembro familiar';
 
-  const { error: updateError } = await supabase
-    .from('usuarios')
-    .update({ nombre: fullName, rol })
-    .eq('auth_id', userId);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          fullName: fullName,
+          role: rol
+        }
+      }
+    });
 
-  if (updateError) {
-    console.error(updateError);
-    return setMessage(`Error al actualizar el usuario: ${updateError.message}`);
-  }
+    if (error) {
+      return setMessage(`Error al registrar usuario: ${error.message}`);
+    }
 
     setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
-    setFormData({ email: '', password: '', confirmPassword: '', fullName: '', isAdmin: false });
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      fullName: '',
+      isAdmin: false
+    });
   };
 
   return (
@@ -74,6 +71,7 @@ const Register = () => {
         backgroundAttachment: 'fixed',
         minHeight: '100vh',
       }}>
+
       <div className="logo">FamBudget</div>
       <div className="register-box">
         <div className='header-container'>
