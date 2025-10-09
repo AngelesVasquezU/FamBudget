@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Concepts from './pages/Concepts';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import DailyInput from './components/DailyInput';
 import './App.css';
 
 function App() {
@@ -35,6 +36,13 @@ function App() {
             </Layout>
           </ProtectedRoute>
           } />
+          <Route path="/daily-input" element={
+          <ProtectedRoute>
+            <Layout>
+              <DailyInput />
+            </Layout>
+          </ProtectedRoute>
+        } />
         </Routes>
       </Router>
     </AuthProvider>
