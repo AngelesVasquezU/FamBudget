@@ -8,7 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Concepts from './pages/Concepts';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import DailyInput from './components/DailyInput';
+import DailyInput from './pages/DailyInput';
 import './App.css';
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
             </Layout>
           </ProtectedRoute>
           } />
-          <Route path="/daily-input" element={
+          <Route path="/registro-diario" element={
           <ProtectedRoute>
             <Layout>
               <DailyInput />
