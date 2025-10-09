@@ -1,5 +1,3 @@
-/* DailyInput.css */
-
 .registro-container {
   max-width: 600px;
   margin: 50px auto;
@@ -99,11 +97,19 @@
   margin-top: 15px;
   text-align: center;
   font-weight: 600;
-  color: #e11d48; /* rojo para errores */
+  padding: 5px 10px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.mensaje.error {
+  color: #e11d48;
+  background-color: #fef2f2;
 }
 
 .mensaje.success {
-  color: #16a34a; /* verde para éxito */
+  color: #16a34a;
+  background-color: #f0fdf4;
 }
 
 .volver-btn {

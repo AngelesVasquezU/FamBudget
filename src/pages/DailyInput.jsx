@@ -5,6 +5,7 @@ import "./DailyInput.css";
 
 const DailyInput = () => {
   const [tipo, setTipo] = useState("ingreso");
+  const [tipoMensaje, setTipoMensaje] = useState(""); 
   const [conceptos, setConceptos] = useState([]);
   const [metas, setMetas] = useState([]);
   const [form, setForm] = useState({
@@ -15,7 +16,7 @@ const DailyInput = () => {
     monto_meta: ""
   });
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const [usuarioId, setUsuarioId] = useState(null);
   useEffect(() => {
@@ -74,7 +75,7 @@ const DailyInput = () => {
 
       if (movError) throw movError;
 
-      // 2️⃣ Si es ingreso con meta, insertar en aportes_meta
+      // Si es ingreso con meta, insertar en aportes_meta
       if (tipo === "ingreso" && form.meta_id && form.monto_meta) {
         const { error: aporteError } = await supabase
           .from("aportes_meta")
@@ -89,7 +90,8 @@ const DailyInput = () => {
         if (aporteError) throw aporteError;
       }
 
-      setMessage("✅ Movimiento registrado con éxito");
+      setMessage("Movimiento registrado con éxito");
+      setTipoMensaje("success");
       setForm({
         concepto_id: "",
         monto: "",
@@ -99,7 +101,8 @@ const DailyInput = () => {
       });
     } catch (error) {
       console.error(error);
-      setMessage(`❌ Error: ${error.message}`);
+      setMessage(`Error: ${error.message}`);
+      setTipoMensaje("error");
     }
   };
 
@@ -194,12 +197,9 @@ const DailyInput = () => {
           Guardar movimiento
         </button>
       </form>
+        
+      <p className={`mensaje ${tipoMensaje}`}>{message}</p>
 
-      {message && <p className="mensaje">{message}</p>}
-
-      <button className="volver-btn" onClick={() => navigate("/dashboard")}>
-        ⬅ Volver al dashboard
-      </button>
     </div>
   );
 };

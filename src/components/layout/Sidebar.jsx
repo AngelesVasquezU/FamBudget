@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Calendar, 
@@ -20,6 +20,7 @@ const Sidebar = ({
   closeMobileSidebar,
   currentFamily = "Familia Rodríguez"
 }) => {
+  const location = useLocation(); 
   const menuItems = [
     { icon: Home, label: 'Inicio',  path: '/dashboard', active: true },
     { icon: Calendar, label: 'Registro Diario', path: '/registro-diario'  },
@@ -61,18 +62,21 @@ const Sidebar = ({
 
         <nav className="sidebar__nav">
           <ul className="sidebar__menu">
-            {menuItems.map((item, index) => (
-              <li key={index} className="sidebar__menu-item">
-                <Link
-                  to={item.path}
-                  className={`sidebar__link ${item.active ? 'sidebar__link--active' : ''}`}
-                  onClick={closeMobileSidebar}
-                >
-                  <item.icon size={20} className="sidebar__icon" />
-                  {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
-                </Link>
-              </li>
-            ))}
+            {menuItems.map((item, index) => {
+              const isActive = location.pathname === item.path; // 👈 Compara ruta
+              return (
+                <li key={index} className="sidebar__menu-item">
+                  <Link
+                    to={item.path}
+                    className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
+                    onClick={closeMobileSidebar}
+                  >
+                    <item.icon size={20} className="sidebar__icon" />
+                    {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
