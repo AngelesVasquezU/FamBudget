@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate } from "react-router-dom";
 import "./DailyInput.css";
 
 const DailyInput = () => {
@@ -16,14 +15,43 @@ const DailyInput = () => {
     monto_meta: ""
   });
   const [message, setMessage] = useState("");
-  //const navigate = useNavigate();
-
   const [usuarioId, setUsuarioId] = useState(null);
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) setUsuarioId(data.user.id);
+      const { data: authData, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error al obtener auth user:", error);
+        return;
+      }
+
+      const authId = authData.user?.id;
+      if (!authId) {
+        console.warn("No se encontró auth ID");
+        return;
+      }
+
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("auth_id", authId)
+        .single();
+
+      if (usuarioError) {
+        console.error("Error al buscar usuario en tabla usuarios:", usuarioError);
+        setMessage("Error al buscar usuario");
+        setTipoMensaje("error");
+        return;
+      }
+      
+      if (!usuario) {
+        setMessage("Usuario no encontrado en la tabla usuarios");
+        setTipoMensaje("error");
+        return;
+      }
+
+      setUsuarioId(usuario.id);
     };
+    
     getUser();
   }, []);
 
@@ -59,6 +87,7 @@ const DailyInput = () => {
     }
 
     try {
+      
       const { data: movimiento, error: movError } = await supabase
         .from("movimientos")
         .insert([
@@ -75,7 +104,6 @@ const DailyInput = () => {
 
       if (movError) throw movError;
 
-      // Si es ingreso con meta, insertar en aportes_meta
       if (tipo === "ingreso" && form.meta_id && form.monto_meta) {
         const { error: aporteError } = await supabase
           .from("aportes_meta")
