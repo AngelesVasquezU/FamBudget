@@ -3,6 +3,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import SendEmail from './components/SendEmail';
 import ResetPassword from './components/ResetPassword';
+import DailyInput from './components/DailyInput';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/send-email" element={<SendEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<h2>Bienvenido al panel</h2>} />
+        <Route path="/daily-input" element={<DailyInput />} />
       </Routes>
     </Router>
   );
