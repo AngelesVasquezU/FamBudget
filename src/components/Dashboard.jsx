@@ -1,11 +1,6 @@
-// pages/Dashboard.jsx
-import React from 'react';
-import { useAuth } from '../hooks/useAuth';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-
   return (
     <div className="dashboard">
       <div className="dashboard__header">

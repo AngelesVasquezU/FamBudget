@@ -28,11 +28,11 @@ h2, h3 {
 }
 
 .type.ingreso {
-  color: #3b82f6; /* azul */
+  color: #3b82f6;
 }
 
 .type.egreso {
-  color: #10b981; /* verde agua */
+  color: #10b981; 
 }
 
 .frequency {
@@ -43,7 +43,6 @@ h2, h3 {
   margin-bottom: 20px;
   padding: 15px;
   border-radius: 8px;
-  /* opcional: una ligera sombra para diferenciar */
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -68,7 +67,6 @@ h2, h3 {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Formulario */
 .concepts-form {
   background: #ffffff;
   padding: 20px;
@@ -121,7 +119,7 @@ h2, h3 {
   margin-top: 20px;
   border-radius: 10px;
   min-width: 300px;
-  border: 1px solid #dddddd; /* opcional, para delimitar el recuadro */
+  border: 1px solid #dddddd; 
 }
 
 .summary-item {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import './Login.css';
+import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
 import fondoInicio from '../assets/fondoInicio.png'; 
 
@@ -18,7 +18,7 @@ const Login = () => {
     e.preventDefault();
     const { email, password } = formData;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -26,7 +26,6 @@ const Login = () => {
     if (error) {
       setMessage(`Error: ${error.message}`);
     } else {
-      setMessage('Inicio de sesión exitoso');
       setTimeout(() => navigate('/dashboard'), 1000);
     }
   };

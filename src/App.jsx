@@ -4,11 +4,11 @@ import Login from './components/Login';
 import Register from './components/Register';
 import SendEmail from './components/SendEmail';
 import ResetPassword from './components/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import Concepts from './pages/Concepts';
+import Dashboard from './components/Dashboard';
+import Concepts from './components/Concepts';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import DailyInput from './pages/DailyInput';
+import DailyInput from './components/DailyInput';
 import './App.css';
 
 function App() {

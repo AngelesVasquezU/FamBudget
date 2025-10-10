@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import './Register.css';
+import '../styles/Register.css';
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import fondoInicio from '../assets/fondoInicio.png'; 
@@ -36,7 +36,7 @@ const Register = () => {
 
     const rol = isAdmin ? 'administrador' : 'miembro familiar';
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
