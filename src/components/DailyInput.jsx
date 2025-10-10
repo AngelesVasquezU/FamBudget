@@ -19,16 +19,17 @@ const DailyInput = () => {
     { codigo: "USD", simbolo: "$", nombre: "Dólares" },
     { codigo: "EUR", simbolo: "€", nombre: "Euros" }
   ];
+  const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0 });
   const [tipoMensaje, setTipoMensaje] = useState(""); 
   const [conceptos, setConceptos] = useState([]);
   const [metas, setMetas] = useState([]);
   const fechaActual = new Date().toLocaleDateString("en-CA");
   const [form, setForm] = useState({
     concepto_id: "",
-    monto: "",
+    monto: 0,
     comentario: "",
     meta_id: "",
-    monto_meta: "",
+    monto_meta: 0,
     fecha: fechaActual,
     moneda: MONEDAS[0].simbolo
   });
@@ -36,48 +37,6 @@ const DailyInput = () => {
   const [usuarioId, setUsuarioId] = useState(null);
   const [showNewConceptModal, setShowNewConceptModal] = useState(false);
   const [newConcept, setNewConcept] = useState({ nombre: '', tipo: tipo, periodo: 'diario' });
-
-  // useEffect(() => {
-  //   const getUser = async () => {
-  //     const { data: authData, error } = await supabase.auth.getUser();
-  //     if (error) {
-  //       console.error("Error al obtener auth user:", error);
-  //       return;
-  //     }
-
-  //     const authId = authData.user?.id;
-  //     if (!authId) {
-  //       console.warn("No se encontró auth ID");
-  //       return;
-  //     }
-
-  //     console.log("Auth ID encontrado:", authId);
-
-  //     const { data: usuario, error: usuarioError } = await supabase
-  //       .from("usuarios")
-  //       .select("id")
-  //       .eq("auth_id", authId)
-  //       .single();
-
-  //     if (usuarioError) {
-  //       console.error("Error al buscar usuario en tabla usuarios:", usuarioError);
-  //       setMessage("Error al buscar usuario");
-  //       setTipoMensaje("error");
-  //       return;
-  //     }
-      
-  //     if (!usuario) {
-  //       setMessage("Usuario no encontrado en la tabla usuarios");
-  //       setTipoMensaje("error");
-  //       return;
-  //     }
-
-  //     setUsuarioId(usuario.id);
-  //     console.log("Usuario ID establecido:", usuario.id);
-  //   };
-    
-  //   getUser();
-  // }, []);
 
   useEffect(() => {
     const obtenerUsuario = async () => {
@@ -90,7 +49,11 @@ const DailyInput = () => {
 
   useEffect(() => {
     const cargarDatos = async () => {
-      if (!usuarioId) return;
+      if (!usuarioId){ 
+        setMessage("Usuario no encontrado");
+        setTipoMensaje("error");
+        return;
+      }
         try {
         const conceptosData = await gestorConceptos.obtenerConceptosPorTipo(tipo);
 
@@ -99,7 +62,9 @@ const DailyInput = () => {
         setConceptos(conceptosData || []);
         setMetas(metas || []);
       } catch (error) {
-        console.error("Error al cargar datos:", error);
+        console.error("Error al buscar usuario en tabla usuarios:", error);
+        setMessage("Error al buscar usuario", error);
+        setTipoMensaje("error");
       }
     };
 
@@ -111,65 +76,12 @@ const DailyInput = () => {
     setForm({ ...form, [name]: value });
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!usuarioId) {
-  //     setMessage("No se encontró el usuario autenticado");
-  //     return;
-  //   }
-
-  //   try {
-  //     const { data: movimiento, error: movError } = await supabase
-  //       .from("movimientos")
-  //       .insert([
-  //         {
-  //           usuario_id: usuarioId,
-  //           concepto_id: form.concepto_id || null,
-  //           tipo,
-  //           monto: parseFloat(form.monto),
-  //           comentario: form.comentario || null,
-  //           fecha: form.fecha
-  //         }
-  //       ])
-  //       .select()
-  //       .single();
-
-  //     if (movError) throw movError;
-
-  //     if (tipo === "ingreso" && form.meta_id && form.monto_meta) {
-  //       const { error: aporteError } = await supabase
-  //         .from("aportes_meta")
-  //         .insert([
-  //           {
-  //             meta_id: form.meta_id,
-  //             usuario_id: usuarioId,
-  //             movimiento_id: movimiento.id,
-  //             monto: parseFloat(form.monto_meta)
-  //           }
-  //         ]);
-  //       if (aporteError) throw aporteError;
-  //     }
-
-  //     setMessage("Movimiento registrado con éxito");
-  //     setTipoMensaje("success");
-  //     setForm({
-  //       concepto_id: "",
-  //       monto: "",
-  //       comentario: "",
-  //       meta_id: "",
-  //       monto_meta: "",
-  //       fecha: new Date().toISOString().slice(0,10)
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //     setMessage(`Error: ${error.message}`);
-  //     setTipoMensaje("error");
-  //   }
-  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!usuarioId) return alert("No se encontró el usuario");
-
+    if (!usuarioId){
+      setMessage("No se encontró el usuario autenticado");
+      return
+    }
     try {
       await gestorMovimientos.crearMovimiento({
         usuarioId,
@@ -182,42 +94,20 @@ const DailyInput = () => {
         montoMeta: form.monto_meta
       });
 
-      alert("Movimiento registrado con éxito");
+      setMessage("Movimiento registrado con éxito");
+      setTipoMensaje("success");
       setForm({ concepto_id: "", monto: "", comentario: "", meta_id: "", monto_meta: "" });
 
     } catch (error) {
       console.error("Error al registrar movimiento:", error);
-      alert(`Error: ${error.message}`);
+      setMessage(`Error: ${error.message}`);
+      setTipoMensaje("error");
     }
   };
 
-
-  // const handleAddNewConcept = async () => {
-  //   const nombre = newConcept.nombre.trim();
-  //   if (!nombre) return alert("El nombre es obligatorio");
-
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from("conceptos")
-  //       .insert([newConcept])
-  //       .select()
-  //       .single();
-
-  //     if (error) throw error;
-
-  //     setConceptos([...conceptos, data]);
-  //     setForm({ ...form, concepto_id: data.id });
-  //     setShowNewConceptModal(false);
-  //     setNewConcept({ nombre: '', tipo: tipo, periodo: 'diario' });
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert(`Error al agregar concepto: ${err.message}`);
-  //   }
-  // };
-
   const handleAddNewConcept = async () => {
     try {
-      await gestorConceptos.agregarConcepto({
+      await gestorConceptos.crearConcepto({
         nombre: newConcept.nombre,
         tipo: newConcept.tipo,
         periodo: newConcept.periodo
@@ -226,15 +116,35 @@ const DailyInput = () => {
       const data = await gestorConceptos.obtenerConceptosPorTipo(tipo);
       setConceptos(data);
     } catch (error) {
-      console.error("Error al agregar concepto:", error);
-      alert("No se pudo agregar el concepto");
+      console.log("Error al agregar concepto:", error);
+      setMessage("No se pudo agregar el concepto");
     }
   };
+  useEffect(() => {
+    const cargarResumen = async () => {
+      if (!usuarioId) return;
+
+      const fechaHoy = new Date().toISOString().slice(0, 10);
+      try {
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
+        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 });
+      } catch (error) {
+        console.error("Error al obtener resumen diario:", error);
+      }
+    };
+
+    cargarResumen();
+  }, [usuarioId, tipo]);
 
   return (
     <div className="registro-container">
       <h2>Registrar movimiento</h2>
-
+      <div className="resumen-dia">
+        <h3>Resumen del día ({fechaActual})</h3>
+        <p>Ingresos: {form.moneda} {resumenDia.ingresos.toFixed(2)}</p>
+        <p>Egresos: {form.moneda} {resumenDia.egresos.toFixed(2)}</p>
+      </div>
       <div className="tipo-selector">
         <button
           className={tipo === "ingreso" ? "active" : ""}
@@ -315,8 +225,8 @@ const DailyInput = () => {
               </select>
 
               <div className="modal-buttons">
-                <button onClick={handleAddNewConcept}>Agregar</button>
-                <button onClick={() => setShowNewConceptModal(false)}>Cancelar</button>
+                <button type="button" onClick={handleAddNewConcept}>Agregar</button>
+                <button type="button" onClick={() => setShowNewConceptModal(false)}>Cancelar</button>
               </div>
             </div>
           </div>

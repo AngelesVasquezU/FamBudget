@@ -41,6 +41,18 @@ export class GestorMovimiento {
       throw err;
     }
   }
+  
+  async obtenerTotalPorTipo(usuarioId, tipo, fecha) {
+    const { data, error } = await this.supabase
+      .from("movimientos")
+      .select("monto")
+      .eq("usuario_id", usuarioId)
+      .eq("tipo", tipo)
+      .eq("fecha", fecha);
 
-  // Opcional: otras funciones como listar movimientos, filtrar por fecha, calcular totales, etc.
+    if (error) throw error;
+
+    return data.reduce((acc, mov) => acc + parseFloat(mov.monto), 0);
+  }
+
 }

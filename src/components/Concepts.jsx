@@ -29,7 +29,7 @@ const Concepts = () => {
     } else {
       setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
     }
-  }, [selectedConceptId]);
+  }, [selectedConceptId, concepts]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

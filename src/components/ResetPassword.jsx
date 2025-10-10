@@ -27,7 +27,6 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      // Solo actualizar contraseña en Supabase Auth
       const { error } = await supabase.auth.updateUser({
         password: password
       });
