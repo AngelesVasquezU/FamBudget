@@ -30,7 +30,6 @@ const Sidebar = ({
     { icon: User, label: 'Cuenta' , path: '/cuenta'}
   ];
 
-
   return (
     <>
       {isMobileOpen && (

@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import './Concepts.css';
+import { GestorConcepto } from './managers/GestorConcepto';
+import '../styles/Concepts.css';
 
 const Concepts = () => {
+  const gestorConceptos = new GestorConcepto(supabase);
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
 
   const fetchConcepts = async () => {
-    const { data, error } = await supabase
-      .from('conceptos')               
-      .select('*')
-      .order('nombre', { ascending: true });
-
-    if (error) console.error('Error fetching concepts:', error);
-    else setConcepts(data);
+    try {
+      const data = await gestorConceptos.obtenerConceptos();
+      setConcepts(data || []);
+    } catch (error) {
+      console.error('Error fetching concepts:', error);
+    }
   };
 
   useEffect(() => {
@@ -40,34 +41,22 @@ const Concepts = () => {
     const nombre = formData.nombre.trim();
 
     if (!nombre) return alert("El nombre es obligatorio");
-        
-    if (selectedConceptId) {
-        const { data, error } = await supabase
-        .from('conceptos')
-        .update({ nombre, tipo, periodo })
-        .eq('id', selectedConceptId);
-        if (error) {
-            console.error('Error updating concept:', error);
-            alert(`Error al editar: ${error.message}`);
-        } else {
-            console.log('Concepto actualizado:', data);
-        }
-    } else {
-        const { data, error } = await supabase
-        .from('conceptos')
-        .insert([{ nombre, tipo, periodo }]);
-        
-        if (error) {
-        console.error('Error al insertar concepto:', error);
-        alert(`Error al insertar: ${error.message}`);
-        } else {
-        console.log('Concepto insertado correctamente:', data);
-        }
-    }
 
-    setSelectedConceptId(null);
-    setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
-    fetchConcepts();
+    try {
+      if (selectedConceptId) {
+        await gestorConceptos.editarConcepto(selectedConceptId, { nombre, tipo, periodo });
+        console.log('Concepto actualizado');
+      } else {
+        await gestorConceptos.crearConcepto({ nombre, tipo, periodo });
+        console.log('Concepto insertado correctamente');
+      }
+      setSelectedConceptId(null);
+      setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
+      fetchConcepts();
+    } catch (error) {
+      console.error('Error al guardar concepto:', error);
+      alert(`Error: ${error.message}`);
+    }
   };
 
   return (
@@ -95,7 +84,7 @@ const Concepts = () => {
             <div className="edit-selector">
             <select
                 value={selectedConceptId || ''}
-                onChange={(e) => setSelectedConceptId(Number(e.target.value))}
+                onChange={(e) => setSelectedConceptId(e.target.value)}
             >
                 <option value="">Selecciona un concepto</option>
                 {concepts.map(c => (
