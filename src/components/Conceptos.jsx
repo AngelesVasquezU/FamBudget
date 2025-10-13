@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { GestorConcepto } from './managers/GestorConcepto';
-import '../styles/Concepts.css';
+import '../styles/Conceptos.css';
 
-const Concepts = () => {
+const Conceptos = () => { // COD004
   const gestorConceptos = new GestorConcepto(supabase);
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
 
-  const fetchConcepts = async () => {
+  const fetchConcepts = async () => { // MCOD004-3
     try {
       const data = await gestorConceptos.obtenerConceptos();
       setConcepts(data || []);
@@ -18,11 +18,11 @@ const Concepts = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // MCOD004-1 
     fetchConcepts();
   }, []);
 
-  useEffect(() => {
+  useEffect(() => { // MCOD004-2 
     if (selectedConceptId) {
       const concept = concepts.find(c => c.id === selectedConceptId);
       if (concept) setFormData(concept);
@@ -31,11 +31,11 @@ const Concepts = () => {
     }
   }, [selectedConceptId, concepts]);
 
-  const handleChange = (e) => {
+  const handleChange = (e) => { // MCOD004-4 
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = async () => {
+  const handleSave = async () => { // MCOD004-5 
     const tipo = formData.tipo.toLowerCase();
     const periodo = formData.periodo.toLowerCase();
     const nombre = formData.nombre.trim();
@@ -132,4 +132,4 @@ const Concepts = () => {
   );
 };
 
-export default Concepts;
+export default Conceptos;

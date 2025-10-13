@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import '../styles/Login.css';
+import '../styles/IniciarSesion.css';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 

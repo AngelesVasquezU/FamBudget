@@ -1,8 +1,9 @@
-export class GestorConcepto {
+export class GestorConcepto { // COD-003
   constructor(supabase) {
     this.supabase = supabase;
   }
   
+  // MCOD003-1
   async obtenerConceptos() {
       const { data, error } = await this.supabase
         .from('conceptos')
@@ -12,6 +13,7 @@ export class GestorConcepto {
       return data;
   }
 
+  // MCOD003-2
   async obtenerConceptosPorTipo(tipo) {
     const { data, error } = await this.supabase
       .from("conceptos")
@@ -22,6 +24,7 @@ export class GestorConcepto {
     return data;
   }
 
+  // MCOD003-3
   async existeNombre(nombre, ignorarId = null) {
     let query = this.supabase.from("conceptos").select("id").eq("nombre", nombre).limit(1);
 

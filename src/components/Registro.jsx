@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import '../styles/Register.css';
+import '../styles/Registro.css';
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import fondoInicio from '../assets/fondoInicio.png'; 
 
-const Register = () => {
+const Registro = () => { // COD008
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -16,7 +16,7 @@ const Register = () => {
   });
   const [message, setMessage] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = (e) => { // MCOD008-1
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
@@ -24,7 +24,7 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => { // MCOD008-2
     e.preventDefault();
     setMessage('');
 
@@ -137,4 +137,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Registro;

@@ -5,14 +5,14 @@ import { GestorMovimiento } from "./managers/GestorMovimiento";
 import { GestorConcepto } from "./managers/GestorConcepto";
 import { GestorMetas } from "./managers/GestorMeta";
 
-import "../styles/DailyInput.css";
+import "../styles/RegistroDiario.css";
 
 const gestorUsuarios = new GestorUsuario(supabase);
 const gestorMovimientos = new GestorMovimiento(supabase);
 const gestorConceptos = new GestorConcepto(supabase);
 const gestorMetas = new GestorMetas(supabase);
 
-const DailyInput = () => {
+const RegistroDiario = () => { // COD-001
   const [tipo, setTipo] = useState("ingreso");
   const MONEDAS = [
     { codigo: "PEN", simbolo: "S/.", nombre: "Soles" },
@@ -38,7 +38,7 @@ const DailyInput = () => {
   const [showNewConceptModal, setShowNewConceptModal] = useState(false);
   const [newConcept, setNewConcept] = useState({ nombre: '', tipo: tipo, periodo: 'diario' });
 
-  useEffect(() => {
+  useEffect(() => {  // MCOD001-1
     const obtenerUsuario = async () => {
       const id = await gestorUsuarios.obtenerIdUsuario();
       if (id) setUsuarioId(id);
@@ -47,7 +47,7 @@ const DailyInput = () => {
     obtenerUsuario();
   }, []);
 
-  useEffect(() => {
+  useEffect(() => {  // MCOD001-2
     const cargarDatos = async () => {
       if (!usuarioId){ 
         setMessage("Usuario no encontrado");
@@ -70,13 +70,30 @@ const DailyInput = () => {
 
     if (usuarioId) cargarDatos();
   }, [tipo, usuarioId]);
+  
+  useEffect(() => {  // MCOD001-3
+    const cargarResumen = async () => {
+      if (!usuarioId) return;
 
-  const handleChange = (e) => {
+      const fechaHoy = new Date().toISOString().slice(0, 10);
+      try {
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
+        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 });
+      } catch (error) {
+        console.error("Error al obtener resumen diario:", error);
+      }
+    };
+
+    cargarResumen();
+  }, [usuarioId, tipo]);
+
+  const handleChange = (e) => {   // MCOD001-4
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {  // MCOD001-5
     e.preventDefault();
     if (!usuarioId){
       setMessage("No se encontró el usuario autenticado");
@@ -105,7 +122,7 @@ const DailyInput = () => {
     }
   };
 
-  const handleAddNewConcept = async () => {
+  const handleAddNewConcept = async () => {   // MCOD001-6
     try {
       await gestorConceptos.crearConcepto({
         nombre: newConcept.nombre,
@@ -120,22 +137,6 @@ const DailyInput = () => {
       setMessage("No se pudo agregar el concepto");
     }
   };
-  useEffect(() => {
-    const cargarResumen = async () => {
-      if (!usuarioId) return;
-
-      const fechaHoy = new Date().toISOString().slice(0, 10);
-      try {
-        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
-        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
-        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 });
-      } catch (error) {
-        console.error("Error al obtener resumen diario:", error);
-      }
-    };
-
-    cargarResumen();
-  }, [usuarioId, tipo]);
 
   return (
     <div className="registro-container">
@@ -299,4 +300,4 @@ const DailyInput = () => {
   );
 };
 
-export default DailyInput;
+export default RegistroDiario;
