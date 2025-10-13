@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Login.css';
+import '../styles/IniciarSesion.css';
 import { FaLock, FaCheckCircle } from 'react-icons/fa';
 
 const ResetPassword = () => {

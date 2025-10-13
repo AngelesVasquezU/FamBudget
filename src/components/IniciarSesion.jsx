@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import '../styles/Login.css';
+import '../styles/IniciarSesion.css';
 import { useNavigate } from 'react-router-dom';
 import fondoInicio from '../assets/fondoInicio.png'; 
 
-const Login = () => {
+const IniciarSesion = () => { // COD007
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const handleChange = (e) => { // MCOD007-1
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => { // MCOD007-2
     e.preventDefault();
     const { email, password } = formData;
 
@@ -77,4 +77,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default IniciarSesion;

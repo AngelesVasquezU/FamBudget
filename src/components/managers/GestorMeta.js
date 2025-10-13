@@ -1,10 +1,10 @@
-export class GestorMetas {
-  constructor(supabase) {
+export class GestorMetas { // COD005
+  constructor(supabase) { // MCOD005-1
     this.supabase = supabase;
   }
 
-  async obtenerMetas(usuarioId) {
-    const { data, error } = await this.supabase
+  async obtenerMetas(usuarioId) { // MCOD005-2
+    const { data, error } = await this.supabase 
       .from("metas")
       .select("*")
       .eq("usuario_id", usuarioId);

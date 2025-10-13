@@ -1,8 +1,9 @@
-export class GestorMovimiento {
+export class GestorMovimiento { // COD-001
   constructor(supabase) {
     this.supabase = supabase;
   }
 
+  // MCOD002-1
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
       const { data: movimiento, error: movError } = await this.supabase
@@ -42,6 +43,7 @@ export class GestorMovimiento {
     }
   }
   
+  // MCOD002-2
   async obtenerTotalPorTipo(usuarioId, tipo, fecha) {
     const { data, error } = await this.supabase
       .from("movimientos")

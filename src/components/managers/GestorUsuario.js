@@ -1,9 +1,9 @@
-export class GestorUsuario {
-  constructor(supabase) {
+export class GestorUsuario { // COD-006
+  constructor(supabase) { // MCOD006-1
     this.supabase = supabase;
   }
 
-  async obtenerIdUsuario() {
+  async obtenerIdUsuario() {  // MCOD006-2
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
       if (error) throw error;
@@ -24,7 +24,7 @@ export class GestorUsuario {
     }
   }
 
-  async obtenerUsuario() {
+  async obtenerUsuario() { // MCOD006-3
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
       if (error) throw error;

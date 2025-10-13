@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import Login from './components/Login';
-import Register from './components/Register';
+import IniciarSesion from './components/IniciarSesion';
+import Registro from './components/Registro';
 import SendEmail from './components/SendEmail';
 import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
-import Concepts from './components/Concepts';
+import Conceptos from './components/Conceptos';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import DailyInput from './components/DailyInput';
+import RegistroDiario from './components/RegistroDiario';
 import './App.css';
 
 function App() {
@@ -16,9 +16,9 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<IniciarSesion />} />
+          <Route path="/login" element={<IniciarSesion />} />
+          <Route path="/register" element={<Registro />} />
           <Route path="/send-email" element={<SendEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           
@@ -32,14 +32,14 @@ function App() {
           <Route path="/configuracion" element={
           <ProtectedRoute>
             <Layout>
-              <Concepts />
+              <Conceptos />
             </Layout>
           </ProtectedRoute>
           } />
           <Route path="/registro-diario" element={
           <ProtectedRoute>
             <Layout>
-              <DailyInput />
+              <RegistroDiario />
             </Layout>
           </ProtectedRoute>
         } />
