@@ -15,6 +15,7 @@ const Metas = () => {
     monto_objetivo: '',
     es_familiar: false
   });
+  const fechaActual = new Date().toLocaleDateString("en-CA");
   const [saldoDisponible, setSaldoDisponible] = useState(0);
   const [aporteMonto, setAporteMonto] = useState('');
   const [showAporteModal, setShowAporteModal] = useState(false);
@@ -513,6 +514,7 @@ const Metas = () => {
                 name="fecha_limite"
                 value={formData.fecha_limite}
                 onChange={handleChange}
+                min={fechaActual}
               />
             </div>
 
