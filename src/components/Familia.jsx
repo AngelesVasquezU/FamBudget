@@ -39,7 +39,7 @@ const Familia = () => {
     };
 
     const handleAgregarMiembro = async () => {
-        if (!nuevoMiembro.email.trim() || !nuevoMiembro.parentesco.trim()) {
+        if (!nuevoMiembro.email.trim()) {
             return alert('Completa todos los campos');
         }
 
