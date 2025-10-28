@@ -7,9 +7,9 @@ import { GestorMetas } from "./managers/GestorMeta";
 
 import "../styles/RegistroDiario.css";
 
-const gestorUsuarios = new GestorUsuario(supabase);
+const gestorUsuario = new GestorUsuario(supabase);
 const gestorMovimientos = new GestorMovimiento(supabase);
-const gestorConceptos = new GestorConcepto(supabase);
+const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 const gestorMetas = new GestorMetas(supabase);
 
 const RegistroDiario = () => { // COD-001
@@ -20,7 +20,7 @@ const RegistroDiario = () => { // COD-001
     { codigo: "EUR", simbolo: "€", nombre: "Euros" }
   ];
   const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0 });
-  const [tipoMensaje, setTipoMensaje] = useState(""); 
+  const [tipoMensaje, setTipoMensaje] = useState("");
   const [conceptos, setConceptos] = useState([]);
   const [metas, setMetas] = useState([]);
   const fechaActual = new Date().toLocaleDateString("en-CA");
@@ -40,7 +40,7 @@ const RegistroDiario = () => { // COD-001
 
   useEffect(() => {  // MCOD001-1
     const obtenerUsuario = async () => {
-      const id = await gestorUsuarios.obtenerIdUsuario();
+      const id = await gestorUsuario.obtenerIdUsuario();
       if (id) setUsuarioId(id);
       else console.error("No se pudo obtener el usuario");
     };
@@ -49,12 +49,12 @@ const RegistroDiario = () => { // COD-001
 
   useEffect(() => {  // MCOD001-2
     const cargarDatos = async () => {
-      if (!usuarioId){ 
+      if (!usuarioId) {
         setMessage("Usuario no encontrado");
         setTipoMensaje("error");
         return;
       }
-        try {
+      try {
         const conceptosData = await gestorConceptos.obtenerConceptosPorTipo(tipo);
 
         const metas = await gestorMetas.obtenerMetas(usuarioId);
@@ -70,7 +70,7 @@ const RegistroDiario = () => { // COD-001
 
     if (usuarioId) cargarDatos();
   }, [tipo, usuarioId]);
-  
+
   useEffect(() => {  // MCOD001-3
     const cargarResumen = async () => {
       if (!usuarioId) return;
@@ -95,7 +95,7 @@ const RegistroDiario = () => { // COD-001
 
   const handleSubmit = async (e) => {  // MCOD001-5
     e.preventDefault();
-    if (!usuarioId){
+    if (!usuarioId) {
       setMessage("No se encontró el usuario autenticado");
       return
     }
@@ -293,7 +293,7 @@ const RegistroDiario = () => { // COD-001
           Guardar movimiento
         </button>
       </form>
-        
+
       <p className={`mensaje ${tipoMensaje}`}>{message}</p>
 
     </div>

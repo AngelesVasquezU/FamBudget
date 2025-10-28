@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import '../styles/Registro.css';
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
-import fondoInicio from '../assets/fondoInicio.png'; 
+import fondoInicio from '../assets/fondoInicio.png';
 
 const Registro = () => { // COD008
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Registro = () => { // COD008
       return setMessage("Las contraseñas no coinciden.");
     }
 
-    const rol = isAdmin ? 'administrador' : 'miembro familiar';
+    const rol = isAdmin ? 'Administrador' : 'Miembro familiar';
 
     const { error } = await supabase.auth.signUp({
       email,
