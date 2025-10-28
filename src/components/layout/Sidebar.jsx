@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { supabase } from '../../supabaseClient';
+import { GestorUsuario } from "../managers/GestorUsuario";
+import { GestorFamilia } from "../managers/GestorFamilia";
 
-import { 
-  Home, 
-  Calendar, 
-  PieChart, 
-  Settings, 
-  Target, 
+import {
+  Home,
+  Calendar,
+  PieChart,
+  Settings,
+  Target,
   User,
   Users,
   ChevronLeft,
@@ -14,27 +17,43 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 
-const Sidebar = ({ 
-  isCollapsed, 
-  isMobileOpen, 
-  toggleSidebar, 
-  closeMobileSidebar,
-  currentFamily = "Familia Rodríguez"
+const Sidebar = ({
+  isCollapsed,
+  isMobileOpen,
+  toggleSidebar,
+  closeMobileSidebar
 }) => {
-  const location = useLocation(); 
+  const [user, setUser] = useState(null);
+  const [family, setFamily] = useState(null);
+
+  const gestorUsuario = new GestorUsuario(supabase);
+  const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
+
+  const location = useLocation();
+  useEffect(() => {
+    const fetchUser = async () => {
+      const usuarioData = await gestorUsuario.obtenerUsuario();
+      setUser(usuarioData);
+
+      const familiaData = await gestorFamilia.obtenerMiFamilia(usuarioData?.id);
+      setFamily(familiaData);
+    };
+    fetchUser();
+  }, []);
+
   const menuItems = [
-    { icon: Home, label: 'Inicio',  path: '/dashboard', active: true },
-    { icon: Calendar, label: 'Registro Diario', path: '/registro-diario'  },
+    { icon: Home, label: 'Inicio', path: '/dashboard', active: true },
+    { icon: Calendar, label: 'Registro Diario', path: '/registro-diario' },
     { icon: PieChart, label: 'Balance', path: '/balance' },
     { icon: Settings, label: 'Configuración', path: '/configuracion' },
     { icon: Target, label: 'Metas', path: '/metas' },
-    { icon: User, label: 'Cuenta' , path: '/cuenta'}
+    { icon: User, label: 'Cuenta', path: '/cuenta' },
+    { icon: Users, label: 'Familia', path: '/familia' }
   ];
-
   return (
     <>
       {isMobileOpen && (
-        <div 
+        <div
           className="sidebar-overlay"
           onClick={closeMobileSidebar}
         />
@@ -46,12 +65,14 @@ const Sidebar = ({
             <div className="sidebar__brand">
               <div className="sidebar__title">
                 <h2>FamBudget</h2>
-                <span className="sidebar__family">{currentFamily}</span>
+                <span className="sidebar__family">
+                  {family ? family.nombre : 'Sin Familia'}
+                </span>
               </div>
             </div>
           )}
-          
-          <button 
+
+          <button
             className="sidebar__toggle"
             onClick={toggleSidebar}
             aria-label={isCollapsed ? 'Expandir sidebar' : 'Contraer sidebar'}
@@ -63,7 +84,7 @@ const Sidebar = ({
         <nav className="sidebar__nav">
           <ul className="sidebar__menu">
             {menuItems.map((item, index) => {
-              const isActive = location.pathname === item.path; // 👈 Compara ruta
+              const isActive = location.pathname === item.path;
               return (
                 <li key={index} className="sidebar__menu-item">
                   <Link
@@ -80,13 +101,15 @@ const Sidebar = ({
           </ul>
         </nav>
 
-        {!isCollapsed && (
+        {!isCollapsed && user && (
           <div className="sidebar__footer">
             <div className="sidebar__user">
-              <div className="user-avatar">T</div>
+              <div className="user-avatar">
+                {user.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+              </div>
               <div className="user-info">
-                <span className="user-name">Tú</span>
-                <span className="user-role">Administrador</span>
+                <span className="user-name">{user.nombre}</span>
+                <span className="user-role">{user.rol}</span>
               </div>
             </div>
           </div>

@@ -3,12 +3,13 @@ import { supabase } from '../supabaseClient';
 import '../styles/Registro.css';
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
-import fondoInicio from '../assets/fondoInicio.png'; 
+import fondoInicio from '../assets/fondoInicio.png';
 
 const Registro = () => { // COD008
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
+    parentesco: '',
     password: '',
     confirmPassword: '',
     fullName: '',
@@ -28,19 +29,20 @@ const Registro = () => { // COD008
     e.preventDefault();
     setMessage('');
 
-    const { email, password, confirmPassword, fullName, isAdmin } = formData;
+    const { email, parentesco, password, confirmPassword, fullName, isAdmin } = formData;
 
     if (password !== confirmPassword) {
       return setMessage("Las contraseñas no coinciden.");
     }
 
-    const rol = isAdmin ? 'administrador' : 'miembro familiar';
+    const rol = isAdmin ? 'Administrador' : 'Miembro familiar';
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
+          parentesco: parentesco,
           fullName: fullName,
           role: rol
         }
@@ -54,6 +56,7 @@ const Registro = () => { // COD008
     setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
     setFormData({
       email: '',
+      parentesco: '',
       password: '',
       confirmPassword: '',
       fullName: '',
@@ -90,7 +93,13 @@ const Registro = () => { // COD008
             onChange={handleChange}
             required
           />
-
+          <label>Parentesco</label>
+          <input
+            type="text"
+            placeholder="Ej: Mamá, Papá, Hijo..."
+            value={formData.parentesco}
+            onChange={handleChange}
+          />
           <label>Correo electrónico</label>
           <input
             type="email"
