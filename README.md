@@ -12,14 +12,9 @@ _Clona el repositorio_
 ```bash
     git clone https://github.com/AngelesVasquezU/FamBudget.git
 ```
-_Instala las dependencias necesarias_
+_Instala la dependencia necesaria_
 ```bash
-    npm install
-    npm install react react-dom
     npm install vite @vitejs/plugin-react --save-dev
-    npm install @supabase/supabase-js
-    npm install react-router-dom
-    npm install react-icons
 ```
 _Ejecutar el proyecto_
 
