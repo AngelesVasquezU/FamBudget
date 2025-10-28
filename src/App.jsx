@@ -6,6 +6,8 @@ import SendEmail from './components/SendEmail';
 import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import Conceptos from './components/Conceptos';
+import MetasDashboard from './components/MetasDashboard';
+import MetasForm from './components/MetasForm';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegistroDiario from './components/RegistroDiario';
@@ -30,19 +32,41 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/configuracion" element={
-          <ProtectedRoute>
-            <Layout>
-              <Conceptos />
-            </Layout>
-          </ProtectedRoute>
+            <ProtectedRoute>
+              <Layout>
+                <Conceptos />
+              </Layout>
+            </ProtectedRoute>
           } />
           <Route path="/registro-diario" element={
-          <ProtectedRoute>
-            <Layout>
-              <RegistroDiario />
-            </Layout>
-          </ProtectedRoute>
-        } />
+            <ProtectedRoute>
+              <Layout>
+                <RegistroDiario />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/metas" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/metas/nueva" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/metas/editar/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </AuthProvider>
