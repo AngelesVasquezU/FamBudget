@@ -8,6 +8,8 @@ import Dashboard from './components/Dashboard';
 import Conceptos from './components/Conceptos';
 import Familia from './components/Familia';
 import Cuenta from './components/Cuenta';
+import MetasDashboard from './components/MetasDashboard';
+import MetasForm from './components/MetasForm';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegistroDiario from './components/RegistroDiario';
@@ -56,6 +58,24 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Cuenta />
+          <Route path="/metas" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/metas/nueva" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/metas/editar/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <MetasForm />
               </Layout>
             </ProtectedRoute>
           } />
