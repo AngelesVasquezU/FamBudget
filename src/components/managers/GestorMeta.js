@@ -1,3 +1,4 @@
+
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency',
@@ -6,8 +7,9 @@ const formatCurrency = (amount) => {
 };
 
 export class GestorMetas { 
-  constructor(supabase) { 
+  constructor(supabase, gestorUsuario) { 
     this.supabase = supabase;
+    this.gestorUsuario  = gestorUsuario;
   }
 
   async obtenerMetas(usuarioId, familiaId = null) {
@@ -78,11 +80,24 @@ export class GestorMetas {
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
       console.log('📝 Editando meta ID:', id, 'con datos:', { nombre, monto_objetivo, fecha_limite, es_familiar });
-      
+      const user_id = await this.gestorUsuario.obtenerIdUsuario();
+      if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
+
+      const { data: usuario, error: errorUsuario } = await this.supabase
+        .from('usuarios')
+        .select('familia_id')
+        .eq('id', user_id)
+        .single();
+
+      if (errorUsuario) throw errorUsuario;
+      if (!usuario) throw new Error('Usuario no encontrado');
+      const familia_id = usuario.familia_id;
+      console.log("familia id: ", familia_id);
       const { data, error } = await this.supabase
         .from("metas")
         .update({ 
           nombre, 
+          familia_id,
           monto_objetivo, 
           fecha_limite, 
           es_familiar 
