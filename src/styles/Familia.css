@@ -180,3 +180,110 @@
     background-color: #1565c0;
     transform: scale(1.03);
 }
+
+/* --- Modal de confirmación --- */
+.modal-confirmacion {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    width: 350px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-confirmacion h3 {
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.modal-confirmacion p {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.modal-confirmacion .alerta {
+    color: #c62828;
+    font-weight: 500;
+    margin-top: 10px;
+}
+
+.modal-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.btn-cancelar {
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cancelar:hover {
+    background: #d5d5d5;
+}
+
+.btn-confirmar {
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-confirmar:hover {
+    background: #1565c0;
+}
+
+/* --- Toast de éxito --- */
+.toast-exito {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 500;
+    animation: aparecer 0.3s ease, desaparecer 0.3s ease 2.7s forwards;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes desaparecer {
+    to {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}

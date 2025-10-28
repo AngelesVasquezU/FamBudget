@@ -89,4 +89,31 @@ export class GestorFamilia {
         if (error) throw error;
         return true;
     }
+    
+    async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
+        const { data: miembro, error: errorMiembro } = await this.supabase
+            .from("usuarios")
+            .select("familia_id, rol")
+            .eq("id", nuevoAdminId)
+            .single();
+
+        if (errorMiembro || !miembro) throw new Error("Miembro no encontrado");
+        if (miembro.familia_id !== familia_id)
+            throw new Error("El usuario no pertenece a esta familia");
+
+        const { error: err1 } = await this.supabase
+            .from("usuarios")
+            .update({ rol: "Administrador" })
+            .eq("id", nuevoAdminId);
+
+        const { error: err2 } = await this.supabase
+            .from("usuarios")
+            .update({ rol: "Miembro Familiar" })
+            .eq("id", adminActualId);
+
+        if (err1 || err2) throw new Error("Error al cambiar el rol");
+
+        return true;
+    }
+
 }
