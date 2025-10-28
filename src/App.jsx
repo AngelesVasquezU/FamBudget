@@ -75,6 +75,12 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/balance" element={
+            <ProtectedRoute>
+              <Layout>
+              </Layout>
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </AuthProvider>
