@@ -53,7 +53,7 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          <Route path="/metas/nueva" element={
+          <Route path="/metas" element={
             <ProtectedRoute>
               <Layout>
                 <MetasForm />
