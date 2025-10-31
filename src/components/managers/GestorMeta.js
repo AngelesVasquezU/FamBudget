@@ -149,7 +149,6 @@ export class GestorMetas {
         .select("monto_actual, monto_objetivo, nombre")
         .eq("id", metaId)
         .single();
-      console.log("daots metas: ",meta.monto_actual, meta.monto_objetivo, meta.nombre);
       if (metaError) throw new Error("Meta no encontrada");
 
       const nuevoMonto = parseFloat(meta.monto_actual) + parseFloat(monto);
