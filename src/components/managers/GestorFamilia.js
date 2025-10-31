@@ -1,10 +1,10 @@
-export class GestorFamilia { 
-    constructor(supabase, gestorUsuario) { 
+export class GestorFamilia {
+    constructor(supabase, gestorUsuario) { //MCOD009-1
         this.supabase = supabase;
         this.gestorUsuario = gestorUsuario;
     }
 
-    async obtenerMiFamilia() {
+    async obtenerMiFamilia() {//MCOD009-2
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user || !user.familia_id) return null;
 
@@ -18,7 +18,7 @@ export class GestorFamilia {
         return data;
     }
 
-    async obtenerMiembros(familia_id) {
+    async obtenerMiembros(familia_id) {//MCOD009-3
         const { data, error } = await this.supabase
         .from('usuarios')
         .select('id, nombre, correo, rol, parentesco')
@@ -28,7 +28,7 @@ export class GestorFamilia {
         return data;
     }
 
-    async crearFamilia(nombre) {
+    async crearFamilia(nombre) {//MCOD009-4
     const { data, error } = await this.supabase
         .from('familias')
         .insert([{ nombre }])
@@ -38,7 +38,7 @@ export class GestorFamilia {
     return data;
     }
 
-    async agregarMiembro(familia_id, correo, parentesco) {
+    async agregarMiembro(familia_id, correo, parentesco) {//MCOD009-5
     const { data: usuario, error: errorUser } = await this.supabase
         .from('usuarios')
         .select('id, rol, familia_id')
@@ -65,7 +65,7 @@ export class GestorFamilia {
     return true;
     }
 
-    async actualizarParentesco(usuario_id, nuevoParentesco) {
+    async actualizarParentesco(usuario_id, nuevoParentesco) {//MCOD009-6
         const { error } = await this.supabase
             .from('usuarios')
             .update({ parentesco: nuevoParentesco })
@@ -75,7 +75,7 @@ export class GestorFamilia {
         return true;
     }
 
-    async eliminarMiembro(usuarioId) {
+    async eliminarMiembro(usuarioId) {//MCOD009-7
         const currentUserId = await this.gestorUsuario.obtenerIdUsuario();
         if (usuarioId === currentUserId) {
             throw new Error('No puedes eliminarte a ti misma como administradora');
@@ -90,7 +90,7 @@ export class GestorFamilia {
         return true;
     }
     
-    async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
+    async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {//MCOD009-8
         const { data: miembro, error: errorMiembro } = await this.supabase
             .from("usuarios")
             .select("familia_id, rol")
