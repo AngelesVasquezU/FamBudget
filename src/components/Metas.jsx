@@ -95,7 +95,7 @@ const Metas = () => {
         setCurrentFamiliaId(usuarioData.familia_id);
 
         await fetchMetas(usuarioData.id, usuarioData.familia_id);
-        await fetchSaldoDisponible(usuarioData.familia_id, usuarioData.id); // CORREGIDO: pasar ambos parámetros
+        await fetchSaldoDisponible(usuarioData.id);
       }
     } catch (error) {
       console.error('Error inicializando:', error);
@@ -135,9 +135,10 @@ const Metas = () => {
   };
 
   // CORREGIDO: Ahora recibe ambos parámetros
-  const fetchSaldoDisponible = async (familiaId = currentFamiliaId, usuarioId = currentUsuarioId) => {
+  const fetchSaldoDisponible = async (usuarioId = currentUsuarioId) => {
     try {
-      const saldo = await gestorMetas.obtenerSaldoDisponible(familiaId, usuarioId);
+      console.log("usuario", usuarioId);
+      const saldo = await gestorMetas.obtenerSaldoDisponible(usuarioId);
       console.log('💰 Saldo disponible REAL calculado:', saldo);
       setSaldoDisponible(saldo);
     } catch (error) {
@@ -249,7 +250,7 @@ const Metas = () => {
       });
 
       await fetchMetas(usuarioData.id, usuarioData.familia_id);
-      await fetchSaldoDisponible(usuarioData.familia_id, usuarioData.id); // CORREGIDO
+      await fetchSaldoDisponible(usuarioData.id); // CORREGIDO
 
     } catch (error) {
       console.error('Error al guardar meta:', error);
@@ -280,7 +281,7 @@ const Metas = () => {
 
       if (userData) {
         await fetchMetas(userData.id, userData.familia_id);
-        await fetchSaldoDisponible(userData.familia_id, userData.id); // CORREGIDO
+        await fetchSaldoDisponible(userData.id); // CORREGIDO
       }
 
     } catch (error) {
@@ -354,8 +355,7 @@ const Metas = () => {
       await gestorMetas.agregarAhorro(
         metaId,
         monto,
-        userData.id,
-        `Aporte a meta`
+        userData.id
       );
 
       setAporteMonto('');
@@ -364,7 +364,7 @@ const Metas = () => {
 
       // Recargar datos para actualizar saldo
       await fetchMetas(userData.id, userData.familia_id);
-      await fetchSaldoDisponible(userData.familia_id, userData.id); // CORREGIDO
+      await fetchSaldoDisponible(userData.id); // CORREGIDO
 
       alert("✅ Ingreso asignado a la meta correctamente");
 

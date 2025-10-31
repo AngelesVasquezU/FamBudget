@@ -1,4 +1,3 @@
-
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency',
@@ -7,11 +6,12 @@ const formatCurrency = (amount) => {
 };
 
 export class GestorMetas { 
-  constructor(supabase, gestorUsuario) { 
+  constructor(supabase, gestorUsuario) { // MCOD005-1
     this.supabase = supabase;
     this.gestorUsuario  = gestorUsuario;
   }
 
+  // MCOD005-2
   async obtenerMetas(usuarioId, familiaId = null) {
     try {
       let query = this.supabase 
@@ -32,24 +32,6 @@ export class GestorMetas {
       return data;
     } catch (error) {
       console.error('Error en obtenerMetas:', error);
-      throw error;
-    }
-  }
-
-  async obtenerMetaPorId(id) {
-    try {
-      const { data, error } = await this.supabase
-        .from("metas")
-        .select(`
-          *,
-          usuarios:usuario_id(nombre)
-        `)
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error en obtenerMetaPorId:', error);
       throw error;
     }
   }
@@ -141,18 +123,18 @@ export class GestorMetas {
         throw new Error('Parámetros inválidos para el aporte');
       }
 
-      const { data: usuario, error: usuarioError } = await this.supabase
+      const { data: saldoUsuario, error: errorSaldo } = await this.supabase
         .from("usuarios")
-        .select("familia_id")
+        .select("saldo_disponible")
         .eq("id", usuarioId)
         .single();
+        
+        if (errorSaldo) throw new Error('No se pudo obtener el saldo del usuario');
+      const saldoDisponible =  parseFloat(saldoUsuario[0].saldo_disponible);
+      console.log('Saldo disponible ANTES de asignar:', saldoDisponible);
 
-      if (usuarioError) throw usuarioError;
-
-      const saldoDisponibleAntes = await this.obtenerSaldoDisponible(usuario.familia_id, usuarioId);
-
-      if (monto > saldoDisponibleAntes) {
-        throw new Error(`Ingresos disponibles insuficientes. Disponible: ${formatCurrency(saldoDisponibleAntes)}, Intenta asignar: ${formatCurrency(monto)}`);
+      if (monto > saldoDisponible) {
+        throw new Error(`Ingresos disponibles insuficientes. Disponible: ${formatCurrency(saldoDisponible)}, Intenta asignar: ${formatCurrency(monto)}`);
       }
 
       const { data: meta, error: metaError } = await this.supabase
@@ -167,46 +149,17 @@ export class GestorMetas {
       if (nuevoMonto > meta.monto_objetivo) {
         throw new Error(`El aporte excede el objetivo de la meta. Máximo permitido: ${formatCurrency(meta.monto_objetivo - meta.monto_actual)}`);
       }
-
-      const { data: ingresosNoAsignados, error: ingresosError } = await this.supabase
-        .from("movimientos")
-        .select("id, monto, fecha, concepto_id, comentario")
-        .eq("usuario_id", usuarioId)
-        .eq("tipo", "ingreso")
-        .is("meta_id", null)
-        .order("fecha", { ascending: false })
-        .limit(10);
-
-      if (ingresosError) throw ingresosError;
-
-      if (!ingresosNoAsignados || ingresosNoAsignados.length === 0) {
-        throw new Error('No hay ingresos disponibles para asignar a la meta');
-      }
-
-      let ingresoSeleccionado = ingresosNoAsignados.find(ingreso => parseFloat(ingreso.monto) >= monto);
-      
-      if (!ingresoSeleccionado) {
-        ingresoSeleccionado = ingresosNoAsignados.reduce((prev, current) => 
-          (parseFloat(prev.monto) > parseFloat(current.monto)) ? prev : current
-        );
-      }
-
-      const comentarioActualizado = ingresoSeleccionado.comentario 
-        ? `${ingresoSeleccionado.comentario} | Asignado a meta: ${meta.nombre}`
-        : `Asignado a meta: ${meta.nombre}`;
-
+      let nuevoSaldo = saldoDisponible - monto;
+      console.log("saldo disponible", saldoDisponible, monto);
       const { error: updateMovError } = await this.supabase
-        .from("movimientos")
+        .from("usuarios")
         .update({
-          meta_id: metaId,
-          monto_meta: parseFloat(monto),
-          fecha_aporte_meta: new Date().toISOString(),
-          comentario: comentarioActualizado
+          saldo_disponible: nuevoSaldo
         })
-        .eq("id", ingresoSeleccionado.id);
+        .eq("id", usuarioId);
 
       if (updateMovError) {
-        console.error('Error al actualizar movimiento:', updateMovError);
+        console.error('Error al actualizar saldo:', updateMovError);
         throw updateMovError;
       }
 
@@ -219,89 +172,38 @@ export class GestorMetas {
 
       if (updateError) {
         console.error('Error al actualizar meta:', updateError);
-        await this.supabase
-          .from("movimientos")
-          .update({
-            meta_id: null,
-            monto_meta: null,
-            fecha_aporte_meta: null,
-            comentario: ingresoSeleccionado.comentario
-          })
-          .eq("id", ingresoSeleccionado.id);
-        throw new Error('Error al actualizar la meta');
       }
 
-      const saldoDisponibleDespues = await this.obtenerSaldoDisponible(usuario.familia_id, usuarioId);
-      console.log('Saldo disponible DESPUÉS de asignar:', saldoDisponibleDespues);
 
-      console.log('Aporte realizado exitosamente asignando ingreso a meta');
-      return { 
-        movimiento: ingresoSeleccionado, 
+      return {
         metaActualizada: true,
         montoAsignado: monto,
-        saldoDisponibleAntes,
-        saldoDisponibleDespues
+        saldoDisponible
       };
 
     } catch (error) {
-      console.error('Error en agregarAhorro:', error);
+      console.error('Error en agregar ahorro:', error);
       throw error;
     }
   }
-  async obtenerSaldoDisponible(familiaId, usuarioId = null) {
-  try {
-    if (!familiaId && !usuarioId) {
-      return 0;
-    }
 
-    let query = this.supabase
-      .from("movimientos")
-      .select("monto, tipo, meta_id, usuario_id");
-
-    if (familiaId) {
-      const { data: usuariosFamilia, error: errorUsuarios } = await this.supabase
+  async obtenerSaldoDisponible(usuarioId) {
+    try {
+      console.log("id usuario: ", usuarioId);
+      const { data, error } = await this.supabase
         .from("usuarios")
-        .select("id")
-        .eq("familia_id", familiaId);
+        .select("saldo_disponible")
+        .eq("id", usuarioId)
+        .single();
 
-      if (errorUsuarios) throw errorUsuarios;
+      if (error) throw error;
 
-      const usuarioIds = usuariosFamilia.map(u => u.id);
-      query = query.in("usuario_id", usuarioIds);
-    } else if (usuarioId) {
-      query = query.eq("usuario_id", usuarioId);
+      const saldo = parseFloat(data?.saldo_disponible) || 0;
+
+      return saldo;
+    } catch (err) {
+      console.error("Error al obtener saldo disponible:", err);
+      throw new Error("No se pudo obtener el saldo disponible del usuario");
     }
-
-    const { data: movimientos, error } = await query;
-
-    if (error) throw error;
-
-    let totalIngresos = 0;
-    let totalIngresosAsignados = 0;
-
-    movimientos.forEach(mov => {
-      const monto = parseFloat(mov.monto);
-      
-      if (mov.tipo === 'ingreso') {
-        totalIngresos += monto;
-        if (mov.meta_id) {
-          totalIngresosAsignados += monto;
-        }
-      }
-    });
-
-    const saldoDisponible = totalIngresos - totalIngresosAsignados;
-
-    console.log('Cálculo CORREGIDO de saldo:', {
-      totalIngresos,
-      totalIngresosAsignados,
-      saldoDisponible
-    });
-
-    return Math.max(0, saldoDisponible);
-  } catch (error) {
-    console.error('Error en obtenerSaldoDisponible:', error);
-    return 0;
   }
-}
 }
