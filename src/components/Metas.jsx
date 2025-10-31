@@ -125,6 +125,10 @@ const Metas = () => {
         if (error) throw error;
 
         console.log('Metas encontradas:', data);
+        // Agregar un log para ver el monto_actual de cada meta
+        data.forEach(meta => {
+          console.log(`Meta: ${meta.nombre}, Monto actual: ${meta.monto_actual}`);
+        });
         setMetas(data || []);
       } else {
         console.warn('No hay usuarioId para buscar metas');
@@ -134,16 +138,19 @@ const Metas = () => {
     }
   };
 
-  // CORREGIDO: Ahora recibe ambos parámetros
   const fetchSaldoDisponible = async (usuarioId = currentUsuarioId) => {
     try {
-      console.log("usuario", usuarioId);
+      console.log("🔍 Obteniendo saldo para usuario:", usuarioId);
+      if (!usuarioId) {
+        console.warn("⚠️ No hay usuarioId para obtener saldo");
+        return;
+      }
+      
       const saldo = await gestorMetas.obtenerSaldoDisponible(usuarioId);
       console.log('💰 Saldo disponible REAL calculado:', saldo);
       setSaldoDisponible(saldo);
     } catch (error) {
       console.error('❌ Error fetching saldo:', error);
-      // En caso de error, establecer 0 para forzar la validación
       setSaldoDisponible(0);
     }
   };
@@ -173,6 +180,24 @@ const Metas = () => {
       setSelectedMetaId(null);
     }
   }, [selectedMetaId, metas, showForm]);
+
+  // Agrega este useEffect en Metas.jsx, después de los otros useEffect
+  useEffect(() => {
+    const handleMetasActualizadas = () => {
+      console.log('📢 Evento recibido: metas actualizadas');
+      if (userData) {
+        fetchMetas(userData.id, userData.familia_id);
+        fetchSaldoDisponible(userData.id);
+      }
+    };
+
+    // Escuchar evento personalizado
+    window.addEventListener('metasActualizadas', handleMetasActualizadas);
+    
+    return () => {
+      window.removeEventListener('metasActualizadas', handleMetasActualizadas);
+    };
+  }, [userData]); // Depende de userData
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

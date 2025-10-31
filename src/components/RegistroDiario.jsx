@@ -56,11 +56,8 @@ const RegistroDiario = () => { // COD-001
       }
       try {
         const conceptosData = await gestorConceptos.obtenerConceptosPorTipo(tipo);
-
-        const metas = await gestorMetas.obtenerMetas(usuarioId);
-
         setConceptos(conceptosData || []);
-        setMetas(metas || []);
+        await cargarMetas();
       } catch (error) {
         console.error("Error al buscar usuario en tabla usuarios:", error);
         setMessage("Error al buscar usuario", error);
@@ -92,12 +89,20 @@ const RegistroDiario = () => { // COD-001
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
-
+  const cargarMetas = async () => {
+    if (!usuarioId) return;
+    try {
+      const metasData = await gestorMetas.obtenerMetas(usuarioId);
+      setMetas(metasData || []);
+    } catch (error) {
+      console.error("Error al cargar metas:", error);
+    }
+  };
   const handleSubmit = async (e) => {  // MCOD001-5
     e.preventDefault();
     if (!usuarioId) {
       setMessage("No se encontró el usuario autenticado");
-      return
+      return;
     }
     try {
       await gestorMovimientos.crearMovimiento({
@@ -113,7 +118,13 @@ const RegistroDiario = () => { // COD-001
 
       setMessage("Movimiento registrado con éxito");
       setTipoMensaje("success");
-      setForm({ concepto_id: "", monto: "", comentario: "", meta_id: "", monto_meta: "" });
+      setForm({ concepto_id: "", monto: 0, comentario: "", meta_id: "", monto_meta: 0 });
+
+      // ✅ AGREGAR ESTO: Disparar evento para actualizar metas
+      if (form.meta_id && form.monto_meta) {
+        console.log('📢 Disparando evento: metas actualizadas desde RegistroDiario');
+        window.dispatchEvent(new CustomEvent('metasActualizadas'));
+      }
 
     } catch (error) {
       console.error("Error al registrar movimiento:", error);
@@ -127,7 +138,7 @@ const RegistroDiario = () => { // COD-001
       await gestorConceptos.crearConcepto({
         nombre: newConcept.nombre,
         tipo: newConcept.tipo,
-        periodo: newConcept.periodo
+        periodo: newConcept.periodo,
       });
       setShowNewConceptModal(false);
       const data = await gestorConceptos.obtenerConceptosPorTipo(tipo);
@@ -181,7 +192,7 @@ const RegistroDiario = () => { // COD-001
             className="concepto-select"
           >
             <option value="">Selecciona un concepto</option>
-            {conceptos.map((c) => (
+            {conceptos && conceptos.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nombre}
               </option>
@@ -189,7 +200,10 @@ const RegistroDiario = () => { // COD-001
           </select>
           <button
             type="button"
-            onClick={() => setShowNewConceptModal(!showNewConceptModal)}
+            onClick={() => {
+              setNewConcept({ nombre: '', tipo: tipo, periodo: 'diario' });
+              setShowNewConceptModal(true);
+            }}
             className="btn-nuevo-concepto"
           > Nuevo
           </button>

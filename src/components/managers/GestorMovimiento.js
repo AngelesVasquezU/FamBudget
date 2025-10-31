@@ -7,8 +7,35 @@ export class GestorMovimiento { // COD-001
   // MCOD002-1
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
+      console.log("=== INICIANDO crearMovimiento ===");
+      console.log("Usuario ID:", usuarioId);
       console.log("Monto que se envía:", monto, typeof monto);
 
+      // 1. Primero obtener el saldo actual del usuario
+      console.log("1. Obteniendo saldo actual del usuario...");
+      const { data: usuarioData, error: errorSaldo } = await this.supabase
+        .from("usuarios")
+        .select("saldo_disponible")
+        .eq("id", usuarioId)
+        .single();
+
+      if (errorSaldo) {
+        console.error("❌ Error al obtener saldo:", errorSaldo);
+        throw new Error('No se pudo obtener el saldo del usuario: ' + errorSaldo.message);
+      }
+
+      if (!usuarioData) {
+        console.error("❌ No se encontró el usuario con ID:", usuarioId);
+        throw new Error('Usuario no encontrado en la base de datos');
+      }
+
+      console.log("✅ Usuario encontrado. Saldo actual:", usuarioData.saldo_disponible);
+
+      const saldoActual = parseFloat(usuarioData.saldo_disponible) || 0;
+      console.log("Saldo actual numérico:", saldoActual);
+
+      // 2. Crear el movimiento
+      console.log("2. Creando movimiento...");
       const { data: movimiento, error: movError } = await this.supabase
         .from("movimientos")
         .insert([
@@ -23,44 +50,66 @@ export class GestorMovimiento { // COD-001
         ])
         .select()
         .single();
-      if (movError) throw movError;
+      
+      if (movError) {
+        console.error("❌ Error al crear movimiento:", movError);
+        throw movError;
+      }
 
+      console.log("✅ Movimiento creado:", movimiento.id);
+
+      // 3. Manejar aporte a meta si aplica
       if (tipo === "ingreso" && metaId && montoMeta) {
+        console.log("3. Creando aporte a meta...");
+        
         const { error: aporteError } = await this.supabase
           .from("aportes_meta")
           .insert([
             {
               meta_id: metaId,
-              usuario_id: usuarioId,
               movimiento_id: movimiento.id,
               monto: parseFloat(montoMeta)
             }
           ]);
-        if (aporteError) throw aporteError;
+
+        if (aporteError) {
+          console.error("❌ Error al crear aporte_meta:", aporteError);
+          throw aporteError;
+        }
+        console.log("✅ Aporte a meta creado exitosamente");
       }
       
-      const { data: usuarioSaldo, error: errorSaldo } = await this.supabase
-        .from("usuarios")
-        .select("saldo_disponible")
-        .eq("id", usuarioId)
+      // 4. Calcular y actualizar nuevo saldo
+      console.log("4. Actualizando saldo del usuario...");
+      const nuevoSaldo = tipo === "ingreso" 
+        ? saldoActual + parseFloat(monto)
+        : saldoActual - parseFloat(monto);
 
-      if (errorSaldo) throw new Error('No se pudo obtener el saldo del usuario');
-      console.log("usuario id", usuarioId);
-      console.log("saldo dispnible", usuarioSaldo[0].saldo_disponible);
-      const nuevoSaldo = parseFloat(usuarioSaldo[0].saldo_disponible)+ monto;
-      console.log("nuevo salod", nuevoSaldo);
-      if(tipo === "ingreso"){
-        const { error: updateMovError } = await this.supabase
+      console.log("Nuevo saldo calculado:", nuevoSaldo);
+
+      const { error: updateError } = await this.supabase
         .from("usuarios")
         .update({
           saldo_disponible: nuevoSaldo
         })
         .eq("id", usuarioId);
-        if (updateMovError) throw updateMovError;
+
+      if (updateError) {
+        console.error("❌ Error al actualizar saldo:", updateError);
+        throw updateError;
       }
+
+      console.log("✅ Saldo actualizado exitosamente a:", nuevoSaldo);
       return movimiento;
+
     } catch (err) {
-      console.error("MovementsManager error:", err);
+      console.error("💥 ERROR COMPLETO en crearMovimiento:", err);
+      console.error("Detalles del error:", {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint
+      });
       throw err;
     }
   }

@@ -123,14 +123,17 @@ export class GestorMetas {
         throw new Error('Parámetros inválidos para el aporte');
       }
 
+      // Obtener saldo del usuario - CORREGIR ESTA PARTE
       const { data: saldoUsuario, error: errorSaldo } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
         .eq("id", usuarioId)
         .single();
         
-        if (errorSaldo) throw new Error('No se pudo obtener el saldo del usuario');
-      const saldoDisponible =  parseFloat(saldoUsuario[0].saldo_disponible);
+      if (errorSaldo) throw new Error('No se pudo obtener el saldo del usuario: ' + errorSaldo.message);
+      
+      // CORRECCIÓN: saldoUsuario es un objeto, no un array
+      const saldoDisponible = parseFloat(saldoUsuario.saldo_disponible) || 0;
       console.log('Saldo disponible ANTES de asignar:', saldoDisponible);
 
       if (monto > saldoDisponible) {
@@ -143,14 +146,17 @@ export class GestorMetas {
         .eq("id", metaId)
         .single();
 
-      if (metaError) throw new Error('No se pudo encontrar la meta especificada');
+      if (metaError) throw new Error('No se pudo encontrar la meta especificada: ' + metaError.message);
 
       const nuevoMonto = parseFloat(meta.monto_actual) + parseFloat(monto);
       if (nuevoMonto > meta.monto_objetivo) {
         throw new Error(`El aporte excede el objetivo de la meta. Máximo permitido: ${formatCurrency(meta.monto_objetivo - meta.monto_actual)}`);
       }
+
       let nuevoSaldo = saldoDisponible - monto;
       console.log("saldo disponible", saldoDisponible, monto);
+      
+      // Actualizar saldo del usuario
       const { error: updateMovError } = await this.supabase
         .from("usuarios")
         .update({
@@ -163,6 +169,7 @@ export class GestorMetas {
         throw updateMovError;
       }
 
+      // Actualizar monto actual de la meta
       const { error: updateError } = await this.supabase
         .from("metas")
         .update({ 
@@ -172,13 +179,13 @@ export class GestorMetas {
 
       if (updateError) {
         console.error('Error al actualizar meta:', updateError);
+        throw updateError;
       }
-
 
       return {
         metaActualizada: true,
         montoAsignado: monto,
-        saldoDisponible
+        saldoDisponible: nuevoSaldo
       };
 
     } catch (error) {
@@ -189,20 +196,23 @@ export class GestorMetas {
 
   async obtenerSaldoDisponible(usuarioId) {
     try {
-      console.log("id usuario: ", usuarioId);
+      console.log("🔍 Buscando saldo para usuario ID:", usuarioId);
       const { data, error } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
         .eq("id", usuarioId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Error en obtenerSaldoDisponible:", error);
+        throw error;
+      }
 
       const saldo = parseFloat(data?.saldo_disponible) || 0;
-
+      console.log("✅ Saldo encontrado:", saldo);
       return saldo;
     } catch (err) {
-      console.error("Error al obtener saldo disponible:", err);
+      console.error("❌ Error al obtener saldo disponible:", err);
       throw new Error("No se pudo obtener el saldo disponible del usuario");
     }
   }
