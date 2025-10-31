@@ -1,18 +1,12 @@
 export class GestorMovimiento { // COD-001
   constructor(supabase, gestorMetas) {
     this.supabase = supabase;
-    this.gestorUsuario = gestorMetas;
+    this.gestorMetas = gestorMetas;
   }
 
   // MCOD002-1
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
-      console.log("=== INICIANDO crearMovimiento ===");
-      console.log("Usuario ID:", usuarioId);
-      console.log("Monto que se envía:", monto, typeof monto);
-
-      // 1. Primero obtener el saldo actual del usuario
-      console.log("1. Obteniendo saldo actual del usuario...");
       const { data: usuarioData, error: errorSaldo } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
@@ -20,12 +14,12 @@ export class GestorMovimiento { // COD-001
         .single();
 
       if (errorSaldo) {
-        console.error("❌ Error al obtener saldo:", errorSaldo);
+        console.error("Error al obtener saldo:", errorSaldo);
         throw new Error('No se pudo obtener el saldo del usuario: ' + errorSaldo.message);
       }
 
       if (!usuarioData) {
-        console.error("❌ No se encontró el usuario con ID:", usuarioId);
+        console.error("No se encontró el usuario con ID:", usuarioId);
         throw new Error('Usuario no encontrado en la base de datos');
       }
 
@@ -34,7 +28,6 @@ export class GestorMovimiento { // COD-001
       const saldoActual = parseFloat(usuarioData.saldo_disponible) || 0;
       console.log("Saldo actual numérico:", saldoActual);
 
-      // 2. Crear el movimiento
       console.log("2. Creando movimiento...");
       const { data: movimiento, error: movError } = await this.supabase
         .from("movimientos")
@@ -56,32 +49,31 @@ export class GestorMovimiento { // COD-001
         throw movError;
       }
 
-      console.log("✅ Movimiento creado:", movimiento.id);
-
-      // 3. Manejar aporte a meta si aplica
+      // ✅ Si hay meta → DELEGAR todo a agregarAhorro
       if (tipo === "ingreso" && metaId && montoMeta) {
-        console.log("3. Creando aporte a meta...");
-        
-        const { error: aporteError } = await this.supabase
-          .from("aportes_meta")
-          .insert([
-            {
-              meta_id: metaId,
-              movimiento_id: movimiento.id,
-              monto: parseFloat(montoMeta)
-            }
-          ]);
+        console.log("➡ Llamando a agregarAhorro con:", {
+          metaId,
+          montoMeta,
+          usuarioId,
+          movimientoId: movimiento.id
+        });
 
-        if (aporteError) {
-          console.error("❌ Error al crear aporte_meta:", aporteError);
-          throw aporteError;
-        }
-        console.log("✅ Aporte a meta creado exitosamente");
+        await this.gestorMetas.agregarAhorro(
+          metaId,
+          montoMeta,
+          usuarioId,
+          movimiento.id
+        );
+
+        console.log("✅ agregarAhorro ya actualizó el saldo y la meta.");
+        console.log("✅ No se recalcula saldo aquí para evitar duplicados.");
+
+        return movimiento;
       }
-      
-      // 4. Calcular y actualizar nuevo saldo
-      console.log("4. Actualizando saldo del usuario...");
-      const nuevoSaldo = tipo === "ingreso" 
+
+      // ✅ Solo actualizamos saldo si NO es un aporte a meta
+      console.log("4. Actualizando saldo del usuario (movimiento normal)...");
+      const nuevoSaldo = tipo === "ingreso"
         ? saldoActual + parseFloat(monto)
         : saldoActual - parseFloat(monto);
 
@@ -113,7 +105,8 @@ export class GestorMovimiento { // COD-001
       throw err;
     }
   }
-  
+
+    
   // MCOD002-2
   async obtenerTotalPorTipo(usuarioId, tipo, fecha) {
     const { data, error } = await this.supabase

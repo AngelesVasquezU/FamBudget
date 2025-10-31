@@ -8,9 +8,9 @@ import { GestorMetas } from "./managers/GestorMeta";
 import "../styles/RegistroDiario.css";
 
 const gestorUsuario = new GestorUsuario(supabase);
-const gestorMovimientos = new GestorMovimiento(supabase);
-const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 const gestorMetas = new GestorMetas(supabase);
+const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
+const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 
 const RegistroDiario = () => { // COD-001
   const [tipo, setTipo] = useState("ingreso");

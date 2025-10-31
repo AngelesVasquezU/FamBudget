@@ -12,29 +12,47 @@ export class GestorMetas {
   }
 
   // MCOD005-2
-  async obtenerMetas(usuarioId, familiaId = null) {
-    try {
-      let query = this.supabase 
-        .from("metas")
-        .select(`
-          *,
-          usuarios:usuario_id(nombre)
-        `);
+  async obtenerMetas(usuarioId) {
+  try {
+    const { data: usuario, error: errorUsuario } = await this.supabase
+      .from("usuarios")
+      .select("familia_id")
+      .eq("id", usuarioId)
+      .single();
 
-      if (familiaId) {
-        query = query.or(`usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`);
-      } else {
-        query = query.eq('usuario_id', usuarioId);
-      }
+    if (errorUsuario) throw errorUsuario;
 
-      const { data, error } = await query.order('fecha_creacion', { ascending: false });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error en obtenerMetas:', error);
-      throw error;
+    const familiaId = usuario?.familia_id || null;
+
+    let query = this.supabase
+      .from("metas")
+      .select(`
+        *,
+        usuarios:usuario_id(nombre)
+      `);
+
+    if (familiaId) {
+      query = query.or(
+        `usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`
+      );
+    } else {
+      query = query.eq("usuario_id", usuarioId);
     }
+
+    const { data, error } = await query.order("fecha_creacion", {
+      ascending: false,
+    });
+
+    if (error) throw error;
+
+    return data;
+
+  } catch (error) {
+    console.error("Error en obtenerMetas:", error);
+    throw error;
   }
+}
+
 
   async crearMeta({ nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar = false }) {
     try {
@@ -102,42 +120,28 @@ export class GestorMetas {
   }
 
   async eliminarMeta(id) {
-    try {
+    const { error } = await this.supabase
+      .from("metas")
+      .delete()
+      .eq("id", id);
 
-      const { error, count } = await this.supabase
-        .from("metas")
-        .delete()
-        .eq("id", id);
+    if (error) throw error;
 
-      if (error) throw error;
-
-      return true;
-    } catch (error) {
-      throw error;
-    }
+    return true;
   }
 
-  async agregarAhorro(metaId, monto, usuarioId) {
+  async agregarAhorro(metaId, monto, usuarioId, movimientoId = null) {
     try {
       if (!metaId || !usuarioId || !monto || monto <= 0) {
-        throw new Error('Parámetros inválidos para el aporte');
+        throw new Error("Parámetros inválidos para el aporte");
       }
 
-      // Obtener saldo del usuario - CORREGIR ESTA PARTE
-      const { data: saldoUsuario, error: errorSaldo } = await this.supabase
-        .from("usuarios")
-        .select("saldo_disponible")
-        .eq("id", usuarioId)
-        .single();
-        
-      if (errorSaldo) throw new Error('No se pudo obtener el saldo del usuario: ' + errorSaldo.message);
-      
-      // CORRECCIÓN: saldoUsuario es un objeto, no un array
-      const saldoDisponible = parseFloat(saldoUsuario.saldo_disponible) || 0;
-      console.log('Saldo disponible ANTES de asignar:', saldoDisponible);
+      const saldoDisponible = await this.obtenerSaldoDisponible(usuarioId);
 
       if (monto > saldoDisponible) {
-        throw new Error(`Ingresos disponibles insuficientes. Disponible: ${formatCurrency(saldoDisponible)}, Intenta asignar: ${formatCurrency(monto)}`);
+        throw new Error(
+          `Ingresos insuficientes. Disponible: ${formatCurrency(saldoDisponible)}`
+        );
       }
 
       const { data: meta, error: metaError } = await this.supabase
@@ -145,58 +149,68 @@ export class GestorMetas {
         .select("monto_actual, monto_objetivo, nombre")
         .eq("id", metaId)
         .single();
-
-      if (metaError) throw new Error('No se pudo encontrar la meta especificada: ' + metaError.message);
+      console.log("daots metas: ",meta.monto_actual, meta.monto_objetivo, meta.nombre);
+      if (metaError) throw new Error("Meta no encontrada");
 
       const nuevoMonto = parseFloat(meta.monto_actual) + parseFloat(monto);
+
       if (nuevoMonto > meta.monto_objetivo) {
-        throw new Error(`El aporte excede el objetivo de la meta. Máximo permitido: ${formatCurrency(meta.monto_objetivo - meta.monto_actual)}`);
+        throw new Error(
+          `El aporte excede el objetivo. Máximo permitido: ${formatCurrency(
+            meta.monto_objetivo - meta.monto_actual
+          )}`
+        );
       }
 
-      let nuevoSaldo = saldoDisponible - monto;
-      console.log("saldo disponible", saldoDisponible, monto);
-      
-      // Actualizar saldo del usuario
-      const { error: updateMovError } = await this.supabase
-        .from("usuarios")
-        .update({
-          saldo_disponible: nuevoSaldo
-        })
-        .eq("id", usuarioId);
-
-      if (updateMovError) {
-        console.error('Error al actualizar saldo:', updateMovError);
-        throw updateMovError;
-      }
-
-      // Actualizar monto actual de la meta
-      const { error: updateError } = await this.supabase
+      const { error: updateMetaError } = await this.supabase
         .from("metas")
-        .update({ 
-          monto_actual: nuevoMonto
-        })
+        .update({ monto_actual: nuevoMonto })
         .eq("id", metaId);
 
-      if (updateError) {
-        console.error('Error al actualizar meta:', updateError);
-        throw updateError;
-      }
+      if (updateMetaError) throw updateMetaError;
+
+      const nuevoSaldo = saldoDisponible - monto;
+
+      const { error: updateSaldoError } = await this.supabase
+        .from("usuarios")
+        .update({ saldo_disponible: nuevoSaldo })
+        .eq("id", usuarioId);
+
+      if (updateSaldoError) throw updateSaldoError;
+      console.log("➡datos aporte meta:", {
+        metaId,
+        monto,
+        usuarioId,
+        movimientoId
+      });
+      const { error: aporteError } = await this.supabase
+        .from("aportes_meta")
+        .insert([
+          {
+            meta_id: metaId,
+            movimiento_id: movimientoId,
+            monto: parseFloat(monto),
+          },
+        ]);
+
+      if (aporteError) throw aporteError;
 
       return {
-        metaActualizada: true,
-        montoAsignado: monto,
-        saldoDisponible: nuevoSaldo
+        exito: true,
+        nuevoSaldo,
+        nuevoMonto,
+        mensaje: "Aporte registrado correctamente",
       };
 
     } catch (error) {
-      console.error('Error en agregar ahorro:', error);
+      console.error("Error en agregarAhorro:", error);
       throw error;
     }
   }
 
   async obtenerSaldoDisponible(usuarioId) {
     try {
-      console.log("🔍 Buscando saldo para usuario ID:", usuarioId);
+      console.log("Buscando saldo para usuario ID:", usuarioId);
       const { data, error } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
@@ -204,15 +218,15 @@ export class GestorMetas {
         .single();
 
       if (error) {
-        console.error("❌ Error en obtenerSaldoDisponible:", error);
+        console.error("Error en obtenerSaldoDisponible:", error);
         throw error;
       }
 
       const saldo = parseFloat(data?.saldo_disponible) || 0;
-      console.log("✅ Saldo encontrado:", saldo);
+      console.log("Saldo encontrado:", saldo);
       return saldo;
     } catch (err) {
-      console.error("❌ Error al obtener saldo disponible:", err);
+      console.error("Error al obtener saldo disponible:", err);
       throw new Error("No se pudo obtener el saldo disponible del usuario");
     }
   }
