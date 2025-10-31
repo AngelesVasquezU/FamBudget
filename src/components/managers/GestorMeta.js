@@ -121,61 +121,22 @@ export class GestorMetas {
 
   async eliminarMeta(id) {
     try {
-      console.log('Eliminando meta ID:', id);
-      
-      const { data: meta, error: errorMeta } = await this.supabase
-        .from("metas")
-        .select("id, nombre, usuario_id")
-        .eq("id", id)
-        .single();
 
-      console.log('Meta a eliminar:', meta);
-      
-      if (errorMeta) {
-        console.error('Error al obtener meta:', errorMeta);
-        throw new Error('La meta no existe o no se pudo encontrar');
-      }
-
-      const { data: movimientos, error: errorMov } = await this.supabase
-        .from("movimientos")
-        .select("id, monto")
-        .eq("meta_id", id);
-
-      console.log('Movimientos relacionados:', movimientos);
-      
-      if (errorMov) {
-        console.error('Error al verificar movimientos:', errorMov);
-      }
-
-      // Intentar eliminar la meta
-      console.log('Ejecutando DELETE...');
       const { error, count } = await this.supabase
         .from("metas")
         .delete()
         .eq("id", id);
 
-      console.log('Resultado DELETE:', { error, count });
+      if (error) throw error;
 
-      if (error) {
-        console.error('Error en eliminarMeta:', error);
-        console.error('Código:', error.code);
-        console.error('Mensaje:', error.message);
-        console.error('Detalles:', error.details);
-        throw error;
-      }
-
-      console.log('Meta eliminada exitosamente');
       return true;
     } catch (error) {
-      console.error('Error en eliminarMeta:', error);
       throw error;
     }
   }
 
-  async agregarAhorro(metaId, monto, usuarioId, comentario = "Aporte a meta") {
+  async agregarAhorro(metaId, monto, usuarioId) {
     try {
-      console.log('agregarAhorro - Parámetros:', { metaId, monto, usuarioId });
-
       if (!metaId || !usuarioId || !monto || monto <= 0) {
         throw new Error('Parámetros inválidos para el aporte');
       }
@@ -189,7 +150,6 @@ export class GestorMetas {
       if (usuarioError) throw usuarioError;
 
       const saldoDisponibleAntes = await this.obtenerSaldoDisponible(usuario.familia_id, usuarioId);
-      console.log('Saldo disponible ANTES de asignar:', saldoDisponibleAntes);
 
       if (monto > saldoDisponibleAntes) {
         throw new Error(`Ingresos disponibles insuficientes. Disponible: ${formatCurrency(saldoDisponibleAntes)}, Intenta asignar: ${formatCurrency(monto)}`);
@@ -229,10 +189,7 @@ export class GestorMetas {
         ingresoSeleccionado = ingresosNoAsignados.reduce((prev, current) => 
           (parseFloat(prev.monto) > parseFloat(current.monto)) ? prev : current
         );
-        console.log('Usando el ingreso de mayor monto disponible:', ingresoSeleccionado.monto);
       }
-
-      console.log('Ingreso seleccionado para asignar:', ingresoSeleccionado);
 
       const comentarioActualizado = ingresoSeleccionado.comentario 
         ? `${ingresoSeleccionado.comentario} | Asignado a meta: ${meta.nombre}`
@@ -347,111 +304,4 @@ export class GestorMetas {
     return 0;
   }
 }
-
-  async obtenerIngresosNoAsignados(usuarioId, familiaId = null) {
-    try {
-      let query = this.supabase
-        .from("movimientos")
-        .select(`
-          *,
-          conceptos:concepto_id(nombre)
-        `)
-        .eq("tipo", "ingreso")
-        .is("meta_id", null)
-        .order("fecha", { ascending: false });
-
-      if (familiaId) {
-        const { data: usuariosFamilia, error: errorUsuarios } = await this.supabase
-          .from("usuarios")
-          .select("id")
-          .eq("familia_id", familiaId);
-
-        if (errorUsuarios) throw errorUsuarios;
-
-        const usuarioIds = usuariosFamilia.map(u => u.id);
-        query = query.in("usuario_id", usuarioIds);
-      } else if (usuarioId) {
-        query = query.eq("usuario_id", usuarioId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (error) {
-      console.error('Error en obtenerIngresosNoAsignados:', error);
-      throw error;
-    }
-  }
-
-  async desasignarIngresoDeMeta(movimientoId) {
-    try {
-      console.log('Desasignando ingreso de meta:', movimientoId);
-
-      const { data: movimiento, error: movError } = await this.supabase
-        .from("movimientos")
-        .select("meta_id, monto_meta")
-        .eq("id", movimientoId)
-        .single();
-
-      if (movError) throw movError;
-
-      if (!movimiento.meta_id) {
-        throw new Error('Este movimiento no está asignado a ninguna meta');
-      }
-
-      const { data: meta, error: metaError } = await this.supabase
-        .from("metas")
-        .select("monto_actual")
-        .eq("id", movimiento.meta_id)
-        .single();
-
-      if (metaError) throw metaError;
-
-      const nuevoMonto = Math.max(0, parseFloat(meta.monto_actual) - parseFloat(movimiento.monto_meta));
-
-      const { error: updateMovError } = await this.supabase
-        .from("movimientos")
-        .update({
-          meta_id: null,
-          monto_meta: null,
-          fecha_aporte_meta: null,
-          comentario: null
-        })
-        .eq("id", movimientoId);
-
-      if (updateMovError) throw updateMovError;
-
-      const { error: updateMetaError } = await this.supabase
-        .from("metas")
-        .update({ 
-          monto_actual: nuevoMonto
-        })
-        .eq("id", movimiento.meta_id);
-
-      if (updateMetaError) {
-        await this.supabase
-          .from("movimientos")
-          .update({
-            meta_id: movimiento.meta_id,
-            monto_meta: movimiento.monto_meta,
-            fecha_aporte_meta: new Date().toISOString()
-          })
-          .eq("id", movimientoId);
-        throw new Error('Error al actualizar la meta');
-      }
-
-      console.log('Ingreso desasignado exitosamente de la meta');
-      return { 
-        movimientoId, 
-        metaId: movimiento.meta_id,
-        montoDesasignado: movimiento.monto_meta
-      };
-
-    } catch (error) {
-      console.error('Error en desasignarIngresoDeMeta:', error);
-      throw error;
-    }
-  }
 }
