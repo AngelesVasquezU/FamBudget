@@ -13,47 +13,47 @@ export class GestorMetas {
 
   // MCOD005-2
   async obtenerMetas(usuarioId) {
-  try {
-    const { data: usuario, error: errorUsuario } = await this.supabase
-      .from("usuarios")
-      .select("familia_id")
-      .eq("id", usuarioId)
-      .single();
+    try {
+      const { data: usuario, error: errorUsuario } = await this.supabase
+        .from("usuarios")
+        .select("familia_id")
+        .eq("id", usuarioId)
+        .single();
 
-    if (errorUsuario) throw errorUsuario;
+      if (errorUsuario) throw errorUsuario;
 
-    const familiaId = usuario?.familia_id || null;
+      const familiaId = usuario?.familia_id || null;
 
-    let query = this.supabase
-      .from("metas")
-      .select(`
-        *,
-        usuarios:usuario_id(nombre)
-      `);
+      let query = this.supabase
+        .from("metas")
+        .select(`
+          *,
+          usuarios:usuario_id(nombre)
+        `);
 
-    if (familiaId) {
-      query = query.or(
-        `usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`
-      );
-    } else {
-      query = query.eq("usuario_id", usuarioId);
+      if (familiaId) {
+        query = query.or(
+          `usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`
+        );
+      } else {
+        query = query.eq("usuario_id", usuarioId);
+      }
+
+      const { data, error } = await query.order("fecha_creacion", {
+        ascending: false,
+      });
+
+      if (error) throw error;
+
+      return data;
+
+    } catch (error) {
+      console.error("Error en obtenerMetas:", error);
+      throw error;
     }
-
-    const { data, error } = await query.order("fecha_creacion", {
-      ascending: false,
-    });
-
-    if (error) throw error;
-
-    return data;
-
-  } catch (error) {
-    console.error("Error en obtenerMetas:", error);
-    throw error;
   }
-}
 
-
+  // MCOD005-3
   async crearMeta({ nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar = false }) {
     try {
       const { data, error } = await this.supabase
@@ -76,7 +76,8 @@ export class GestorMetas {
       throw error;
     }
   }
-
+  
+  // MCOD005-4
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
       console.log('📝 Editando meta ID:', id, 'con datos:', { nombre, monto_objetivo, fecha_limite, es_familiar });
@@ -119,6 +120,7 @@ export class GestorMetas {
     }
   }
 
+  // MCOD005-5
   async eliminarMeta(id) {
     const { error } = await this.supabase
       .from("metas")
@@ -130,6 +132,7 @@ export class GestorMetas {
     return true;
   }
 
+  // MCOD005-6
   async agregarAhorro(metaId, monto, usuarioId, movimientoId = null) {
     try {
       if (!metaId || !usuarioId || !monto || monto <= 0) {
@@ -207,6 +210,7 @@ export class GestorMetas {
     }
   }
 
+  // MCOD005-7
   async obtenerSaldoDisponible(usuarioId) {
     try {
       console.log("Buscando saldo para usuario ID:", usuarioId);
