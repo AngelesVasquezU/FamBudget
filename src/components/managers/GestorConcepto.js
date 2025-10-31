@@ -84,7 +84,7 @@ export class GestorConcepto { // COD-003
       .select('familia_id, nombre')
       .eq('id', user_id)
       .single();
-
+    
     if (errorUsuario) throw errorUsuario;
     if (!usuario) throw new Error('Usuario no encontrado');
     

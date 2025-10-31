@@ -145,7 +145,7 @@ const Metas = () => {
         console.warn("⚠️ No hay usuarioId para obtener saldo");
         return;
       }
-      
+
       const saldo = await gestorMetas.obtenerSaldoDisponible(usuarioId);
       console.log('💰 Saldo disponible REAL calculado:', saldo);
       setSaldoDisponible(saldo);
@@ -193,7 +193,7 @@ const Metas = () => {
 
     // Escuchar evento personalizado
     window.addEventListener('metasActualizadas', handleMetasActualizadas);
-    
+
     return () => {
       window.removeEventListener('metasActualizadas', handleMetasActualizadas);
     };
@@ -571,7 +571,7 @@ const Metas = () => {
             )}
 
             <div className="form-buttons">
-              <button className="save-btn" onClick={handleSave}>
+              <button className="metas-save-btn" onClick={handleSave}>
                 {selectedMetaId ? 'Actualizar' : 'Crear'} Meta
               </button>
 
@@ -638,7 +638,7 @@ const Metas = () => {
 
             <div className="modal-buttons">
               <button
-                className="save-btn"
+                className="metas-save-btn"
                 onClick={handleAportar}
                 disabled={!aporteMonto || aporteMonto <= 0}
               >
