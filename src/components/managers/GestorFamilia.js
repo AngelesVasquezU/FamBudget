@@ -1,5 +1,5 @@
-export class GestorFamilia {
-    constructor(supabase, gestorUsuario) {
+export class GestorFamilia { 
+    constructor(supabase, gestorUsuario) { 
         this.supabase = supabase;
         this.gestorUsuario = gestorUsuario;
     }
@@ -100,7 +100,7 @@ export class GestorFamilia {
         if (errorMiembro || !miembro) throw new Error("Miembro no encontrado");
         if (miembro.familia_id !== familia_id)
             throw new Error("El usuario no pertenece a esta familia");
-
+        console.log("ids: ", adminActualId, ", ", nuevoAdminId);
         const { error: err1 } = await this.supabase
             .from("usuarios")
             .update({ rol: "Administrador" })
@@ -108,7 +108,7 @@ export class GestorFamilia {
 
         const { error: err2 } = await this.supabase
             .from("usuarios")
-            .update({ rol: "Miembro Familiar" })
+            .update({ rol: "Miembro familiar" })
             .eq("id", adminActualId);
 
         if (err1 || err2) throw new Error("Error al cambiar el rol");

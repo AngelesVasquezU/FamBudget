@@ -96,9 +96,11 @@ const Registro = () => { // COD008
           <label>Parentesco</label>
           <input
             type="text"
+            name="parentesco"
             placeholder="Ej: Mamá, Papá, Hijo..."
             value={formData.parentesco}
             onChange={handleChange}
+            required
           />
           <label>Correo electrónico</label>
           <input
