@@ -103,7 +103,6 @@ export class GestorMovimiento { // COD-001
       throw err;
     }
   }
-
     
   // MCOD002-2
   async obtenerTotalPorTipo(usuarioId, tipo, fecha) {

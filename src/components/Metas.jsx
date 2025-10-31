@@ -125,7 +125,6 @@ const Metas = () => {
         if (error) throw error;
 
         console.log('Metas encontradas:', data);
-        // Agregar un log para ver el monto_actual de cada meta
         data.forEach(meta => {
           console.log(`Meta: ${meta.nombre}, Monto actual: ${meta.monto_actual}`);
         });
@@ -140,17 +139,17 @@ const Metas = () => {
 
   const fetchSaldoDisponible = async (usuarioId = currentUsuarioId) => {
     try {
-      console.log("🔍 Obteniendo saldo para usuario:", usuarioId);
+      console.log("Obteniendo saldo para usuario:", usuarioId);
       if (!usuarioId) {
-        console.warn("⚠️ No hay usuarioId para obtener saldo");
+        console.warn("No hay usuarioId para obtener saldo");
         return;
       }
 
       const saldo = await gestorMetas.obtenerSaldoDisponible(usuarioId);
-      console.log('💰 Saldo disponible REAL calculado:', saldo);
+      console.log('Saldo disponible REAL calculado:', saldo);
       setSaldoDisponible(saldo);
     } catch (error) {
-      console.error('❌ Error fetching saldo:', error);
+      console.error('Error fetching saldo:', error);
       setSaldoDisponible(0);
     }
   };
@@ -181,23 +180,21 @@ const Metas = () => {
     }
   }, [selectedMetaId, metas, showForm]);
 
-  // Agrega este useEffect en Metas.jsx, después de los otros useEffect
   useEffect(() => {
     const handleMetasActualizadas = () => {
-      console.log('📢 Evento recibido: metas actualizadas');
+      console.log('Evento recibido: metas actualizadas');
       if (userData) {
         fetchMetas(userData.id, userData.familia_id);
         fetchSaldoDisponible(userData.id);
       }
     };
 
-    // Escuchar evento personalizado
     window.addEventListener('metasActualizadas', handleMetasActualizadas);
 
     return () => {
       window.removeEventListener('metasActualizadas', handleMetasActualizadas);
     };
-  }, [userData]); // Depende de userData
+  }, [userData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -236,7 +233,7 @@ const Metas = () => {
         return alert("No puedes crear una meta familiar porque no perteneces a una familia. Crea una meta personal o únete a una familia primero.");
       }
 
-      console.log('💾 Guardando meta con datos:', {
+      console.log('Guardando meta con datos:', {
         nombre,
         monto_objetivo,
         fecha_limite,
@@ -275,7 +272,7 @@ const Metas = () => {
       });
 
       await fetchMetas(usuarioData.id, usuarioData.familia_id);
-      await fetchSaldoDisponible(usuarioData.id); // CORREGIDO
+      await fetchSaldoDisponible(usuarioData.id);
 
     } catch (error) {
       console.error('Error al guardar meta:', error);
@@ -306,7 +303,7 @@ const Metas = () => {
 
       if (userData) {
         await fetchMetas(userData.id, userData.familia_id);
-        await fetchSaldoDisponible(userData.id); // CORREGIDO
+        await fetchSaldoDisponible(userData.id);
       }
 
     } catch (error) {
@@ -338,13 +335,12 @@ const Metas = () => {
   };
 
   const handleAportar = async () => {
-    console.log('💰 Iniciando aporte...');
-    console.log('🔍 Datos del aporte:', {
+    console.log('Datos del aporte:', {
       metaAportando: metaAportando,
       selectedMetaId: selectedMetaId,
       aporteMonto: aporteMonto,
       userData: userData,
-      saldoDisponible: saldoDisponible // Agregado para debug
+      saldoDisponible: saldoDisponible
     });
 
     if (!aporteMonto || aporteMonto <= 0) {
@@ -353,29 +349,26 @@ const Metas = () => {
 
     const monto = parseFloat(aporteMonto);
 
-    // CORREGIDO: Validar contra saldo disponible REAL
     if (monto > saldoDisponible) {
       return alert(`Ingresos disponibles insuficientes.\nDisponible: ${formatCurrency(saldoDisponible)}\nIntenta asignar: ${formatCurrency(monto)}`);
     }
 
     const metaId = selectedMetaId || (metaAportando && metaAportando.id);
 
-    console.log('🔍 Meta ID a usar:', metaId);
 
     if (!metaId || metaId === 'null' || metaId === 'undefined') {
-      console.error('❌ ID de meta inválido:', metaId);
+      console.error('ID de meta inválido:', metaId);
       alert('Error: No se pudo identificar la meta para aportar');
       return;
     }
 
     if (!userData || !userData.id) {
-      console.error('❌ Datos de usuario inválidos:', userData);
+      console.error('Datos de usuario inválidos:', userData);
       alert('Error: No se pudieron obtener los datos del usuario');
       return;
     }
 
     try {
-      console.log('🔄 Asignando ingreso a meta:', metaId);
 
       await gestorMetas.agregarAhorro(
         metaId,
@@ -391,10 +384,10 @@ const Metas = () => {
       await fetchMetas(userData.id, userData.familia_id);
       await fetchSaldoDisponible(userData.id); // CORREGIDO
 
-      alert("✅ Ingreso asignado a la meta correctamente");
+      alert("Ingreso asignado a la meta correctamente");
 
     } catch (error) {
-      console.error('❌ Error al asignar ingreso a meta:', error);
+      console.error('Error al asignar ingreso a meta:', error);
       alert(`Error: ${error.message}`);
     }
   };
@@ -433,7 +426,6 @@ const Metas = () => {
     <div className="metas-container">
       {!showForm ? (
         <>
-          {/* CORREGIDO: Texto actualizado para reflejar que son ingresos disponibles */}
           <div className="saldo-disponible">
             <h3>Ingresos disponibles para metas</h3>
             <p>Estos son los ingresos que aún no han sido asignados a ninguna meta</p>

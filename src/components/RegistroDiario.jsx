@@ -120,9 +120,7 @@ const RegistroDiario = () => { // COD-001
       setTipoMensaje("success");
       setForm({ concepto_id: "", monto: 0, comentario: "", meta_id: "", monto_meta: 0 });
 
-      // ✅ AGREGAR ESTO: Disparar evento para actualizar metas
       if (form.meta_id && form.monto_meta) {
-        console.log('📢 Disparando evento: metas actualizadas desde RegistroDiario');
         window.dispatchEvent(new CustomEvent('metasActualizadas'));
       }
 
