@@ -7,6 +7,8 @@ export class GestorMovimiento { // COD-001
   // MCOD002-1
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
+      console.log("Monto que se envía:", monto, typeof monto);
+
       const { data: usuarioData, error: errorSaldo } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
@@ -23,12 +25,11 @@ export class GestorMovimiento { // COD-001
         throw new Error('Usuario no encontrado en la base de datos');
       }
 
-      console.log("✅ Usuario encontrado. Saldo actual:", usuarioData.saldo_disponible);
+      console.log("Usuario encontrado. Saldo actual:", usuarioData.saldo_disponible);
 
       const saldoActual = parseFloat(usuarioData.saldo_disponible) || 0;
       console.log("Saldo actual numérico:", saldoActual);
 
-      console.log("2. Creando movimiento...");
       const { data: movimiento, error: movError } = await this.supabase
         .from("movimientos")
         .insert([
@@ -45,13 +46,12 @@ export class GestorMovimiento { // COD-001
         .single();
       
       if (movError) {
-        console.error("❌ Error al crear movimiento:", movError);
+        console.error("Error al crear movimiento:", movError);
         throw movError;
       }
 
-      // ✅ Si hay meta → DELEGAR todo a agregarAhorro
       if (tipo === "ingreso" && metaId && montoMeta) {
-        console.log("➡ Llamando a agregarAhorro con:", {
+        console.log("Llamando a agregarAhorro con:", {
           metaId,
           montoMeta,
           usuarioId,
@@ -65,14 +65,12 @@ export class GestorMovimiento { // COD-001
           movimiento.id
         );
 
-        console.log("✅ agregarAhorro ya actualizó el saldo y la meta.");
-        console.log("✅ No se recalcula saldo aquí para evitar duplicados.");
+        console.log("agregarAhorro ya actualizó el saldo y la meta.");
+        console.log("No se recalcula saldo aquí para evitar duplicados.");
 
         return movimiento;
       }
 
-      // ✅ Solo actualizamos saldo si NO es un aporte a meta
-      console.log("4. Actualizando saldo del usuario (movimiento normal)...");
       const nuevoSaldo = tipo === "ingreso"
         ? saldoActual + parseFloat(monto)
         : saldoActual - parseFloat(monto);
@@ -87,15 +85,15 @@ export class GestorMovimiento { // COD-001
         .eq("id", usuarioId);
 
       if (updateError) {
-        console.error("❌ Error al actualizar saldo:", updateError);
+        console.error("Error al actualizar saldo:", updateError);
         throw updateError;
       }
 
-      console.log("✅ Saldo actualizado exitosamente a:", nuevoSaldo);
+      console.log("Saldo actualizado exitosamente a:", nuevoSaldo);
       return movimiento;
 
     } catch (err) {
-      console.error("💥 ERROR COMPLETO en crearMovimiento:", err);
+      console.error("ERROR en crearMovimiento:", err);
       console.error("Detalles del error:", {
         message: err.message,
         code: err.code,
