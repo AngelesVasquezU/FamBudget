@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/IniciarSesion.css';
-import { FaLock, FaCheckCircle } from 'react-icons/fa';
+import BackButton from '../../components/button/BackButton';
+import Input from '../../components/input/Input';
+import Button from '../../components/button/Button';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,8 +25,6 @@ const ResetPassword = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       const { error } = await supabase.auth.updateUser({
         password: password
@@ -39,18 +38,19 @@ const ResetPassword = () => {
     } catch (error) {
       setMessage(`Error: ${error.message}`);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>Restablecer contraseña</h2>
+        <div className="header-line">
+          <BackButton to="/login" />
+          <h2>Restablecer contraseña</h2>
+        </div>
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>Nueva contraseña</label>
           <div className="input-icon">
-            <input
+            <Input
+              label="Nueva contraseña"
               type="password"
               placeholder="••••••••"
               value={password}
@@ -58,30 +58,20 @@ const ResetPassword = () => {
               required
               minLength={6}
             />
-            <FaLock className="input-icon-symbol" />
           </div>
-
-          <label>Confirmar contraseña</label>
           <div className="input-icon">
-            <input
+            <Input
+              label="Confirmar contraseña"
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            <FaCheckCircle className="input-icon-symbol" />
           </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? 'Actualizando...' : 'Actualizar contraseña'}
-          </button>
+          <Button type="submit">Actualizar contraseña</Button>
         </form>
-
         {message && <p className="message">{message}</p>}
-
-        <BackButton to="/login" text="Volver al login" />
-
       </div>
     </div>
   );

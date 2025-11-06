@@ -1,7 +1,7 @@
 .input-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 9px;
 }
 
 .input-wrapper label {
@@ -11,7 +11,7 @@
 }
 
 .input-wrapper input {
-    padding: 0.85rem;
+    padding: 0.8rem;
     border-radius: 10px;
     border: 1px solid #cfd8e3;
     transition: all 0.25s ease;

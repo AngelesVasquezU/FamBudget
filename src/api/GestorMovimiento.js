@@ -104,18 +104,71 @@ export class GestorMovimiento { // COD-001
     }
   }
     
-  // MCOD002-2
-  async obtenerTotalPorTipo(usuarioId, tipo, fecha) {
-    const { data, error } = await this.supabase
+
+  // MCOD002-2  mejorado
+  async obtenerTotalPorTipo(usuarioId, tipo, fecha = null) {
+    let query = this.supabase
       .from("movimientos")
       .select("monto")
       .eq("usuario_id", usuarioId)
-      .eq("tipo", tipo)
-      .eq("fecha", fecha);
+      .eq("tipo", tipo);
+
+    if (fecha) {
+      query = query.eq("fecha", fecha);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
     return data.reduce((acc, mov) => acc + parseFloat(mov.monto), 0);
   }
 
+  // Por poner MCOD002-3
+  async obtenerMovimientosUsuario(usuarioId, opciones = {}) {
+    try {
+      const {
+        limit = 50,
+        ordenar = "desc",
+        mes = null,
+        año = null
+      } = opciones;
+
+      let query = this.supabase
+        .from("movimientos")
+        .select(`
+          id,
+          usuario_id,
+          concepto_id,
+          tipo,
+          monto,
+          comentario,
+          fecha,
+          conceptos ( id, nombre )
+        `)
+        .eq("usuario_id", usuarioId)
+        .order("fecha", { ascending: ordenar === "asc" })
+        .limit(limit);
+
+      if (mes && año) {
+        const inicio = `${año}-${String(mes).padStart(2, "0")}-01`;
+        const fin = `${año}-${String(mes).padStart(2, "0")}-31`;
+
+        query = query.gte("fecha", inicio).lte("fecha", fin);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error al obtener movimientos:", error);
+        throw error;
+      }
+
+      return data;
+
+    } catch (err) {
+      console.error("ERROR en obtenerMovimientosUsuario:", err);
+      throw err;
+    }
+  }
 }

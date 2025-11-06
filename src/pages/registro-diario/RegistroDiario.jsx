@@ -4,6 +4,7 @@ import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
 import { GestorConcepto } from "../../api/GestorConcepto";
 import { GestorMetas } from "../../api/GestorMeta";
+import Button from '../../components/button/Button';
 
 import "../../styles/RegistroDiario.css";
 
@@ -300,15 +301,11 @@ const RegistroDiario = () => { // COD-001
             )}
           </>
         )}
-
-        <button type="submit" className="btn-guardar">
-          Guardar movimiento
-        </button>
+        <Button type="submit" mt="30px">Guardar Movimiento</Button>
       </form>
-
       <p className={`mensaje ${tipoMensaje}`}>{message}</p>
 
-    </div>
+    </div >
   );
 };
 
