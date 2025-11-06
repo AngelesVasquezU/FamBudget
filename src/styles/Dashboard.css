@@ -1,63 +1,157 @@
 .dashboard {
-  padding: 20px;
-}
-
-.dashboard__header {
-  margin-bottom: 30px;
+  padding: 30px 40px;
+  width: 100%;
+  color: #000000;
+  font-family: "Segoe UI", sans-serif;
 }
 
 .dashboard__header h1 {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  color: #1e293b;
+  font-size: 32px;
+  font-weight: 500;
+  margin-bottom: 30px;
+  color: #0f224f;
 }
 
-.dashboard__header p {
-  margin: 0 0 16px 0;
-  color: #64748b;
-  font-size: 16px;
-}
-.logout-btn {
-  background: #3b82f6; 
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
+.dashboard-summary {
   display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
+  gap: 25px;
+  margin-bottom: 35px;
 }
 
-.logout-btn:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
+.summary-card {
+  flex: 1;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0px 8px 22px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  transition: transform 0.2s ease;
 }
 
-.logout-btn svg {
-  stroke: white; 
-  transition: transform 0.3s ease;
+.summary-card:hover {
+  transform: translateY(-4px);
 }
 
-.logout-btn:hover svg {
-  transform: translateX(4px);
+.summary-card h3 {
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
 }
 
-.dashboard__section {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.summary-card p {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.summary-card span {
+  font-size: 24px;
+  color: #2c405e;
+  font-weight: 500;
+}
+
+.summary-card.ingreso {
+  border-left: 5px solid #0a7e35;
+}
+
+.summary-card.egreso {
+  border-left: 5px solid #a01616;
+}
+
+.dashboard-lower {
+  display: flex;
+  gap: 25px;
+}
+
+.recent-movements {
+  flex: 2;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 18px;
   border: 1px solid #e2e8f0;
+  box-shadow: 0px 8px 22px rgba(0, 0, 0, 0.06);
 }
 
-.dashboard__section h2 {
-  margin: 0 0 12px 0;
-  color: #1e293b;
+.recent-movements h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
 }
 
-.dashboard__section p {
-  margin: 8px 0;
+.recent-movements table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recent-movements th {
+  text-align: left;
+  font-size: 14px;
   color: #64748b;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.recent-movements td {
+  font-size: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.recent-movements tr:hover td {
+  background: #f8fafc;
+}
+
+.positivo {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.negativo {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.dashboard-chart {
+  flex: 1;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  box-shadow: 0px 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-chart h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2em;
+  color: #44669e;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-summary {
+    flex-direction: column;
+  }
+
+  .dashboard-lower {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 20px;
+  }
+
+  .dashboard__header h1 {
+    font-size: 26px;
+  }
 }

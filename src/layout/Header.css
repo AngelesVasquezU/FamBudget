@@ -5,157 +5,27 @@
   height: 70px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: right;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.header__left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.header__menu-toggle {
-  background: none;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #64748b;
-  transition: all 0.2s;
-}
-
-.header__menu-toggle:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.header__search {
-  position: relative;
-  width: 300px;
-}
-
-.header__search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-}
-
-.header__search-input {
-  width: 100%;
-  padding: 10px 12px 10px 40px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.header__search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.header__right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header__action {
-  position: relative;
-  background: none;
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #64748b;
-  transition: all 0.2s;
-}
-
-.header__action:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.header__badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: #ef4444;
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 16px;
-  text-align: center;
-}
-
-.header__user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.header__user:hover {
-  background: #f1f5f9;
-}
-
-.header__user-avatar {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.header__user-name {
-  font-weight: 600;
-  color: #334155;
-}
-
 @media (max-width: 768px) {
   .header {
     padding: 0 16px;
   }
-  
-  .header__search {
-    width: 200px;
-  }
-}
-
-@media (max-width: 640px) {
-  .header__search {
-    display: none;
-  }
-  
-  .header__user-name {
-    display: none;
-  }
 }
 
 .logout-link {
-  color: #122583; 
+  color: #122583;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  text-decoration: none; 
+  text-decoration: none;
 }
 
 .logout-link:hover {
