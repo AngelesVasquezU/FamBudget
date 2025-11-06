@@ -89,7 +89,7 @@ const Dashboard = () => {
             <tbody>
               {movimientos.slice(0, 4).map(m => (
                 <tr key={m.id}>
-                  <td>{m.comentario}</td>
+                  <td>{m.comentario || "Sin descripcion"} </td>
                   <td>{m.conceptos.nombre}</td>
                   <td>{new Date(m.fecha).toLocaleDateString()}</td>
                   <td className={m.tipo === "egreso" ? "negativo" : "positivo"}>
