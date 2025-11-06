@@ -14,7 +14,7 @@ _Clona el repositorio_
 ```
 _Instala la dependencia necesaria_
 ```bash
-    npm install vite @vitejs/plugin-react --save-dev
+    npm install
 ```
 _Ejecutar el proyecto_
 
