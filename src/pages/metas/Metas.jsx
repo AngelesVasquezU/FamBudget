@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { GestorUsuario } from './managers/GestorUsuario';
-import { GestorMetas } from './managers/GestorMeta';
-import '../styles/Metas.css';
+import { supabase } from '../../supabaseClient';
+import { GestorUsuario } from '../../api/GestorUsuario';
+import { GestorMetas } from '../../api/GestorMeta';
+import '../../styles/Metas.css';
 
 const Metas = () => {
   const gestorUsuario = new GestorUsuario(supabase);
@@ -417,7 +417,7 @@ const Metas = () => {
   if (isLoading) {
     return (
       <div className="metas-container">
-        <div className="loading">Cargando datos del usuario...</div>
+        <div className="loading">Cargando metas...</div>
       </div>
     );
   }

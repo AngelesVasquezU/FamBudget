@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../supabaseClient";
-import { GestorUsuario } from "./managers/GestorUsuario";
-import { GestorMovimiento } from "./managers/GestorMovimiento";
-import { GestorConcepto } from "./managers/GestorConcepto";
-import { GestorMetas } from "./managers/GestorMeta";
+import { supabase } from "../../supabaseClient";
+import { GestorUsuario } from "../../api/GestorUsuario";
+import { GestorMovimiento } from "../../api/GestorMovimiento";
+import { GestorConcepto } from "../../api/GestorConcepto";
+import { GestorMetas } from "../../api/GestorMeta";
 
-import "../styles/RegistroDiario.css";
+import "../../styles/RegistroDiario.css";
 
 const gestorUsuario = new GestorUsuario(supabase);
 const gestorMetas = new GestorMetas(supabase);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../supabaseClient";
-import { GestorUsuario } from "./managers/GestorUsuario";
+import { supabase } from "../../supabaseClient";
+import { GestorUsuario } from "../../api/GestorUsuario";
 import { Pencil } from "lucide-react";
-import "../styles/Cuenta.css";
+import "../../styles/Cuenta.css";
 
 const Cuenta = () => {
     const gestorUsuario = new GestorUsuario(supabase);
@@ -48,7 +48,11 @@ const Cuenta = () => {
         setEditable(false);
     };
 
-    if (!usuario) return <p>Cargando datos...</p>;
+    if (!usuario) return (
+        <div className="cuenta-page">
+            <div className="loading">Cargando datos del usuario...</div>
+        </div>
+    );
 
     return (
         <div className="cuenta-page">

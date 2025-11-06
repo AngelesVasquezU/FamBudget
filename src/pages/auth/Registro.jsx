@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
-import '../styles/Registro.css';
-import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from 'react-router-dom';
-import fondoInicio from '../assets/fondoInicio.png';
+import { supabase } from '../../supabaseClient';
+import '../../styles/Registro.css';
+import fondoInicio from '../../assets/fondoInicio.png';
+import BackButton from '../../components/button/BackButton';
+import Input from '../../components/input/Input';
+import Button from '../../components/button/Button';
 
 const Registro = () => { // COD008
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     parentesco: '',
@@ -78,50 +78,45 @@ const Registro = () => { // COD008
       <div className="logo">FamBudget</div>
       <div className="register-box">
         <div className='header-container'>
-          <button className="back-button" onClick={() => navigate("/login")}>
-            <FaArrowLeft />
-          </button>
+          <BackButton to="/login" />
           <h2>Crear cuenta</h2>
         </div>
 
         <form className="register-form" onSubmit={handleSubmit}>
-          <label>Nombre completo</label>
-          <input
+          <Input
+            label="Nombre Completo"
             type="text"
             name="fullName"
             value={formData.fullName}
             onChange={handleChange}
             required
           />
-          <label>Parentesco</label>
-          <input
+          <Input
+            label="Parentesco"
             type="text"
-            name="parentesco"
-            placeholder="Ej: Mamá, Papá, Hijo..."
-            value={formData.parentesco}
+            name="fullName"
+            value={formData.fullName}
             onChange={handleChange}
             required
           />
-          <label>Correo electrónico</label>
-          <input
+          <Input
+            label="Correo electrónico"
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
           />
-
-          <label>Contraseña</label>
-          <input
+          <Input
+            label="Contraseña"
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
             required
           />
-
-          <label>Confirmar Contraseña</label>
-          <input
+          <Input
+            label="Confirmar Contraseña"
             type="password"
             name="confirmPassword"
             value={formData.confirmPassword}
@@ -139,7 +134,7 @@ const Registro = () => { // COD008
             <span>¿Registrar como administrador?</span>
           </div>
 
-          <button type="submit">Crear Cuenta</button>
+          <Button type="submit">Crear Cuenta</Button>
         </form>
 
         {message && <p className="message">{message}</p>}

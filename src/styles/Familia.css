@@ -103,6 +103,14 @@
     gap: 1rem;
 }
 
+.loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.2em;
+    color: #44669e;
+    grid-column: 1 / -1;
+}
+
 @keyframes popIn {
     from {
         opacity: 0;

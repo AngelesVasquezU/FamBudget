@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { GestorConcepto } from './managers/GestorConcepto';
-import { GestorUsuario } from "./managers/GestorUsuario";
-import '../styles/Conceptos.css';
+import { supabase } from '../../supabaseClient';
+import { GestorConcepto } from '../../api/GestorConcepto';
+import { GestorUsuario } from "../../api/GestorUsuario";
+import '../../styles/Conceptos.css';
 
 const Conceptos = () => { // COD004
   const gestorUsuario = new GestorUsuario(supabase);

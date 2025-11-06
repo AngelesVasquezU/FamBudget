@@ -1,87 +1,58 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import IniciarSesion from './components/IniciarSesion';
-import Registro from './components/Registro';
-import SendEmail from './components/SendEmail';
-import ResetPassword from './components/ResetPassword';
-import Dashboard from './components/Dashboard';
-import Conceptos from './components/Conceptos';
-import Familia from './components/Familia';
-import Cuenta from './components/Cuenta';
-import MetasForm from './components/Metas';
-import Layout from './components/layout/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import RegistroDiario from './components/RegistroDiario';
+
+// Auth 
+import IniciarSesion from './pages/auth/IniciarSesion';
+import Registro from './pages/auth/Registro';
+import SendEmail from './pages/auth/SendEmail';
+import ResetPassword from './pages/auth/ResetPassword';
+
+// Pages
+import Dashboard from './pages/dashboard/Dashboard';
+import Conceptos from './pages/conceptos/Conceptos';
+import Familia from './pages/familia/Familia';
+import Cuenta from './pages/cuenta/Cuenta';
+import Metas from './pages/metas/Metas';
+import ProtectedRoute from './routes/ProtectedRoute';
+import RegistroDiario from './pages/registro-diario/RegistroDiario';
+import Layout from './layout/Layout';
 import './App.css';
 
+const privateRoutes = [
+  { path: "/dashboard", element: <Dashboard /> },
+  { path: "/configuracion", element: <Conceptos /> },
+  { path: "/registro-diario", element: <RegistroDiario /> },
+  { path: "/familia", element: <Familia /> },
+  { path: "/cuenta", element: <Cuenta /> },
+  { path: "/metas", element: <Metas /> },
+  { path: "/metas/editar/:id", element: <Metas /> },
+  { path: "/balance", element: <div>En desarrollo...</div> },
+];
 function App() {
+
   return (
     <AuthProvider>
-      <Router>
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<IniciarSesion />} />
-          <Route path="/login" element={<IniciarSesion />} />
+          <Route path="/login" element={<Navigate to="/" />} />
           <Route path="/register" element={<Registro />} />
           <Route path="/send-email" element={<SendEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/configuracion" element={
-            <ProtectedRoute>
-              <Layout>
-                <Conceptos />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/registro-diario" element={
-            <ProtectedRoute>
-              <Layout>
-                <RegistroDiario />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/familia" element={
-            <ProtectedRoute>
-              <Layout>
-                <Familia />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/cuenta" element={
-            <ProtectedRoute>
-              <Layout>
-                <Cuenta />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/metas" element={
-            <ProtectedRoute>
-              <Layout>
-                <MetasForm />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/metas/editar/:id" element={
-            <ProtectedRoute>
-              <Layout>
-                <MetasForm />
-              </Layout>
-            </ProtectedRoute>
-          } />
-          <Route path="/balance" element={
-            <ProtectedRoute>
-              <Layout>
-              </Layout>
-            </ProtectedRoute>
-          } />
+          {privateRoutes.map(({ path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <ProtectedRoute>
+                  <Layout>{element}</Layout>
+                </ProtectedRoute>
+              }
+            />
+          ))}
         </Routes>
-      </Router>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

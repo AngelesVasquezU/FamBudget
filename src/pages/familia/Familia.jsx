@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { GestorFamilia } from './managers/GestorFamilia';
-import { GestorUsuario } from './managers/GestorUsuario';
+import { supabase } from '../../supabaseClient';
+import { GestorFamilia } from '../../api/GestorFamilia';
+import { GestorUsuario } from '../../api/GestorUsuario';
 import { Home, PlusCircle, Edit, Trash2, Users, X } from 'lucide-react';
 import { FaUsers } from "react-icons/fa";
-import '../styles/Familia.css';
+import '../../styles/Familia.css';
 
 const Familia = () => {
     const gestorUsuario = new GestorUsuario(supabase);
@@ -12,6 +12,7 @@ const Familia = () => {
 
     const [mostrarModal, setMostrarModal] = useState(false);
     const [nuevoMiembro, setNuevoMiembro] = useState({ email: '', parentesco: '' });
+    const [isLoading, setIsLoading] = useState(true);
 
     const [miFamilia, setMiFamilia] = useState(null);
     const [miembros, setMiembros] = useState([]);
@@ -22,6 +23,8 @@ const Familia = () => {
     const [mensajeExito, setMensajeExito] = useState('');
 
     const fetchMiFamilia = async () => {
+        setIsLoading(true);
+
         try {
             const familia = await gestorFamilia.obtenerMiFamilia();
             setMiFamilia(familia);
@@ -35,6 +38,8 @@ const Familia = () => {
             }
         } catch (error) {
             console.error('Error obteniendo mi familia:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -67,6 +72,14 @@ const Familia = () => {
     useEffect(() => {
         fetchMiFamilia();
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="familia-container">
+                <div className="loading">Cargando familia...</div>
+            </div>
+        );
+    }
 
     if (!miFamilia) {
         return (
