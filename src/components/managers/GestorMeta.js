@@ -80,7 +80,6 @@ export class GestorMetas {
   // MCOD005-4
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
-      console.log('📝 Editando meta ID:', id, 'con datos:', { nombre, monto_objetivo, fecha_limite, es_familiar });
       const user_id = await this.gestorUsuario.obtenerIdUsuario();
       if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
 
