@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import '../../styles/Registro.css';
-import fondoInicio from '../../assets/fondoInicio.png';
+import fondo from '../../assets/fondo.png';
 import BackButton from '../../components/button/BackButton';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
@@ -67,7 +67,7 @@ const Registro = () => { // COD008
   return (
     <div className="register-container"
       style={{
-        backgroundImage: `url(${fondoInicio})`,
+        backgroundImage: `url(${fondo})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

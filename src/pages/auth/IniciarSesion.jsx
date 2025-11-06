@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import '../../styles/IniciarSesion.css';
 import { useNavigate } from 'react-router-dom';
-import fondoInicio from '../../assets/fondoInicio.png';
+import fondo from '../../assets/fondo.png';
 import Input from "../../components/input/Input";
 import Button from "../../components/button/Button";
 import Message from "../../components/message/Message";
@@ -37,7 +37,7 @@ const IniciarSesion = () => { // COD007
 
   return (
     <div className="login-container" style={{
-      backgroundImage: `url(${fondoInicio})`,
+      backgroundImage: `url(${fondo})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
