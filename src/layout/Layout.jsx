@@ -1,7 +1,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { useSidebar } from '../../hooks/useSidebar';
+import { useSidebar } from '../hooks/useSidebar';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -9,13 +9,13 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout">
-      <Sidebar 
+      <Sidebar
         isCollapsed={isCollapsed}
         isMobileOpen={isMobileOpen}
         toggleSidebar={toggleSidebar}
         closeMobileSidebar={closeMobileSidebar}
       />
-      
+
       <div className={`layout__content ${isCollapsed ? 'layout__content--expanded' : ''}`}>
         <Header toggleSidebar={toggleSidebar} />
         <main className="layout__main">

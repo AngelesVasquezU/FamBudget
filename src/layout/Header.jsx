@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, Bell, Search, User } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import { FiLogOut } from 'react-icons/fi';
 import './Header.css';
 
@@ -9,14 +9,14 @@ const Header = ({ toggleSidebar }) => {
   return (
     <header className="header">
       <div className="header__left">
-        <button 
+        <button
           className="header__menu-toggle"
           onClick={toggleSidebar}
           aria-label="Toggle menu"
         >
           <Menu size={20} />
         </button>
-        
+
       </div>
 
       <div className="header__right">
