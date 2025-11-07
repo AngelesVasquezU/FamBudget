@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 
 // Auth 
 import IniciarSesion from './pages/auth/IniciarSesion';
@@ -20,7 +20,7 @@ import './App.css';
 
 const privateRoutes = [
   { path: "/dashboard", element: <Dashboard /> },
-  { path: "/configuracion", element: <Conceptos /> },
+  { path: "/configuracion", element: <Conceptos />, roles: ["Administrador"] },
   { path: "/registro-diario", element: <RegistroDiario /> },
   { path: "/familia", element: <Familia /> },
   { path: "/cuenta", element: <Cuenta /> },
@@ -28,24 +28,36 @@ const privateRoutes = [
   { path: "/metas/editar/:id", element: <Metas /> },
   { path: "/balance", element: <div>En desarrollo...</div> },
 ];
+
+const BaseRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  return user
+    ? <Navigate to="/dashboard" replace />
+    : <IniciarSesion />;
+};
+
+
 function App() {
 
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<IniciarSesion />} />
+          <Route path="/" element={<BaseRedirect />} />
           <Route path="/login" element={<Navigate to="/" />} />
           <Route path="/register" element={<Registro />} />
           <Route path="/send-email" element={<SendEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {privateRoutes.map(({ path, element }) => (
+          {privateRoutes.map(({ path, element, roles }) => (
             <Route
               key={path}
               path={path}
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={roles}>
                   <Layout>{element}</Layout>
                 </ProtectedRoute>
               }

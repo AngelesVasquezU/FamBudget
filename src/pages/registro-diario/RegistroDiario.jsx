@@ -14,6 +14,7 @@ const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
 const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 
 const RegistroDiario = () => { // COD-001
+  const [userData, setUserData] = useState(null);
   const [tipo, setTipo] = useState("ingreso");
   const MONEDAS = [
     { codigo: "PEN", simbolo: "S/.", nombre: "Soles" },
@@ -44,12 +45,21 @@ const RegistroDiario = () => { // COD-001
       const id = await gestorUsuario.obtenerIdUsuario();
       if (id) setUsuarioId(id);
       else console.error("No se pudo obtener el usuario");
+
+      const usuario = await gestorUsuario.obtenerUsuario();
+
+      if (usuario) {
+        setUserData(usuario);
+      } else {
+        console.error("No se pudo obtener el usuario");
+      }
     };
     obtenerUsuario();
   }, []);
 
   useEffect(() => {  // MCOD001-2
     const cargarDatos = async () => {
+      console.log("rol usuario: ", userData);
       if (!usuarioId) {
         setMessage("Usuario no encontrado");
         setTipoMensaje("error");
@@ -197,15 +207,19 @@ const RegistroDiario = () => { // COD-001
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => {
-              setNewConcept({ nombre: '', tipo: tipo, periodo: 'diario' });
-              setShowNewConceptModal(true);
-            }}
-            className="btn-nuevo-concepto"
-          > Nuevo
-          </button>
+          {userData?.rol === "Administrador" && (
+            <button
+              type="button"
+              onClick={() => {
+                setNewConcept({ nombre: "", tipo: tipo, periodo: "diario" });
+                setShowNewConceptModal(true);
+              }}
+              className="btn-nuevo-concepto"
+            >
+              Nuevo
+            </button>
+          )}
+
         </div>
         {showNewConceptModal && (
           <div className="modal-overlay">
