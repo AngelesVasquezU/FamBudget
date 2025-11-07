@@ -50,38 +50,6 @@
   color: #2c3e50;
 }
 
-.login-form input[type="email"],
-.login-form input[type="password"] {
-  padding: 0.8rem;
-  border: 1px solid #cfd8e3;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-}
-
-.login-form input:focus {
-  outline: none;
-  border-color: #3056d3;
-  box-shadow: 0 0 5px rgba(48, 86, 211, 0.3);
-}
-
-.login-form button {
-  background-color: #1e2a44;
-  color: white;
-  border: none;
-  padding: 0.9rem;
-  border-radius: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.login-form button:hover {
-  background-color: #2f4b8c;
-  transform: translateY(-1px);
-}
-
 .bottom-text {
   margin-top: 0.8 rem;
   font-size: 0.9rem;
@@ -91,7 +59,7 @@
 }
 
 .bottom-text span {
-  color: #1e2a44; 
+  color: #1e2a44;
   cursor: pointer;
   font-weight: 600;
   transition: color 0.3s, text-shadow 0.3s;
@@ -116,65 +84,19 @@
   border-left: 4px solid #3056d3;
 }
 
-/* ======= RECUPERAR CONTRASEÑA ======= */
 
 .header-line {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  margin-bottom: 1rem;
 }
 
 .header-line h2 {
   text-align: center;
   color: #1e2a44;
   margin: 0 auto;
-}
-
-.back-button {
-  position: absolute;
-  left: 0;
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  color: #1e2a44;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.2s ease;
-}
-
-.back-button:hover {
-  color: #2f4b8c;
-  transform: translateX(-2px);
-}
-
-.input-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon-symbol {
-  position: absolute;
-  right: 15px;
-  color: #607b96;
-  font-size: 0.95rem;
-  pointer-events: none;
-  transition: color 0.3s ease;
-}
-
-.input-icon input {  
-  width: 100%;
-  padding-right: 1.2rem;
-  padding-left: 0.8rem;
-  border: 1px solid #cfd8e3;
-  border-radius: 10px;
-  height: 45px;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-}
-
-.input-icon-right input:focus + .input-icon-right-symbol {
-  color: #3056d3;
 }
 
 .message {
@@ -193,7 +115,6 @@
 .login-box h2 {
   color: #1e2a44;
   text-align: center;
-  margin-bottom: 1rem;
   font-weight: 700;
 }
 

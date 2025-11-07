@@ -150,7 +150,7 @@
 .sidebar__members {
   display: flex;
   flex-direction: column;
-  gap: 8px; 
+  gap: 8px;
 }
 
 .sidebar__member {
@@ -247,12 +247,14 @@
   color: #94a3b8;
 }
 
+
+
 @media (max-width: 767px) {
   .sidebar {
     transform: translateX(-100%);
     width: 280px;
   }
-  
+
   .sidebar--mobile-open {
     transform: translateX(0);
   }

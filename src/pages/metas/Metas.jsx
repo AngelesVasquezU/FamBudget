@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { GestorMetas } from './managers/GestorMeta';
-import '../styles/Metas.css';
+import { supabase } from '../../supabaseClient';
+import { GestorUsuario } from '../../api/GestorUsuario';
+import { GestorMetas } from '../../api/GestorMeta';
+import '../../styles/Metas.css';
 
 const Metas = () => {
-  const gestorMetas = new GestorMetas(supabase);
+  const gestorUsuario = new GestorUsuario(supabase);
+  const gestorMetas = new GestorMetas(supabase, gestorUsuario);
   const [metas, setMetas] = useState([]);
   const [selectedMetaId, setSelectedMetaId] = useState(null);
-  const [formData, setFormData] = useState({ 
-    nombre: '', 
-    fecha_limite: '', 
-    monto_objetivo: '', 
+  const [formData, setFormData] = useState({
+    nombre: '',
+    fecha_limite: '',
+    monto_objetivo: '',
     es_familiar: false
   });
+  const fechaActual = new Date().toLocaleDateString("en-CA");
   const [saldoDisponible, setSaldoDisponible] = useState(0);
   const [aporteMonto, setAporteMonto] = useState('');
   const [showAporteModal, setShowAporteModal] = useState(false);
@@ -26,47 +29,47 @@ const Metas = () => {
   const fetchDatosUsuario = async () => {
     try {
       console.log('Iniciando obtención de datos del usuario...');
-      
+
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
         console.error('Error de autenticación:', authError);
         throw authError;
       }
-      
+
       if (!user) {
         console.error('No hay usuario autenticado');
         throw new Error('No hay usuario autenticado');
       }
 
       console.log('Usuario autenticado:', user.id, user.email);
-      
+
       const { data: usuarioData, error: userError } = await supabase
         .from('usuarios')
         .select('id, familia_id, nombre, correo, rol')
         .eq('auth_id', user.id)
         .single();
-      
+
       if (userError) {
         console.error('Error buscando usuario en BD:', userError);
-        
+
         console.log('Intentando búsqueda por correo...');
         const { data: usuarioPorCorreo, error: errorCorreo } = await supabase
           .from('usuarios')
           .select('id, familia_id, nombre, correo, rol')
           .eq('correo', user.email)
           .single();
-          
+
         if (errorCorreo) {
           console.error('Error buscando por correo:', errorCorreo);
           throw new Error('Usuario no encontrado en la base de datos. Contacta al administrador.');
         }
-        
+
         if (usuarioPorCorreo) {
           console.log('Usuario encontrado por correo:', usuarioPorCorreo);
           return usuarioPorCorreo;
         }
       }
-      
+
       if (usuarioData) {
         console.log('Usuario encontrado por auth_id:', usuarioData);
         return usuarioData;
@@ -84,15 +87,15 @@ const Metas = () => {
     try {
       console.log('Inicializando datos...');
       const usuarioData = await fetchDatosUsuario();
-      
+
       if (usuarioData) {
         console.log('Datos usuario obtenidos:', usuarioData);
         setUserData(usuarioData);
         setCurrentUsuarioId(usuarioData.id);
         setCurrentFamiliaId(usuarioData.familia_id);
-        
+
         await fetchMetas(usuarioData.id, usuarioData.familia_id);
-        await fetchSaldoDisponible(usuarioData.familia_id, usuarioData.id); // CORREGIDO: pasar ambos parámetros
+        await fetchSaldoDisponible(usuarioData.id);
       }
     } catch (error) {
       console.error('Error inicializando:', error);
@@ -106,22 +109,25 @@ const Metas = () => {
     try {
       if (usuarioId) {
         console.log('Buscando metas para usuario:', usuarioId);
-        
+
         let query = supabase
           .from('metas')
           .select('*');
-        
+
         if (familiaId) {
           query = query.or(`usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`);
         } else {
           query = query.eq('usuario_id', usuarioId);
         }
-        
+
         const { data, error } = await query.order('fecha_creacion', { ascending: false });
-        
+
         if (error) throw error;
-        
+
         console.log('Metas encontradas:', data);
+        data.forEach(meta => {
+          console.log(`Meta: ${meta.nombre}, Monto actual: ${meta.monto_actual}`);
+        });
         setMetas(data || []);
       } else {
         console.warn('No hay usuarioId para buscar metas');
@@ -131,15 +137,19 @@ const Metas = () => {
     }
   };
 
-  // CORREGIDO: Ahora recibe ambos parámetros
-  const fetchSaldoDisponible = async (familiaId = currentFamiliaId, usuarioId = currentUsuarioId) => {
+  const fetchSaldoDisponible = async (usuarioId = currentUsuarioId) => {
     try {
-      const saldo = await gestorMetas.obtenerSaldoDisponible(familiaId, usuarioId);
-      console.log('💰 Saldo disponible REAL calculado:', saldo);
+      console.log("Obteniendo saldo para usuario:", usuarioId);
+      if (!usuarioId) {
+        console.warn("No hay usuarioId para obtener saldo");
+        return;
+      }
+
+      const saldo = await gestorMetas.obtenerSaldoDisponible(usuarioId);
+      console.log('Saldo disponible REAL calculado:', saldo);
       setSaldoDisponible(saldo);
     } catch (error) {
-      console.error('❌ Error fetching saldo:', error);
-      // En caso de error, establecer 0 para forzar la validación
+      console.error('Error fetching saldo:', error);
       setSaldoDisponible(0);
     }
   };
@@ -160,21 +170,37 @@ const Metas = () => {
         });
       }
     } else if (!showForm) {
-      setFormData({ 
-        nombre: '', 
-        fecha_limite: '', 
-        monto_objetivo: '', 
+      setFormData({
+        nombre: '',
+        fecha_limite: '',
+        monto_objetivo: '',
         es_familiar: false
       });
       setSelectedMetaId(null);
     }
   }, [selectedMetaId, metas, showForm]);
 
+  useEffect(() => {
+    const handleMetasActualizadas = () => {
+      console.log('Evento recibido: metas actualizadas');
+      if (userData) {
+        fetchMetas(userData.id, userData.familia_id);
+        fetchSaldoDisponible(userData.id);
+      }
+    };
+
+    window.addEventListener('metasActualizadas', handleMetasActualizadas);
+
+    return () => {
+      window.removeEventListener('metasActualizadas', handleMetasActualizadas);
+    };
+  }, [userData]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ 
-      ...formData, 
-      [name]: type === 'checkbox' ? checked : value 
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
@@ -207,47 +233,47 @@ const Metas = () => {
         return alert("No puedes crear una meta familiar porque no perteneces a una familia. Crea una meta personal o únete a una familia primero.");
       }
 
-      console.log('💾 Guardando meta con datos:', {
-        nombre, 
-        monto_objetivo, 
-        fecha_limite, 
-        familia_id: es_familiar ? usuarioData.familia_id : null, 
+      console.log('Guardando meta con datos:', {
+        nombre,
+        monto_objetivo,
+        fecha_limite,
+        familia_id: es_familiar ? usuarioData.familia_id : null,
         usuario_id: usuarioData.id,
         es_familiar
       });
 
       if (selectedMetaId) {
-        await gestorMetas.editarMeta(selectedMetaId, { 
-          nombre, 
-          monto_objetivo, 
-          fecha_limite, 
-          es_familiar 
+        await gestorMetas.editarMeta(selectedMetaId, {
+          nombre,
+          monto_objetivo,
+          fecha_limite,
+          es_familiar
         });
         alert('Meta actualizada correctamente');
       } else {
-        await gestorMetas.crearMeta({ 
-          nombre, 
-          monto_objetivo, 
-          fecha_limite, 
-          familia_id: es_familiar ? usuarioData.familia_id : null, 
+        await gestorMetas.crearMeta({
+          nombre,
+          monto_objetivo,
+          fecha_limite,
+          familia_id: es_familiar ? usuarioData.familia_id : null,
           usuario_id: usuarioData.id,
           es_familiar
         });
         alert('Meta creada correctamente');
       }
-      
+
       setShowForm(false);
       setSelectedMetaId(null);
-      setFormData({ 
-        nombre: '', 
-        fecha_limite: '', 
-        monto_objetivo: '', 
+      setFormData({
+        nombre: '',
+        fecha_limite: '',
+        monto_objetivo: '',
         es_familiar: false
       });
-      
+
       await fetchMetas(usuarioData.id, usuarioData.familia_id);
-      await fetchSaldoDisponible(usuarioData.familia_id, usuarioData.id); // CORREGIDO
-      
+      await fetchSaldoDisponible(usuarioData.id);
+
     } catch (error) {
       console.error('Error al guardar meta:', error);
       alert(`Error: ${error.message}`);
@@ -263,23 +289,23 @@ const Metas = () => {
     try {
       console.log('Iniciando eliminación de meta:', selectedMetaId);
       await gestorMetas.eliminarMeta(selectedMetaId);
-      
+
       alert('Meta eliminada correctamente');
-      
+
       setShowForm(false);
       setSelectedMetaId(null);
-      setFormData({ 
-        nombre: '', 
-        fecha_limite: '', 
-        monto_objetivo: '', 
+      setFormData({
+        nombre: '',
+        fecha_limite: '',
+        monto_objetivo: '',
         es_familiar: false
       });
-      
+
       if (userData) {
         await fetchMetas(userData.id, userData.familia_id);
-        await fetchSaldoDisponible(userData.familia_id, userData.id); // CORREGIDO
+        await fetchSaldoDisponible(userData.id);
       }
-      
+
     } catch (error) {
       console.error('Error al eliminar meta:', error);
       alert(`Error al eliminar: ${error.message}`);
@@ -288,7 +314,7 @@ const Metas = () => {
 
   const handleAbrirAporteModal = (meta) => {
     console.log('Abriendo modal de aporte para:', meta);
-    
+
     if (!meta || !meta.id) {
       console.error('Meta inválida:', meta);
       alert('Error: No se pudo identificar la meta');
@@ -297,25 +323,24 @@ const Metas = () => {
 
     setMetaAportando(meta);
     setSelectedMetaId(meta.id);
-    
+
     setFormData({
       nombre: meta.nombre,
       fecha_limite: meta.fecha_limite ? meta.fecha_limite.split('T')[0] : '',
       monto_objetivo: meta.monto_objetivo,
       es_familiar: meta.es_familiar
     });
-    
+
     setShowAporteModal(true);
   };
 
   const handleAportar = async () => {
-    console.log('💰 Iniciando aporte...');
-    console.log('🔍 Datos del aporte:', {
+    console.log('Datos del aporte:', {
       metaAportando: metaAportando,
       selectedMetaId: selectedMetaId,
       aporteMonto: aporteMonto,
       userData: userData,
-      saldoDisponible: saldoDisponible // Agregado para debug
+      saldoDisponible: saldoDisponible
     });
 
     if (!aporteMonto || aporteMonto <= 0) {
@@ -323,50 +348,46 @@ const Metas = () => {
     }
 
     const monto = parseFloat(aporteMonto);
-    
-    // CORREGIDO: Validar contra saldo disponible REAL
+
     if (monto > saldoDisponible) {
       return alert(`Ingresos disponibles insuficientes.\nDisponible: ${formatCurrency(saldoDisponible)}\nIntenta asignar: ${formatCurrency(monto)}`);
     }
 
     const metaId = selectedMetaId || (metaAportando && metaAportando.id);
-    
-    console.log('🔍 Meta ID a usar:', metaId);
+
 
     if (!metaId || metaId === 'null' || metaId === 'undefined') {
-      console.error('❌ ID de meta inválido:', metaId);
+      console.error('ID de meta inválido:', metaId);
       alert('Error: No se pudo identificar la meta para aportar');
       return;
     }
 
     if (!userData || !userData.id) {
-      console.error('❌ Datos de usuario inválidos:', userData);
+      console.error('Datos de usuario inválidos:', userData);
       alert('Error: No se pudieron obtener los datos del usuario');
       return;
     }
 
     try {
-      console.log('🔄 Asignando ingreso a meta:', metaId);
-      
+
       await gestorMetas.agregarAhorro(
-        metaId, 
-        monto, 
-        userData.id,
-        `Aporte a meta`
+        metaId,
+        monto,
+        userData.id
       );
-      
+
       setAporteMonto('');
       setShowAporteModal(false);
       setMetaAportando(null);
-      
+
       // Recargar datos para actualizar saldo
       await fetchMetas(userData.id, userData.familia_id);
-      await fetchSaldoDisponible(userData.familia_id, userData.id); // CORREGIDO
-      
-      alert("✅ Ingreso asignado a la meta correctamente");
-      
+      await fetchSaldoDisponible(userData.id); // CORREGIDO
+
+      alert("Ingreso asignado a la meta correctamente");
+
     } catch (error) {
-      console.error('❌ Error al asignar ingreso a meta:', error);
+      console.error('Error al asignar ingreso a meta:', error);
       alert(`Error: ${error.message}`);
     }
   };
@@ -396,7 +417,7 @@ const Metas = () => {
   if (isLoading) {
     return (
       <div className="metas-container">
-        <div className="loading">Cargando datos del usuario...</div>
+        <div className="loading">Cargando metas...</div>
       </div>
     );
   }
@@ -405,7 +426,6 @@ const Metas = () => {
     <div className="metas-container">
       {!showForm ? (
         <>
-          {/* CORREGIDO: Texto actualizado para reflejar que son ingresos disponibles */}
           <div className="saldo-disponible">
             <h3>Ingresos disponibles para metas</h3>
             <p>Estos son los ingresos que aún no han sido asignados a ninguna meta</p>
@@ -436,7 +456,7 @@ const Metas = () => {
                       {meta.es_familiar ? '🏠 Familiar' : '👤 Personal'}
                     </div>
                   </div>
-                  
+
                   <div className="meta-monto-info">
                     <div className="monto-item monto-meta">
                       <span className="monto-label">Meta</span>
@@ -454,8 +474,8 @@ const Metas = () => {
 
                   <div className="progreso-container">
                     <div className="progreso-bar">
-                      <div 
-                        className="progreso-fill" 
+                      <div
+                        className="progreso-fill"
                         style={{ width: `${calcularProgreso(meta)}%` }}
                       ></div>
                     </div>
@@ -466,7 +486,7 @@ const Metas = () => {
                   </div>
 
                   <div className="meta-actions">
-                    <button 
+                    <button
                       className="editar-btn"
                       onClick={() => {
                         setSelectedMetaId(meta.id);
@@ -475,7 +495,7 @@ const Metas = () => {
                     >
                       Editar
                     </button>
-                    <button 
+                    <button
                       className="aporte-btn"
                       onClick={() => handleAbrirAporteModal(meta)}
                       disabled={calcularProgreso(meta) >= 100}
@@ -492,35 +512,36 @@ const Metas = () => {
         <div className="metas-form-container">
           <div className="metas-form">
             <h3>{selectedMetaId ? 'Editar Meta' : 'Nueva Meta'}</h3>
-            
+
             <div className="form-group">
               <label>Nombre de la meta</label>
-              <input 
-                type="text" 
-                name="nombre" 
-                value={formData.nombre} 
-                onChange={handleChange} 
+              <input
+                type="text"
+                name="nombre"
+                value={formData.nombre}
+                onChange={handleChange}
                 placeholder="Ej: Viaje a Cancún"
               />
             </div>
 
             <div className="form-group">
               <label>Fecha límite</label>
-              <input 
-                type="date" 
-                name="fecha_limite" 
-                value={formData.fecha_limite} 
-                onChange={handleChange} 
+              <input
+                type="date"
+                name="fecha_limite"
+                value={formData.fecha_limite}
+                onChange={handleChange}
+                min={fechaActual}
               />
             </div>
 
             <div className="form-group">
               <label>Monto objetivo (S/.)</label>
-              <input 
-                type="number" 
-                name="monto_objetivo" 
-                value={formData.monto_objetivo} 
-                onChange={handleChange} 
+              <input
+                type="number"
+                name="monto_objetivo"
+                value={formData.monto_objetivo}
+                onChange={handleChange}
                 placeholder="4500.00"
                 step="0.01"
                 min="0.01"
@@ -530,11 +551,11 @@ const Metas = () => {
             {userData?.familia_id && (
               <div className="form-group checkbox-group">
                 <label>
-                  <input 
-                    type="checkbox" 
-                    name="es_familiar" 
-                    checked={formData.es_familiar} 
-                    onChange={handleChange} 
+                  <input
+                    type="checkbox"
+                    name="es_familiar"
+                    checked={formData.es_familiar}
+                    onChange={handleChange}
                   />
                   Meta familiar (compartida con la familia)
                 </label>
@@ -542,10 +563,10 @@ const Metas = () => {
             )}
 
             <div className="form-buttons">
-              <button className="save-btn" onClick={handleSave}>
+              <button className="metas-save-btn" onClick={handleSave}>
                 {selectedMetaId ? 'Actualizar' : 'Crear'} Meta
               </button>
-              
+
               {selectedMetaId && (
                 <button className="delete-btn" onClick={() => {
                   if (window.confirm("¿Estás seguro de eliminar esta meta? Esta acción no se puede deshacer.")) {
@@ -555,9 +576,9 @@ const Metas = () => {
                   Eliminar
                 </button>
               )}
-              
-              <button 
-                className="cancel-btn" 
+
+              <button
+                className="cancel-btn"
                 onClick={() => setShowForm(false)}
               >
                 Cancelar
@@ -577,7 +598,7 @@ const Metas = () => {
             {metaAportando && (
               <>
                 <p>
-                  <strong>Progreso actual:</strong> {calcularProgreso(metaAportando).toFixed(1)}% 
+                  <strong>Progreso actual:</strong> {calcularProgreso(metaAportando).toFixed(1)}%
                   ({formatCurrency(metaAportando.monto_actual)} de {formatCurrency(metaAportando.monto_objetivo)})
                 </p>
                 <p>
@@ -585,12 +606,12 @@ const Metas = () => {
                 </p>
               </>
             )}
-            
+
             <div className="form-group">
               <label>Monto a asignar de ingresos (S/.)</label>
-              <input 
-                type="number" 
-                value={aporteMonto} 
+              <input
+                type="number"
+                value={aporteMonto}
                 onChange={(e) => setAporteMonto(e.target.value)}
                 placeholder="0.00"
                 step="0.01"
@@ -606,17 +627,17 @@ const Metas = () => {
                 </small>
               )}
             </div>
-            
+
             <div className="modal-buttons">
-              <button 
-                className="save-btn" 
+              <button
+                className="metas-save-btn"
                 onClick={handleAportar}
                 disabled={!aporteMonto || aporteMonto <= 0}
               >
                 Asignar Ingreso
               </button>
-              <button 
-                className="cancel-btn" 
+              <button
+                className="cancel-btn"
                 onClick={handleCerrarAporteModal}
               >
                 Cancelar

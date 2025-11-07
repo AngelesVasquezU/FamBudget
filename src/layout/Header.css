@@ -1,0 +1,41 @@
+.header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 24px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+}
+
+.logout-link {
+  color: #122583;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.logout-link:hover {
+  color: #2e56ad;
+}
+
+.logout-link svg {
+  stroke: #122583;
+}
+
+.logout-link:hover svg {
+  stroke: #2e56ad;
+}

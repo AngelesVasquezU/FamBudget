@@ -1,9 +1,10 @@
 export class GestorFamilia {
-    constructor(supabase, gestorUsuario) {
+    constructor(supabase, gestorUsuario) { //MCOD009-1
         this.supabase = supabase;
         this.gestorUsuario = gestorUsuario;
     }
 
+    //MCOD009-2
     async obtenerMiFamilia() {
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user || !user.familia_id) return null;
@@ -18,6 +19,7 @@ export class GestorFamilia {
         return data;
     }
 
+    //MCOD009-3
     async obtenerMiembros(familia_id) {
         const { data, error } = await this.supabase
         .from('usuarios')
@@ -28,6 +30,7 @@ export class GestorFamilia {
         return data;
     }
 
+    //MCOD009-4
     async crearFamilia(nombre) {
     const { data, error } = await this.supabase
         .from('familias')
@@ -38,6 +41,7 @@ export class GestorFamilia {
     return data;
     }
 
+    //MCOD009-5
     async agregarMiembro(familia_id, correo, parentesco) {
     const { data: usuario, error: errorUser } = await this.supabase
         .from('usuarios')
@@ -65,6 +69,7 @@ export class GestorFamilia {
     return true;
     }
 
+    //MCOD009-6
     async actualizarParentesco(usuario_id, nuevoParentesco) {
         const { error } = await this.supabase
             .from('usuarios')
@@ -75,6 +80,7 @@ export class GestorFamilia {
         return true;
     }
 
+    //MCOD009-7
     async eliminarMiembro(usuarioId) {
         const currentUserId = await this.gestorUsuario.obtenerIdUsuario();
         if (usuarioId === currentUserId) {
@@ -90,6 +96,7 @@ export class GestorFamilia {
         return true;
     }
     
+    //MCOD009-8
     async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
         const { data: miembro, error: errorMiembro } = await this.supabase
             .from("usuarios")
@@ -100,7 +107,7 @@ export class GestorFamilia {
         if (errorMiembro || !miembro) throw new Error("Miembro no encontrado");
         if (miembro.familia_id !== familia_id)
             throw new Error("El usuario no pertenece a esta familia");
-
+        console.log("ids: ", adminActualId, ", ", nuevoAdminId);
         const { error: err1 } = await this.supabase
             .from("usuarios")
             .update({ rol: "Administrador" })
@@ -108,7 +115,7 @@ export class GestorFamilia {
 
         const { error: err2 } = await this.supabase
             .from("usuarios")
-            .update({ rol: "Miembro Familiar" })
+            .update({ rol: "Miembro familiar" })
             .eq("id", adminActualId);
 
         if (err1 || err2) throw new Error("Error al cambiar el rol");

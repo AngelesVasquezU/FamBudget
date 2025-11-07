@@ -6,7 +6,8 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-h2, h3 {
+h2,
+h3 {
   color: #1e2a44;
 }
 
@@ -32,13 +33,14 @@ h2, h3 {
 }
 
 .type.egreso {
-  color: #10b981; 
+  color: #10b981;
 }
 
 .frequency {
   font-size: 0.9rem;
   color: #64748b;
 }
+
 .concepts-edit {
   margin-bottom: 20px;
   padding: 15px;
@@ -71,7 +73,7 @@ h2, h3 {
   background: #ffffff;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -96,11 +98,10 @@ h2, h3 {
 }
 
 .save-btn {
-  align-self: flex-end;
-  background-color: #3b82f6;
+  background-color: #008a7f;
   color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -108,8 +109,9 @@ h2, h3 {
 }
 
 .save-btn:hover {
-  background-color: #2563eb;
+  background-color: #1eaeae;
 }
+
 .concepts-summary {
   margin-bottom: 10px;
 }
@@ -119,7 +121,7 @@ h2, h3 {
   margin-top: 20px;
   border-radius: 10px;
   min-width: 300px;
-  border: 1px solid #dddddd; 
+  border: 1px solid #dddddd;
 }
 
 .summary-item {
@@ -133,33 +135,34 @@ h2, h3 {
 }
 
 .summary-item.total span:last-child {
-  color: #111; 
+  color: #111;
 }
 
 .summary-item.ingreso span:last-child {
-  color: #046327; 
+  color: #046327;
 }
 
 .summary-item.egreso span:last-child {
-  color: #cd2222; 
+  color: #cd2222;
 }
 
 .summary-item span:first-child {
   font-size: 0.9rem;
   margin-bottom: 5px;
   text-transform: uppercase;
-  color: #333; 
+  color: #333;
 }
 
 .form-buttons {
   display: flex;
+  justify-content: right;
   gap: 10px;
   margin-top: 10px;
 }
 
 .new-btn {
   background: none;
-  border: 1px solid #3b82f6; 
+  border: 1px solid #3b82f6;
   color: #3b82f6;
   padding: 6px 12px;
   border-radius: 6px;
@@ -169,5 +172,5 @@ h2, h3 {
 }
 
 .new-btn:hover {
-  background: #3b82f610; 
+  background: #3b82f610;
 }
