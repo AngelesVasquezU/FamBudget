@@ -183,14 +183,8 @@ export class GestorMetas {
         .eq("id", usuarioId);
 
       if (updateSaldoError) throw updateSaldoError;
-      console.log("➡datos aporte meta:", {
-        metaId,
-        monto,
-        usuarioId,
-        movimientoId
-      });
       const { error: aporteError } = await this.supabase
-        .from("aportes_meta")
+        .from("ahorro")
         .insert([
           {
             meta_id: metaId,
