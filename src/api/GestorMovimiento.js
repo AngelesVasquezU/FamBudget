@@ -8,6 +8,7 @@ export class GestorMovimiento { // COD-001
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
       console.log("Monto que se envía:", monto, typeof monto);
+      console.log("Usuario id en crear movimiento:", usuarioId);
 
       const { data: usuarioData, error: errorSaldo } = await this.supabase
         .from("usuarios")
@@ -104,7 +105,6 @@ export class GestorMovimiento { // COD-001
     }
   }
     
-
   // MCOD002-2  mejorado
   async obtenerTotalPorTipo(usuarioId, tipo, fecha = null) {
     let query = this.supabase

@@ -91,25 +91,30 @@ export class GestorMetas {
 
       if (errorUsuario) throw errorUsuario;
       if (!usuario) throw new Error('Usuario no encontrado');
+
       const familia_id = usuario.familia_id;
-      console.log("familia id: ", familia_id);
+
+      const updateData = {
+        nombre,
+        monto_objetivo,
+        fecha_limite,
+        es_familiar,
+        familia_id: es_familiar ? familia_id : null,
+        usuario_id: es_familiar ? null : user_id
+      };
+
       const { data, error } = await this.supabase
         .from("metas")
-        .update({ 
-          nombre, 
-          familia_id,
-          monto_objetivo, 
-          fecha_limite, 
-          es_familiar 
-        })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
+
       
       if (error) {
         console.error('Error en editarMeta:', error);
         throw error;
-      }
+      } 
       
       console.log('Meta editada exitosamente:', data);
       return data;
@@ -178,14 +183,8 @@ export class GestorMetas {
         .eq("id", usuarioId);
 
       if (updateSaldoError) throw updateSaldoError;
-      console.log("➡datos aporte meta:", {
-        metaId,
-        monto,
-        usuarioId,
-        movimientoId
-      });
       const { error: aporteError } = await this.supabase
-        .from("aportes_meta")
+        .from("ahorro")
         .insert([
           {
             meta_id: metaId,

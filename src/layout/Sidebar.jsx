@@ -45,10 +45,10 @@ const Sidebar = ({
     { icon: Home, label: 'Inicio', path: '/dashboard', active: true },
     { icon: Calendar, label: 'Registro Diario', path: '/registro-diario' },
     { icon: PieChart, label: 'Balance', path: '/balance' },
-    { icon: Settings, label: 'Configuración', path: '/configuracion' },
+    { icon: Settings, label: 'Configuración', path: '/configuracion', roles: ["Administrador"] },
     { icon: Target, label: 'Metas', path: '/metas' },
-    { icon: User, label: 'Cuenta', path: '/cuenta' },
-    { icon: Users, label: 'Familia', path: '/familia' }
+    { icon: Users, label: 'Familia', path: '/familia' },
+    { icon: User, label: 'Cuenta', path: '/cuenta' }
   ];
   return (
     <>
@@ -83,21 +83,23 @@ const Sidebar = ({
 
         <nav className="sidebar__nav">
           <ul className="sidebar__menu">
-            {menuItems.map((item, index) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <li key={index} className="sidebar__menu-item">
-                  <Link
-                    to={item.path}
-                    className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
-                    onClick={closeMobileSidebar}
-                  >
-                    <item.icon size={20} className="sidebar__icon" />
-                    {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
-                  </Link>
-                </li>
-              );
-            })}
+            {menuItems
+              .filter(item => !item.roles || item.roles.includes(user?.rol))
+              .map((item, index) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <li key={index} className="sidebar__menu-item">
+                    <Link
+                      to={item.path}
+                      className={`sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
+                      onClick={closeMobileSidebar}
+                    >
+                      <item.icon size={20} className="sidebar__icon" />
+                      {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </nav>
 
