@@ -79,19 +79,19 @@ h3 {
   gap: 12px;
 }
 
-.form-group {
+.form-group-concepto {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.form-group label {
+.form-group-concepto label {
   font-weight: 600;
   color: #1e2a44;
 }
 
-.form-group input,
-.form-group select {
+.form-group-concepto input,
+.form-group-concepto select {
   padding: 8px;
   border-radius: 10px;
   border: 1px solid #cfd8e3;

@@ -513,7 +513,7 @@ const Metas = () => {
           <div className="metas-form">
             <h3>{selectedMetaId ? 'Editar Meta' : 'Nueva Meta'}</h3>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Nombre de la meta</label>
               <input
                 type="text"
@@ -524,7 +524,7 @@ const Metas = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Fecha límite</label>
               <input
                 type="date"
@@ -535,7 +535,7 @@ const Metas = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Monto objetivo (S/.)</label>
               <input
                 type="number"
@@ -549,7 +549,7 @@ const Metas = () => {
             </div>
 
             {userData?.familia_id && (
-              <div className="form-group checkbox-group">
+              <div className="form-group-metas checkbox-group">
                 <label>
                   <input
                     type="checkbox"
@@ -607,7 +607,7 @@ const Metas = () => {
               </>
             )}
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Monto a asignar de ingresos (S/.)</label>
               <input
                 type="number"

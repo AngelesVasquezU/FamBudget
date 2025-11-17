@@ -98,18 +98,18 @@ const Conceptos = () => { // COD004
 
       <div className="concepts-form">
         <h3>{selectedConceptId ? 'Editar concepto' : 'Nuevo concepto'}</h3>
-        <div className="form-group">
+        <div className="form-group-concepto">
           <label>Nombre del concepto</label>
           <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} />
         </div>
-        <div className="form-group">
+        <div className="form-group-concepto">
           <label>Tipo</label>
           <select name="tipo" value={formData.tipo} onChange={handleChange}>
             <option value="ingreso">Ingreso</option>
             <option value="egreso">Egreso</option>
           </select>
         </div>
-        <div className="form-group">
+        <div className="form-group-concepto">
           <label>Periodicidad</label>
           <select name="periodo" value={formData.periodo} onChange={handleChange}>
             <option value="diario">Diario</option>
