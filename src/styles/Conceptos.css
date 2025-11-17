@@ -60,7 +60,7 @@ h3 {
 }
 
 .edit-selector select {
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 0.95rem;
@@ -92,7 +92,7 @@ h3 {
 
 .form-group-concepto input,
 .form-group-concepto select {
-  padding: 8px;
+  padding: 12px;
   border-radius: 10px;
   border: 1px solid #cfd8e3;
 }

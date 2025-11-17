@@ -125,9 +125,7 @@ const Conceptos = () => { // COD004
               setSelectedConceptId(null);
               setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
             }}
-          >
-            Nuevo
-          </button>
+          >Nuevo</button>
         </div>
       </div>
     </div>
