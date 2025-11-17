@@ -120,7 +120,7 @@ const Conceptos = () => { // COD004
         <div className="form-buttons">
           <button className="save-btn" onClick={handleSave}>Guardar</button>
           <button
-            className="new-btn"
+            className="new-btn-concept"
             onClick={() => {
               setSelectedConceptId(null);
               setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
