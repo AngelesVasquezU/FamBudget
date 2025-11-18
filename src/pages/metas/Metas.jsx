@@ -31,8 +31,6 @@ const Metas = () => {
 
   const fetchDatosUsuario = async () => {
     try {
-      console.log('Iniciando obtención de datos del usuario...');
-
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
         console.error('Error de autenticación:', authError);
@@ -44,8 +42,6 @@ const Metas = () => {
         throw new Error('No hay usuario autenticado');
       }
 
-      console.log('Usuario autenticado:', user.id, user.email);
-
       const { data: usuarioData, error: userError } = await supabase
         .from('usuarios')
         .select('id, familia_id, nombre, correo, rol')
@@ -55,7 +51,6 @@ const Metas = () => {
       if (userError) {
         console.error('Error buscando usuario en BD:', userError);
 
-        console.log('Intentando búsqueda por correo...');
         const { data: usuarioPorCorreo, error: errorCorreo } = await supabase
           .from('usuarios')
           .select('id, familia_id, nombre, correo, rol')
@@ -68,13 +63,11 @@ const Metas = () => {
         }
 
         if (usuarioPorCorreo) {
-          console.log('Usuario encontrado por correo:', usuarioPorCorreo);
           return usuarioPorCorreo;
         }
       }
 
       if (usuarioData) {
-        console.log('Usuario encontrado por auth_id:', usuarioData);
         return usuarioData;
       } else {
         throw new Error('No se encontraron datos del usuario en la base de datos');
@@ -452,13 +445,16 @@ const Metas = () => {
                 <div key={meta.id} className="meta-card">
                   <div className="meta-header-info">
                     <h4>{meta.nombre}</h4>
-
-                    <Edit size={17} className="editar-btn"
-                      onClick={() => {
-                        setSelectedMetaId(meta.id);
-                        setShowForm(true);
-                      }} />
-
+                    {(
+                      (userData?.rol == 'Administrador') ||
+                      (userData?.rol == 'Miembro familiar' && !meta.es_familiar)
+                    ) && (
+                        <Edit size={17} className="editar-btn"
+                          onClick={() => {
+                            setSelectedMetaId(meta.id);
+                            setShowForm(true);
+                          }} />
+                      )}
                   </div>
                   <div className="meta-header-info">
                     <div className="meta-fecha">
@@ -556,7 +552,7 @@ const Metas = () => {
               />
             </div>
 
-            {userData?.familia_id && (
+            {userData?.familia_id && userData?.rol == 'Administrador' && (
               <div className="form-group-metas checkbox-group">
                 <label>
                   <input

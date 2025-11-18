@@ -133,4 +133,39 @@ export class GestorFamilia {
         return true;
     }
 
+    //MCOD009-9
+    async eliminarFamilia() {
+        const user = await this.gestorUsuario.obtenerUsuario();
+        if (!user) throw new Error("No hay usuario autenticado");
+        if (!user.familia_id) throw new Error("No perteneces a ninguna familia");
+
+        if (user.rol !== "Administrador") {
+            throw new Error("Solo el administrador puede eliminar la familia");
+        }
+
+        const familiaId = user.familia_id;
+
+        const { error: errorMiembros } = await this.supabase
+            .from("usuarios")
+            .update({ familia_id: null, parentesco: null })
+            .eq("familia_id", familiaId)
+            .neq("rol", "Administrador");
+
+        if (errorMiembros) throw errorMiembros;
+
+        const { error: errorFamilia } = await this.supabase
+            .from("familias")
+            .delete()
+            .eq("id", familiaId);
+
+        await this.supabase
+            .from("usuarios")
+            .update({ familia_id: null, parentesco: null })
+            .eq("id", user.id);
+
+        if (errorFamilia) throw errorFamilia;
+
+        return true;
+    }
+
 }

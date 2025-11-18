@@ -11,6 +11,8 @@ const Familia = () => {
     const gestorUsuario = new GestorUsuario(supabase);
     const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
 
+    const [mostrarEliminarFamilia, setMostrarEliminarFamilia] = useState(false);
+
     const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
     const [nuevaFamilia, setNuevaFamilia] = useState({ nombre: '' });
 
@@ -152,7 +154,21 @@ const Familia = () => {
 
     return (
         <div className="familia-container">
-            <h2>{esAdmin ? 'Gestionar Grupo Familiar' : 'Mi Grupo Familiar'}</h2>
+            <div className="title-container">
+                <h2>{esAdmin ? 'Gestionar Grupo Familiar' : 'Mi Grupo Familiar'}</h2>
+                <div className="group-items">
+                    {esAdmin && (
+                        <>
+                            <button className="btn-agregar" onClick={() => setMostrarModal(true)}>
+                                <PlusCircle size={18} /> Agregar Miembro
+                            </button>
+                            <button className="btn-eliminar-familia" onClick={() => setMostrarEliminarFamilia(true)}>
+                                <Trash2 size={18} />
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
             <div className="familia-header">
                 <div className="familia-info">
                     <Home size={32} className="icono-familia" />
@@ -163,12 +179,6 @@ const Familia = () => {
                         </p>
                     </div>
                 </div>
-                {esAdmin && (
-                    <button className="btn-agregar" onClick={() => setMostrarModal(true)}>
-                        <PlusCircle size={18} /> Agregar Miembro
-                    </button>
-                )}
-
             </div>
 
             <div className="tabla-miembros">
@@ -300,6 +310,49 @@ const Familia = () => {
                     </div>
                 )
             }
+
+            {mostrarEliminarFamilia && (
+                <div className="modal-overlay">
+                    <div className="modal modal-eliminar">
+                        <h3>¿Eliminar familia?</h3>
+                        <p>
+                            Esta acción eliminará <strong>permanentemente</strong> la familia
+                            <strong> {miFamilia.nombre}</strong> y todos los miembros quedarán sin grupo.
+                        </p>
+
+                        <p className="alerta">Esta acción no se puede deshacer.</p>
+
+                        <div className="modal-buttons">
+                            <button
+                                className="btn-cancelar"
+                                onClick={() => setMostrarEliminarFamilia(false)}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                className="btn-confirmar eliminar"
+                                onClick={async () => {
+                                    try {
+                                        await gestorFamilia.eliminarFamilia();
+                                        setMostrarEliminarFamilia(false);
+                                        setMensajeExito('Familia eliminada correctamente');
+
+                                        // recargar datos
+                                        fetchMiFamilia?.();
+
+                                        setTimeout(() => setMensajeExito(''), 3000);
+                                    } catch (err) {
+                                        alert(err.message);
+                                    }
+                                }}
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {
                 mensajeExito && (

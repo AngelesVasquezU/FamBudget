@@ -285,6 +285,54 @@
     align-items: center;
 }
 
+.title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.group-items {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    gap: 12px;
+}
+
+.btn-eliminar-familia {
+    background: #d9534f;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.btn-eliminar-familia:hover {
+    background: #c9302c;
+}
+
+.modal-eliminar h3 {
+    color: #b00000;
+}
+
+.btn-confirmar.eliminar {
+    background: #d9534f;
+}
+
+.btn-confirmar.eliminar:hover {
+    background: #c9302c;
+}
+
+.alerta {
+    color: #b00000;
+    margin: 10px 0;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
