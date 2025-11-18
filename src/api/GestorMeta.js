@@ -231,6 +231,7 @@ export class GestorMetas {
       throw new Error("No se pudo obtener el saldo disponible del usuario");
     }
   }
+
   // MCOD005-8
   async obtenerAportesPorMeta(metaId) {
     try {
@@ -239,12 +240,21 @@ export class GestorMetas {
         .select(`
         id,
         monto,
-        movimiento_id,
-        created_at,
-        usuarios:usuario_id(nombre, correo)
+        fecha_aporte,
+        movimiento:movimiento_id (
+          id,
+          monto,
+          tipo,
+          fecha,
+          usuario:usuario_id (
+            id,
+            nombre,
+            correo
+          )
+        )
       `)
         .eq("meta_id", metaId)
-        .order("created_at", { ascending: false });
+        .order("fecha_aporte", { ascending: false });
 
       if (error) throw error;
 
