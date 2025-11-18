@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaEye } from 'react-icons/fa';
 import { supabase } from "../../supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorConcepto } from "../../api/GestorConcepto";
@@ -36,6 +36,7 @@ const Balance = () => {
   const [movimientosConcepto, setMovimientosConcepto] = useState([]);
   const [filtroTiempo, setFiltroTiempo] = useState('todos');
   const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
+  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null); // Nuevo estado para el modal de comentario
 
   // Inicializar gestores
   const gestores = (() => {
@@ -220,7 +221,6 @@ const Balance = () => {
     }
   };
 
-  // Función para cargar movimientos de un concepto específico
   const cargarMovimientosPorConcepto = async (concepto, forzarFiltro = null) => {
     if (!user) return;
 
@@ -240,10 +240,8 @@ const Balance = () => {
         .eq('concepto_id', concepto.id)
         .order('fecha', { ascending: false });
 
-      // Usar el filtro forzado o el filtro actual
       const filtroAAplicar = forzarFiltro !== null ? forzarFiltro : filtroTiempo;
 
-      // Aplicar filtro de tiempo si no es "todos"
       if (filtroAAplicar !== 'todos') {
         const hoy = new Date();
         let fechaInicioFiltro, fechaFinFiltro;
@@ -271,15 +269,17 @@ const Balance = () => {
             break;
         }
 
-        // Formatear a YYYY-MM-DD
-        const fechaInicioStr = fechaInicioFiltro.toISOString().split('T')[0];
-        const fechaFinStr = fechaFinFiltro.toISOString().split('T')[0];
+        fechaInicioFiltro.setHours(0, 0, 0, 0);
+        fechaFinFiltro.setHours(23, 59, 59, 999);
 
-        console.log(`Filtro ${filtroAAplicar}: ${fechaInicioStr} a ${fechaFinStr}`);
+        const fechaInicioISO = fechaInicioFiltro.toISOString();
+        const fechaFinISO = fechaFinFiltro.toISOString();
+
+        console.log(`Filtro ${filtroAAplicar}: ${fechaInicioISO} a ${fechaFinISO}`);
 
         query = query
-          .gte('fecha', fechaInicioStr)
-          .lte('fecha', fechaFinStr);
+          .gte('fecha', fechaInicioISO)
+          .lte('fecha', fechaFinISO);
       }
 
       const { data: movimientos, error } = await query;
@@ -291,22 +291,19 @@ const Balance = () => {
 
     } catch (error) {
       console.error("Error cargando movimientos del concepto:", error);
-      setError("Error al cargar los movimientos del concepto");
+      setError("Error al cargar los movimientos del concepto: " + error.message);
     } finally {
       setCargandoMovimientos(false);
     }
   };
 
-  // Función para manejar cambio de filtro de tiempo
   const manejarCambioFiltro = async (nuevoFiltro) => {
     setFiltroTiempo(nuevoFiltro);
     
-    // Si hay un concepto seleccionado, recargar los movimientos con el nuevo filtro
     if (conceptoSeleccionado) {
       await cargarMovimientosPorConcepto(conceptoSeleccionado, nuevoFiltro);
     }
   };
-  // Función para obtener el texto descriptivo del rango de fechas
   const obtenerTextoRangoFechas = (filtro) => {
     const hoy = new Date();
     
@@ -363,14 +360,14 @@ const Balance = () => {
       if (tipoMovimiento === 'todos') {
         const ingresos = await gestores.gestorMovimiento.obtenerMovimientosUsuario(user_id, {
           tipo: 'ingreso',
-          fechaInicio: convertirFecha(fechaInicio),
-          fechaFin: convertirFecha(fechaFin)
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin
         });
         
         const egresos = await gestores.gestorMovimiento.obtenerMovimientosUsuario(user_id, {
           tipo: 'egreso',
-          fechaInicio: convertirFecha(fechaInicio),
-          fechaFin: convertirFecha(fechaFin)
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin
         });
 
         movimientos = [...ingresos || [], ...egresos || []];
@@ -385,8 +382,8 @@ const Balance = () => {
             metas:meta_id(nombre),
             movimientos:movimiento_id(*, conceptos:concepto_id(nombre, tipo))
           `)
-          .gte('created_at', convertirFecha(fechaInicio))
-          .lte('created_at', convertirFecha(fechaFin));
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin);
 
         if (errorAhorros) throw errorAhorros;
 
@@ -396,7 +393,7 @@ const Balance = () => {
           movimientos: ahorros?.map(ahorro => ({
             id: ahorro.id,
             monto: ahorro.monto,
-            fecha: ahorro.created_at,
+            fecha: ahorro.fecha,
             concepto: ahorro.metas?.nombre || 'Ahorro',
             tipo: 'ahorro'
           })) || []
@@ -409,8 +406,8 @@ const Balance = () => {
       else {
         movimientos = await gestores.gestorMovimiento.obtenerMovimientosUsuario(user_id, {
           tipo: tipoMovimiento,
-          fechaInicio: convertirFecha(fechaInicio),
-          fechaFin: convertirFecha(fechaFin)
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin
         });
         
         total = (movimientos || []).reduce((sum, mov) => sum + parseFloat(mov.monto || 0), 0);
@@ -426,8 +423,8 @@ const Balance = () => {
             conceptos:concepto_id(nombre, tipo)
           `)
           .eq('familia_id', usuario.familia_id)
-          .gte('fecha', convertirFecha(fechaInicio))
-          .lte('fecha', convertirFecha(fechaFin))
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin)
           .order('fecha', { ascending: false });
 
         if (error) throw error;
@@ -461,12 +458,6 @@ const Balance = () => {
     }
   };
 
-  const convertirFecha = (fechaDDMMAAAA) => {
-    const [dia, mes, anio] = fechaDDMMAAAA.split('/');
-    return `${anio}-${mes}-${dia}`;
-  };
-
-  // Si hay un error en la inicialización de gestores
   if (!gestores) {
     return (
       <div className="balance">
@@ -501,7 +492,6 @@ const Balance = () => {
 
    return (
     <div className="balance">
-      {/* Panel de Movimientos - VERSIÓN CORREGIDA */}
       {panelMovimientosAbierto && (
         <div className="panel-movimientos-overlay">
           <div className="panel-movimientos">
@@ -516,7 +506,6 @@ const Balance = () => {
             </div>
 
             <div className="panel-contenido">
-              {/* Columna izquierda - Lista de conceptos */}
               <div className="conceptos-lista">
                 <h3>Conceptos</h3>
                 <ul>
@@ -532,7 +521,6 @@ const Balance = () => {
                 </ul>
               </div>
 
-              {/* Columna derecha - Detalles del concepto seleccionado */}
               <div className="movimientos-detalle">
                 <div className="detalle-header">
                   <div className="filtro-tiempo">
@@ -547,7 +535,6 @@ const Balance = () => {
                       <option value="mes">Mes</option>
                     </select>
                     
-                    {/* Indicador del rango de fechas */}
                     {filtroTiempo !== 'todos' && (
                       <span className="rango-fechas-info">
                         {obtenerTextoRangoFechas(filtroTiempo)}
@@ -585,7 +572,7 @@ const Balance = () => {
                           {movimientosConcepto.map(movimiento => (
                             <tr key={movimiento.id}>
                               <td>{movimiento.usuarios?.nombre || 'Usuario'}</td>
-                              <td>{new Date(movimiento.fecha).toLocaleDateString('es-ES')}</td>
+                              <td>{movimiento.fecha}</td>
                               <td className={movimiento.conceptos?.tipo === 'egreso' ? 'negativo' : 'positivo'}>
                                 {movimiento.conceptos?.tipo === 'egreso' ? '-' : '+'} 
                                 {formatCurrency(movimiento.monto)}
@@ -596,7 +583,17 @@ const Balance = () => {
                                   : 'S/.0.00'
                                 }
                               </td>
-                              <td>{movimiento.comentario || 'Sin comentario'}</td>
+                              <td className="celda-comentario">
+                                  {movimiento.comentario ? (
+                                    <FaEye 
+                                      className="icono-comentario"
+                                      onClick={() => setComentarioSeleccionado(movimiento.comentario)}
+                                      title="Ver comentario completo"
+                                    />
+                                  ) : (
+                                    'Sin comentario'
+                                  )}
+                              </td>
                               <td>
                                 <button className="btn-editar" title="Editar movimiento">
                                   <FaEdit size={14} />
@@ -619,12 +616,37 @@ const Balance = () => {
         </div>
       )}
 
-      {/* El resto de tu componente se mantiene EXACTAMENTE igual */}
+      {comentarioSeleccionado && (
+        <div className="modal-comentario-overlay" onClick={() => setComentarioSeleccionado(null)}>
+          <div className="modal-comentario" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-comentario-header">
+              <h3>Comentario Completo</h3>
+              <button 
+                className="cerrar-modal"
+                onClick={() => setComentarioSeleccionado(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-comentario-content">
+              <p>{comentarioSeleccionado}</p>
+            </div>
+            <div className="modal-comentario-footer">
+              <button 
+                className="btn-cerrar-modal"
+                onClick={() => setComentarioSeleccionado(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="balance__header">
         <h1>Balance</h1>
       </div>
 
-      {/* Sección Resumen */}
       <div className="balance-resumen">
         <div className="resumen-card">
           <h2>Resumen</h2>
@@ -689,7 +711,6 @@ const Balance = () => {
         </div>
       </div>
 
-      {/* Sección Balance Personalizado */}
       <div className="balance-personalizado">
         <div className="personalizado-card">
           <h2>Balance Personalizado</h2>

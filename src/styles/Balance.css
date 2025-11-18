@@ -622,7 +622,6 @@
 }
 
 .ahorro {
-    color: #17a2b8;
     font-weight: bold;
 }
 
@@ -635,6 +634,123 @@
 .movimiento-acciones {
     display: flex;
     gap: 10px;
+}
+
+.celda-comentario {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* Estilos para el icono de comentario */
+.icono-comentario {
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  font-size: 16px;
+}
+
+.icono-comentario:hover {
+  color: var(--primary-hover);
+}
+
+/* Estilos para el modal de comentario */
+.modal-comentario-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-comentario {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-comentario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-comentario-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.cerrar-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cerrar-modal:hover {
+  color: #333;
+}
+
+.modal-comentario-content {
+  padding: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.modal-comentario-content p {
+  margin: 0;
+  line-height: 1.5;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.modal-comentario-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-cerrar-modal {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-cerrar-modal:hover {
+  background: #5a6268;
+}
+
+/* Asegurar que la tabla se vea bien */
+.tabla-movimientos td {
+  vertical-align: middle;
 }
 
 @media (max-width: 992px) {
@@ -724,4 +840,6 @@
         align-items: flex-start;
         gap: 5px;
     }
+
+    
 }
