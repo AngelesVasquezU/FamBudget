@@ -5,6 +5,7 @@ import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorConcepto } from "../../api/GestorConcepto";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
 import { GestorMetas } from "../../api/GestorMeta";
+import BalanceChart from "../../pages/balance/BalanceChart";
 import "../../styles/Balance.css";
 
 const formatCurrency = (amount) => {
@@ -43,6 +44,7 @@ const Balance = () => {
   const [movimientoEditando, setMovimientoEditando] = useState(null);
   const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false);
   const [guardandoCambios, setGuardandoCambios] = useState(false);
+
   // Inicializar gestores
   const gestores = (() => {
     try {
@@ -457,7 +459,6 @@ const Balance = () => {
             ]
           }
         });
-
         setModalBalanceAbierto(true);
         return;
       } else {
@@ -940,78 +941,90 @@ const Balance = () => {
       )}
 
 
-      {modalBalanceAbierto && balanceData && balanceData.resumen && (
-        <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
-          <div className="panel-movimientos" onClick={(e) => e.stopPropagation()}>
-            <div className="panel-header">
-              <h2>Resumen de Ganancias</h2>
-              <button
-                className="cerrar-panel"
-                onClick={() => setModalBalanceAbierto(false)}
-              >
-                ×
-              </button>
-            </div>
+      {modalBalanceAbierto && balanceData && balanceData.resumen && (() => {
+        const graficoData = balanceData.resumen.conceptos.map(c => ({
+          fecha: c.fechas[0] || "—",
+          ingresos: c.ingresos || 0,
+          egresos: c.egresos || 0
+        }));
 
-            <div className="panel-contenido">
-              <div className="balance-resumen-content">
-                <div className="conceptos-resumen">
-                  {balanceData.resumen.conceptos.map((concepto, index) => (
-                    <div key={concepto.id || index} className="concepto-item">
-                      <h3 className="concepto-nombre">{concepto.nombre}</h3>
-                      <div className="concepto-detalles">
-                        {concepto.ingresos > 0 && (
-                          <div className="concepto-linea">
-                            <span>Ingresos</span>
-                            <span className="monto-positivo">{formatCurrency(concepto.ingresos)}</span>
+        return (
+          <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
+            <div className="panel-movimientos" onClick={(e) => e.stopPropagation()}>
+              <div className="panel-header">
+                <h2>Resumen de Ganancias</h2>
+                <button
+                  className="cerrar-panel"
+                  onClick={() => setModalBalanceAbierto(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="panel-contenido">
+                <div className="balance-resumen-content">
+                  <div className="conceptos-resumen">
+                    {balanceData.resumen.conceptos.map((concepto, index) => (
+                      <div key={concepto.id || index} className="concepto-item">
+                        <h3 className="concepto-nombre">{concepto.nombre}</h3>
+                        <div className="concepto-detalles">
+                          {concepto.ingresos > 0 && (
+                            <div className="concepto-linea">
+                              <span>Ingresos</span>
+                              <span className="monto-positivo">{formatCurrency(concepto.ingresos)}</span>
+                            </div>
+                          )}
+                          {concepto.egresos > 0 && (
+                            <div className="concepto-linea">
+                              <span>Egresos</span>
+                              <span className="monto-negativo">{formatCurrency(concepto.egresos)}</span>
+                            </div>
+                          )}
+                          <div className="concepto-fechas">
+                            {concepto.fechas.slice(0, 3).map((fecha, i) => (
+                              <span key={i} className="fecha-item">{fecha}</span>
+                            ))}
                           </div>
-                        )}
-                        {concepto.egresos > 0 && (
-                          <div className="concepto-linea">
-                            <span>Egresos</span>
-                            <span className="monto-negativo">{formatCurrency(concepto.egresos)}</span>
-                          </div>
-                        )}
-                        <div className="concepto-fechas">
-                          {concepto.fechas.slice(0, 3).map((fecha, i) => (
-                            <span key={i} className="fecha-item">{fecha}</span>
-                          ))}
                         </div>
                       </div>
+                    ))}
+                  </div>
+
+                  <div className="resumen-totales">
+                    <div className="total-linea">
+                      <span className="total-label">TOTAL INGRESOS:</span>
+                      <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
                     </div>
-                  ))}
-                </div>
-
-                <div className="resumen-totales">
-                  <div className="total-linea">
-                    <span className="total-label">TOTAL INGRESOS:</span>
-                    <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
+                    <div className="total-linea">
+                      <span className="total-label">TOTAL EGRESOS:</span>
+                      <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
+                    </div>
                   </div>
-                  <div className="total-linea">
-                    <span className="total-label">TOTAL EGRESOS:</span>
-                    <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
-                  </div>
-                </div>
 
-                <div className="resumen-tendencias">
-                  <h3 className="tendencias-titulo">Tendencias:</h3>
-                  <div className="tendencias-content">
-                    <span className={`tendencia ${balanceData.resumen.tendencia.toLowerCase()}`}>
-                      {balanceData.resumen.tendencia}
-                    </span>
-                    <div className="ahorro-linea">
-                      <span>Ahorro</span>
-                      <span className={`ahorro-monto ${balanceData.resumen.ahorro >= 0 ? 'positivo' : 'negativo'}`}>
-                        {formatCurrency(balanceData.resumen.ahorro)}
+                  <div className="resumen-tendencias">
+                    <h3 className="tendencias-titulo">Tendencias:</h3>
+                    <div className="tendencias-content">
+                      <span className={`tendencia ${balanceData.resumen.tendencia.toLowerCase()}`}>
+                        {balanceData.resumen.tendencia}
                       </span>
+                      <div className="ahorro-linea">
+                        <span>Ahorro</span>
+                        <span className={`ahorro-monto ${balanceData.resumen.ahorro >= 0 ? 'positivo' : 'negativo'}`}>
+                          {formatCurrency(balanceData.resumen.ahorro)}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div style={{ width: "100%", height: 300, minHeight: 300, marginTop: "20px" }}>
+                    <BalanceChart data={graficoData} />
+                  </div>
+
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       <div className="balance__header">
         <h1>Balance</h1>
