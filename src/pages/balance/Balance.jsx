@@ -150,7 +150,7 @@ const Balance = () => {
         if (mov.conceptos && mov.conceptos.nombre) {
           const conceptoId = mov.conceptos.id;
           const nombre = mov.conceptos.nombre;
-          const tipo = mov.conceptos.tipo;
+          const tipo = mov.tipo;
           const monto = parseFloat(mov.monto) || 0;
 
           // Solo procesar si el monto es positivo
@@ -485,7 +485,7 @@ const Balance = () => {
         if (mov.conceptos && mov.conceptos.nombre) {
           const conceptoId = mov.conceptos.id;
           const nombre = mov.conceptos.nombre;
-          const tipo = mov.conceptos.tipo;
+          const tipo = mov.tipo;
           const monto = parseFloat(mov.monto) || 0;
           const fecha = mov.fecha?.split('T')[0];
 
@@ -511,7 +511,7 @@ const Balance = () => {
           }
         }
       });
-
+      console.log('ConceptosMap después de agrupar:', conceptosMap);
       const ahorro = totalIngresos - totalEgresos;
 
       setBalanceData({
@@ -982,14 +982,18 @@ const Balance = () => {
                   ))}
                 </div>
 
-                <div className="resumen-totales">
-                  <div className="total-linea">
-                    <span className="total-label">TOTAL INGRESOS:</span>
-                    <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
+                <div className="totales-grid">
+                  <div className="resumen-totales ingresos">
+                    <div className="total-linea">
+                      <span className="total-label">TOTAL INGRESOS:</span>
+                      <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
+                    </div>
                   </div>
-                  <div className="total-linea">
-                    <span className="total-label">TOTAL EGRESOS:</span>
-                    <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
+                  <div className="resumen-totales egresos">
+                    <div className="total-linea">
+                      <span className="total-label">TOTAL EGRESOS:</span>
+                      <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
+                    </div>
                   </div>
                 </div>
 

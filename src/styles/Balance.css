@@ -601,11 +601,33 @@
     border: 1px solid #e9ecef;
 }
 
+.totales-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Si quieres que no ocupen todo el ancho, puedes limitar el contenedor grid */
+.totales-grid {
+  width: 80%;
+  margin: 0 auto;
+}
+
 .resumen-totales {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 0.75rem 0;
+  border: 1px solid #e9ecef;
+}
+.resumen-totales.ingresos {
+  border-left: 4px solid #27ae60;
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.resumen-totales.egresos {
+  border-left: 4px solid #e74c3c;
+  background: linear-gradient(135deg, #fff8f8 0%, #f5e8e8 100%);
 }
 
 .total-linea {
