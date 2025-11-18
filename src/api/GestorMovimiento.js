@@ -45,7 +45,7 @@ export class GestorMovimiento { // COD-001
         ])
         .select()
         .single();
-      
+
       if (movError) {
         console.error("Error al crear movimiento:", movError);
         throw movError;
@@ -104,7 +104,7 @@ export class GestorMovimiento { // COD-001
       throw err;
     }
   }
-    
+
   // MCOD002-2  mejorado
   async obtenerTotalPorTipo(usuarioId, tipo, fecha = null) {
     let query = this.supabase

@@ -5,10 +5,10 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-export class GestorMetas { 
+export class GestorMetas {
   constructor(supabase, gestorUsuario) { // MCOD005-1
     this.supabase = supabase;
-    this.gestorUsuario  = gestorUsuario;
+    this.gestorUsuario = gestorUsuario;
   }
 
   // MCOD005-2
@@ -58,11 +58,11 @@ export class GestorMetas {
     try {
       const { data, error } = await this.supabase
         .from("metas")
-        .insert([{ 
-          nombre, 
-          monto_objetivo, 
-          fecha_limite, 
-          familia_id, 
+        .insert([{
+          nombre,
+          monto_objetivo,
+          fecha_limite,
+          familia_id,
           usuario_id,
           es_familiar,
           monto_actual: 0
@@ -76,7 +76,7 @@ export class GestorMetas {
       throw error;
     }
   }
-  
+
   // MCOD005-4
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
@@ -110,12 +110,12 @@ export class GestorMetas {
         .select()
         .single();
 
-      
+
       if (error) {
         console.error('Error en editarMeta:', error);
         throw error;
-      } 
-      
+      }
+
       console.log('Meta editada exitosamente:', data);
       return data;
     } catch (error) {
@@ -231,4 +231,28 @@ export class GestorMetas {
       throw new Error("No se pudo obtener el saldo disponible del usuario");
     }
   }
+  // MCOD005-8
+  async obtenerAportesPorMeta(metaId) {
+    try {
+      const { data, error } = await this.supabase
+        .from("ahorro")
+        .select(`
+        id,
+        monto,
+        movimiento_id,
+        created_at,
+        usuarios:usuario_id(nombre, correo)
+      `)
+        .eq("meta_id", metaId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error("Error en obtenerAportes:", error);
+      throw error;
+    }
+  }
+
 }
