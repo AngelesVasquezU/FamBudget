@@ -13,6 +13,7 @@ import Conceptos from './pages/conceptos/Conceptos';
 import Familia from './pages/familia/Familia';
 import Cuenta from './pages/cuenta/Cuenta';
 import Metas from './pages/metas/Metas';
+import Balance from './pages/balance/Balance';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RegistroDiario from './pages/registro-diario/RegistroDiario';
 import Layout from './layout/Layout';
@@ -26,7 +27,7 @@ const privateRoutes = [
   { path: "/cuenta", element: <Cuenta /> },
   { path: "/metas", element: <Metas /> },
   { path: "/metas/editar/:id", element: <Metas /> },
-  { path: "/balance", element: <div>En desarrollo...</div> },
+  { path: "/balance", element: <Balance /> },
 ];
 
 const BaseRedirect = () => {
