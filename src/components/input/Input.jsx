@@ -1,6 +1,6 @@
 import "./Input.css";
 
-const Input = ({ label, type = "text", name, value, onChange, placeholder }) => {
+const Input = ({ label, type = "text", name, value, onChange, placeholder, required }) => {
     return (
         <div className="input-wrapper">
             {label && <label>{label}</label>}
@@ -10,7 +10,7 @@ const Input = ({ label, type = "text", name, value, onChange, placeholder }) => 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                required
+                required={required}
             />
         </div>
     );

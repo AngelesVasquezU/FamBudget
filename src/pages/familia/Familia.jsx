@@ -4,11 +4,17 @@ import { GestorFamilia } from '../../api/GestorFamilia';
 import { GestorUsuario } from '../../api/GestorUsuario';
 import { Home, PlusCircle, Edit, Trash2, Users, X } from 'lucide-react';
 import { FaUsers } from "react-icons/fa";
+import { ShieldUser } from 'lucide-react';
 import '../../styles/Familia.css';
 
 const Familia = () => {
     const gestorUsuario = new GestorUsuario(supabase);
     const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
+
+    const [mostrarEliminarFamilia, setMostrarEliminarFamilia] = useState(false);
+
+    const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
+    const [nuevaFamilia, setNuevaFamilia] = useState({ nombre: '' });
 
     const [mostrarModal, setMostrarModal] = useState(false);
     const [nuevoMiembro, setNuevoMiembro] = useState({ email: '', parentesco: '' });
@@ -42,7 +48,21 @@ const Familia = () => {
             setIsLoading(false);
         }
     };
+    const handleCrearFamilia = async () => {
+        if (!nuevaFamilia.nombre.trim()) {
+            return alert("El nombre es obligatorio");
+        }
 
+        try {
+            await gestorFamilia.crearFamilia(nuevaFamilia.nombre.trim());
+            setMostrarModalCrear(false);
+            setNuevaFamilia({ nombre: '' });
+            await fetchMiFamilia();
+            alert("Familia creada correctamente");
+        } catch (error) {
+            alert(error.message);
+        }
+    };
     const handleAgregarMiembro = async () => {
         if (!nuevoMiembro.email.trim()) {
             return alert('Completa todos los campos');
@@ -81,36 +101,84 @@ const Familia = () => {
         );
     }
 
+    const esAdmin = rolUsuario === 'Administrador';
+
     if (!miFamilia) {
         return (
             <div className="familia-container">
                 <h2>Grupo Familiar</h2>
-                <p>No perteneces a ninguna familia actualmente.</p>
+                <div className="group-sin-familia">
+                    <p>No perteneces a ninguna familia actualmente.</p>
+                    {esAdmin && (
+                        <button
+                            className="btn-agregar"
+                            onClick={() => setMostrarModalCrear(true)}
+                        >
+                            <PlusCircle size={18} /> Crear Familia
+                        </button>
+                    )}
+                </div>
+
+                {mostrarModalCrear && (
+                    <div className="modal-overlay">
+                        <div className="modal">
+                            <div className="modal-header">
+                                <h3>Crear nueva familia</h3>
+                                <button className="btn-cerrar" onClick={() => setMostrarModalCrear(false)}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="modal-body">
+                                <label>Nombre de la familia</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: Familia Rodríguez"
+                                    value={nuevaFamilia.nombre}
+                                    onChange={(e) => setNuevaFamilia({ nombre: e.target.value })}
+                                />
+
+                                <button
+                                    className="btn-guardar"
+                                    onClick={handleCrearFamilia}
+                                >
+                                    Crear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
 
-    const esAdmin = rolUsuario === 'Administrador';
-
     return (
         <div className="familia-container">
-            <h2>{esAdmin ? 'Gestionar Grupo Familiar' : 'Mi Grupo Familiar'}</h2>
+            <div className="title-container">
+                <h2>{esAdmin ? 'Gestionar Grupo Familiar' : 'Mi Grupo Familiar'}</h2>
+                <div className="group-items">
+                    {esAdmin && (
+                        <>
+                            <button className="btn-agregar" onClick={() => setMostrarModal(true)}>
+                                <PlusCircle size={18} /> Agregar Miembro
+                            </button>
+                            <button className="btn-eliminar-familia" onClick={() => setMostrarEliminarFamilia(true)}>
+                                <Trash2 size={18} />
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
             <div className="familia-header">
                 <div className="familia-info">
                     <Home size={32} className="icono-familia" />
                     <div>
-                        <h2>{miFamilia.nombre}</h2>
+                        <h3>{miFamilia.nombre}</h3>
                         <p className="familia-nombre">
                             <FaUsers size={17} /> {miembros.length} {miembros.length > 1 ? 'miembros' : 'miembro'}
                         </p>
                     </div>
                 </div>
-                {esAdmin && (
-                    <button className="btn-agregar" onClick={() => setMostrarModal(true)}>
-                        <PlusCircle size={18} /> Agregar Miembro
-                    </button>
-                )}
-
             </div>
 
             <div className="tabla-miembros">
@@ -121,7 +189,7 @@ const Familia = () => {
                             <th>Miembro</th>
                             <th>Correo</th>
                             <th>Rol</th>
-                            {esAdmin && <th>Acciones</th>}
+                            {esAdmin && <th style={{ textAlign: 'center' }}>Acciones</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -140,23 +208,25 @@ const Familia = () => {
                                 <td>{m.correo}</td>
                                 <td>{m.rol}</td>
                                 {esAdmin && (
-                                    <td className="acciones">
-                                        {m.rol !== 'Administrador' && (
-                                            <button
-                                                className="btn-icono editar"
-                                                onClick={() => {
-                                                    setMiembroSeleccionado(m);
-                                                    setMostrarConfirmacion(true);
-                                                }}
-                                            >
-                                                <Edit size={16} />
-                                            </button>
-                                        )}
-                                        {m.rol !== 'Administrador' && (
-                                            <button className="btn-icono eliminar" onClick={() => handleEliminarMiembro(m)}>
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
+                                    <td>
+                                        <div className="acciones">
+                                            {m.rol !== 'Administrador' && (
+                                                <button
+                                                    className="btn-icono editar"
+                                                    onClick={() => {
+                                                        setMiembroSeleccionado(m);
+                                                        setMostrarConfirmacion(true);
+                                                    }}
+                                                >
+                                                    <ShieldUser size={16} />
+                                                </button>
+                                            )}
+                                            {m.rol !== 'Administrador' && (
+                                                <button className="btn-icono eliminar" onClick={() => handleEliminarMiembro(m)}>
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 )}
                             </tr>
@@ -165,64 +235,111 @@ const Familia = () => {
                 </table>
             </div>
 
-            {mostrarModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Agregar nuevo miembro</h3>
-                            <button className="btn-cerrar" onClick={() => { setMostrarModal(false); }}>
-                                <X size={20} />
-                            </button>
-                        </div>
+            {
+                mostrarModal && (
+                    <div className="modal-overlay">
+                        <div className="modal">
+                            <div className="modal-header">
+                                <h3>Agregar nuevo miembro</h3>
+                                <button className="btn-cerrar" onClick={() => { setMostrarModal(false); }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
 
-                        <div className="modal-body">
+                            <div className="modal-body">
 
-                            <label>Correo electrónico</label>
-                            <input
-                                type="email"
-                                placeholder="ejemplo@correo.com"
-                                value={nuevoMiembro.email}
-                                onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, email: e.target.value })}
-                            />
-                            <button className="btn-guardar" onClick={handleAgregarMiembro}>
-                                Guardar
-                            </button>
+                                <label>Correo electrónico</label>
+                                <input
+                                    type="email"
+                                    placeholder="ejemplo@correo.com"
+                                    value={nuevoMiembro.email}
+                                    onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, email: e.target.value })}
+                                />
+                                <button className="btn-guardar" onClick={handleAgregarMiembro}>
+                                    Guardar
+                                </button>
 
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {mostrarConfirmacion && (
+            {
+                mostrarConfirmacion && (
+                    <div className="modal-overlay">
+                        <div className="modal modal-confirmacion">
+                            <h3>¿Transferir rol de administrador?</h3>
+                            <p>
+                                Vas a pasar el rol de <strong>Administrador</strong> a{' '}
+                                <strong>{miembroSeleccionado?.nombre || miembroSeleccionado?.correo}</strong>.
+                            </p>
+                            <p className="alerta">⚠️ Dejarás de ser administrador de la familia.</p>
+
+                            <div className="modal-buttons">
+                                <button
+                                    className="btn-cancelar"
+                                    onClick={() => setMostrarConfirmacion(false)}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn-confirmar"
+                                    onClick={async () => {
+                                        try {
+                                            const adminActual = await gestorUsuario.obtenerUsuario();
+                                            await gestorFamilia.cambiarRolAdmin(
+                                                miFamilia.id,
+                                                miembroSeleccionado.id,
+                                                adminActual.id
+                                            );
+                                            setMostrarConfirmacion(false);
+                                            setMensajeExito('Rol de administrador transferido con éxito');
+                                            fetchMiFamilia();
+
+                                            setTimeout(() => setMensajeExito(''), 3000);
+                                        } catch (err) {
+                                            alert(err.message);
+                                        }
+                                    }}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {mostrarEliminarFamilia && (
                 <div className="modal-overlay">
-                    <div className="modal modal-confirmacion">
-                        <h3>¿Transferir rol de administrador?</h3>
+                    <div className="modal modal-eliminar">
+                        <h3>¿Eliminar familia?</h3>
                         <p>
-                            Vas a pasar el rol de <strong>Administrador</strong> a{' '}
-                            <strong>{miembroSeleccionado?.nombre || miembroSeleccionado?.correo}</strong>.
+                            Esta acción eliminará <strong>permanentemente</strong> la familia
+                            <strong> {miFamilia.nombre}</strong> y todos los miembros quedarán sin grupo.
                         </p>
-                        <p className="alerta">⚠️ Dejarás de ser administrador de la familia.</p>
+
+                        <p className="alerta">Esta acción no se puede deshacer.</p>
 
                         <div className="modal-buttons">
                             <button
                                 className="btn-cancelar"
-                                onClick={() => setMostrarConfirmacion(false)}
+                                onClick={() => setMostrarEliminarFamilia(false)}
                             >
                                 Cancelar
                             </button>
+
                             <button
-                                className="btn-confirmar"
+                                className="btn-confirmar eliminar"
                                 onClick={async () => {
                                     try {
-                                        const adminActual = await gestorUsuario.obtenerUsuario();
-                                        await gestorFamilia.cambiarRolAdmin(
-                                            miFamilia.id,
-                                            miembroSeleccionado.id,
-                                            adminActual.id
-                                        );
-                                        setMostrarConfirmacion(false);
-                                        setMensajeExito('Rol de administrador transferido con éxito');
-                                        fetchMiFamilia();
+                                        await gestorFamilia.eliminarFamilia();
+                                        setMostrarEliminarFamilia(false);
+                                        setMensajeExito('Familia eliminada correctamente');
+
+                                        // recargar datos
+                                        fetchMiFamilia?.();
 
                                         setTimeout(() => setMensajeExito(''), 3000);
                                     } catch (err) {
@@ -230,18 +347,20 @@ const Familia = () => {
                                     }
                                 }}
                             >
-                                Confirmar
+                                Eliminar
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {mensajeExito && (
-                <div className="toast-exito">
-                    <span>✅ {mensajeExito}</span>
-                </div>
-            )}
+            {
+                mensajeExito && (
+                    <div className="toast-exito">
+                        <span>{mensajeExito}</span>
+                    </div>
+                )
+            }
 
         </div >
     );
