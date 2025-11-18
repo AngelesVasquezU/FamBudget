@@ -101,8 +101,9 @@
 }
 
 .meta-fecha {
-    font-size: 0.85em;
-    color: #95a5a6;
+    font-size: 1em;
+    font-weight: 500;
+    color: #4a4d63;
     background: transparent;
     padding: 0;
     border-radius: 0;
@@ -116,18 +117,6 @@
     padding: 4px 8px;
     border-radius: 4px;
     text-transform: uppercase;
-}
-
-.meta-tipo.familiar {
-    background: #e9eff7;
-    color: #44669e;
-    border: 1px solid #44669e;
-}
-
-.meta-tipo.personal {
-    background: #f7f3e9;
-    color: #b96d3c;
-    border: 1px solid #b96d3c;
 }
 
 .meta-monto-info {
@@ -172,7 +161,7 @@
 
 .monto-valor {
     display: block;
-    font-size: 1.3em;
+    font-size: 1em;
     font-weight: bold;
     color: #2c3e50;
 }
@@ -236,6 +225,8 @@
     font-size: 0.85em;
     color: #7f8c8d;
     font-weight: 500;
+    margin-top: 14px;
+    margin-bottom: 14px;
 }
 
 .progreso-text .ahorrado {
@@ -340,38 +331,35 @@
     display: flex;
     gap: 10px;
     margin-top: 20px;
+    justify-content: end;
+    align-items: center;
+    width: 100%;
 }
 
 .editar-btn {
-    background: #44669e;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
     cursor: pointer;
-    font-weight: 600;
-    flex: 1;
-    transition: background 0.2s ease;
+    color: #11244b;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .editar-btn:hover {
-    background: #395484;
+    color: #233566;
+    transform: scale(1.1);
 }
 
 .aporte-btn {
-    background: #397960;
+    background: #2f3f6a;
     color: white;
     border: none;
     padding: 10px 15px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    flex: 1;
     transition: background 0.2s ease;
 }
 
 .aporte-btn:hover {
-    background: #4a9172;
+    background: #3a4c86;
 }
 
 .aporte-btn:disabled {
@@ -461,17 +449,17 @@
 }
 
 .metas-save-btn {
-    background: linear-gradient(135deg, #44669e, #1e2a44);
+    background: #2f3f6a;
     color: white;
     border: none;
-    padding: 14px 28px;
-    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.85em;
     transition: all 0.3s ease;
     flex: 1;
     min-width: 140px;
+    padding: 13px 15px;
+    border-radius: 6px;
 }
 
 .metas-save-btn:hover {
@@ -483,14 +471,14 @@
     background: #a23a3a;
     color: white;
     border: none;
-    padding: 14px 28px;
-    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.85em;
     transition: all 0.3s ease;
     flex: 1;
-    min-width: 120px;
+    min-width: 140px;
+    padding: 13px 15px;
+    border-radius: 6px;
 }
 
 .delete-btn:hover {
@@ -503,13 +491,14 @@
     background: #95a5a6;
     color: white;
     border: none;
-    padding: 14px 28px;
-    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    flex: 1;
+    font-size: 0.85em;
     transition: all 0.3s ease;
-    min-width: 120px;
+    flex: 1;
+    min-width: 140px;
+    padding: 13px 15px;
+    border-radius: 6px;
 }
 
 .cancel-btn:hover {
@@ -574,6 +563,31 @@
     font-size: 1.2em;
     color: #44669e;
     grid-column: 1 / -1;
+}
+
+.estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.estado.familiar {
+    background-color: #e6f4f6;
+    color: #056366;
+}
+
+.estado.personal {
+    background-color: #e6eeff;
+    color: #163e9d;
+}
+
+.estado .icon {
+    width: 16px;
+    height: 16px;
 }
 
 @media (max-width: 768px) {

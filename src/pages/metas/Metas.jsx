@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { GestorUsuario } from '../../api/GestorUsuario';
 import { GestorMetas } from '../../api/GestorMeta';
+import { HouseHeart } from 'lucide-react';
+import { UserRound } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import '../../styles/Metas.css';
 
 const Metas = () => {
@@ -447,32 +450,39 @@ const Metas = () => {
             ) : (
               metas.map(meta => (
                 <div key={meta.id} className="meta-card">
-                  <h4>{meta.nombre}</h4>
+                  <div className="meta-header-info">
+                    <h4>{meta.nombre}</h4>
+
+                    <Edit size={17} className="editar-btn"
+                      onClick={() => {
+                        setSelectedMetaId(meta.id);
+                        setShowForm(true);
+                      }} />
+
+                  </div>
                   <div className="meta-header-info">
                     <div className="meta-fecha">
                       Fecha límite: {new Date(meta.fecha_limite).toLocaleDateString()}
                     </div>
-                    <div className={`meta-tipo ${meta.es_familiar ? 'familiar' : 'personal'}`}>
-                      {meta.es_familiar ? '🏠 Familiar' : '👤 Personal'}
-                    </div>
+                    {meta.es_familiar ? (
+                      <span className="estado familiar">
+                        <HouseHeart className="icon" /> Familiar
+                      </span>
+                    ) : (
+                      <span className="estado personal">
+                        <UserRound className="icon" /> Personal
+                      </span>
+                    )}
                   </div>
 
-                  <div className="meta-monto-info">
-                    <div className="monto-item monto-meta">
-                      <span className="monto-label">Meta</span>
-                      <span className="monto-valor">{formatCurrency(meta.monto_objetivo)}</span>
-                    </div>
-                    <div className="monto-item monto-ahorrado">
-                      <span className="monto-label">Ahorrado</span>
-                      <span className="monto-valor">{formatCurrency(meta.monto_actual)}</span>
-                    </div>
-                    <div className="monto-item monto-restante">
-                      <span className="monto-label">Restante</span>
-                      <span className="monto-valor">{formatCurrency(calcularRestante(meta))}</span>
-                    </div>
-                  </div>
 
                   <div className="progreso-container">
+                    <div className="progreso-text">
+                      <div>
+                        <span className="monto-valor">Meta: {formatCurrency(meta.monto_objetivo)}</span>
+                      </div>
+                      <span>{calcularProgreso(meta).toFixed(1)}% completado</span>
+                    </div>
                     <div className="progreso-bar">
                       <div
                         className="progreso-fill"
@@ -480,21 +490,19 @@ const Metas = () => {
                       ></div>
                     </div>
                     <div className="progreso-text">
-                      <span>{calcularProgreso(meta).toFixed(1)}% completado</span>
-                      <span>{formatCurrency(meta.monto_actual)} de {formatCurrency(meta.monto_objetivo)}</span>
+                      <div>
+                        <span className="monto-valor">{formatCurrency(meta.monto_actual)}</span>
+                        <span>Ahorrado</span>
+                      </div>
+                      <div>
+                        <span className="monto-valor">{formatCurrency(calcularRestante(meta))}</span>
+                        <span>Restante</span>
+                      </div>
                     </div>
+
                   </div>
 
                   <div className="meta-actions">
-                    <button
-                      className="editar-btn"
-                      onClick={() => {
-                        setSelectedMetaId(meta.id);
-                        setShowForm(true);
-                      }}
-                    >
-                      Editar
-                    </button>
                     <button
                       className="aporte-btn"
                       onClick={() => handleAbrirAporteModal(meta)}
