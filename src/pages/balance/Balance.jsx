@@ -38,6 +38,10 @@ const Balance = () => {
   const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
   const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null); // Nuevo estado para el modal de comentario
 
+  // Estados para el modal de edición
+  const [movimientoEditando, setMovimientoEditando] = useState(null);
+  const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false);
+  const [guardandoCambios, setGuardandoCambios] = useState(false);
   // Inicializar gestores
   const gestores = (() => {
     try {
@@ -327,6 +331,56 @@ const Balance = () => {
     }
   };
 
+  // Función para abrir el modal de edición
+const abrirModalEdicion = (movimiento) => {
+  setMovimientoEditando(movimiento);
+  setModalEdicionAbierto(true);
+};
+
+// Función para cerrar el modal de edición
+const cerrarModalEdicion = () => {
+  setModalEdicionAbierto(false);
+  setMovimientoEditando(null);
+};
+
+// Función para guardar los cambios del movimiento
+const guardarMovimientoEditado = async () => {
+  if (!movimientoEditando || !gestores) return;
+
+  setGuardandoCambios(true);
+  
+  try {
+    const { error } = await supabase
+      .from('movimientos')
+      .update({
+        monto: movimientoEditando.monto,
+        fecha: movimientoEditando.fecha,
+        comentario: movimientoEditando.comentario,
+        // Agrega aquí otros campos que quieras editar
+      })
+      .eq('id', movimientoEditando.id);
+
+    if (error) throw error;
+
+    // Actualizar la lista de movimientos
+    setMovimientosConcepto(prev => 
+      prev.map(mov => 
+        mov.id === movimientoEditando.id ? movimientoEditando : mov
+      )
+    );
+
+    cerrarModalEdicion();
+    // Opcional: mostrar mensaje de éxito
+    alert('Movimiento actualizado correctamente');
+
+  } catch (error) {
+    console.error('Error al actualizar movimiento:', error);
+    setError('Error al actualizar el movimiento: ' + error.message);
+  } finally {
+    setGuardandoCambios(false);
+  }
+};
+
   const generarBalance = async () => {
     if (!gestores || !user) {
       setError("Gestores o usuario no disponibles");
@@ -595,7 +649,11 @@ const Balance = () => {
                                   )}
                               </td>
                               <td>
-                                <button className="btn-editar" title="Editar movimiento">
+                                <button 
+                                  className="btn-editar" 
+                                  title="Editar movimiento"
+                                  onClick={() => abrirModalEdicion(movimiento)}
+                                >
                                   <FaEdit size={14} />
                                 </button>
                               </td>
@@ -611,6 +669,82 @@ const Balance = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalEdicionAbierto && movimientoEditando && (
+        <div className="modal-edicion-overlay" onClick={cerrarModalEdicion}>
+          <div className="modal-edicion" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-edicion-header">
+              <h3>Editar Movimiento</h3>
+              <button 
+                className="cerrar-modal"
+                onClick={cerrarModalEdicion}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-edicion-content">
+              <div className="form-group">
+                <label>Monto:</label>
+                <input
+                  type="number"
+                  value={movimientoEditando.monto}
+                  onChange={(e) => setMovimientoEditando({
+                    ...movimientoEditando,
+                    monto: parseFloat(e.target.value)
+                  })}
+                  className="input-edicion"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Fecha:</label>
+                <input
+                  type="date"
+                  value={movimientoEditando.fecha}
+                  onChange={(e) => setMovimientoEditando({
+                    ...movimientoEditando,
+                    fecha: e.target.value
+                  })}
+                  className="input-edicion"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Comentario:</label>
+                <textarea
+                  value={movimientoEditando.comentario || ''}
+                  onChange={(e) => setMovimientoEditando({
+                    ...movimientoEditando,
+                    comentario: e.target.value
+                  })}
+                  className="textarea-edicion"
+                  rows="4"
+                  placeholder="Agregar comentario..."
+                />
+              </div>
+            </div>
+
+            <div className="modal-edicion-footer">
+              <button 
+                className="btn-cancelar"
+                onClick={cerrarModalEdicion}
+                disabled={guardandoCambios}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-guardar"
+                onClick={guardarMovimientoEditado}
+                disabled={guardandoCambios}
+              >
+                {guardandoCambios ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
             </div>
           </div>
         </div>
