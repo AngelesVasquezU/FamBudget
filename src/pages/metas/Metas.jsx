@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { GestorUsuario } from '../../api/GestorUsuario';
 import { GestorMetas } from '../../api/GestorMeta';
+import { HouseHeart } from 'lucide-react';
+import { UserRound } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import '../../styles/Metas.css';
 
 const Metas = () => {
@@ -28,8 +31,6 @@ const Metas = () => {
 
   const fetchDatosUsuario = async () => {
     try {
-      console.log('Iniciando obtención de datos del usuario...');
-
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
         console.error('Error de autenticación:', authError);
@@ -41,8 +42,6 @@ const Metas = () => {
         throw new Error('No hay usuario autenticado');
       }
 
-      console.log('Usuario autenticado:', user.id, user.email);
-
       const { data: usuarioData, error: userError } = await supabase
         .from('usuarios')
         .select('id, familia_id, nombre, correo, rol')
@@ -52,7 +51,6 @@ const Metas = () => {
       if (userError) {
         console.error('Error buscando usuario en BD:', userError);
 
-        console.log('Intentando búsqueda por correo...');
         const { data: usuarioPorCorreo, error: errorCorreo } = await supabase
           .from('usuarios')
           .select('id, familia_id, nombre, correo, rol')
@@ -65,13 +63,11 @@ const Metas = () => {
         }
 
         if (usuarioPorCorreo) {
-          console.log('Usuario encontrado por correo:', usuarioPorCorreo);
           return usuarioPorCorreo;
         }
       }
 
       if (usuarioData) {
-        console.log('Usuario encontrado por auth_id:', usuarioData);
         return usuarioData;
       } else {
         throw new Error('No se encontraron datos del usuario en la base de datos');
@@ -447,32 +443,42 @@ const Metas = () => {
             ) : (
               metas.map(meta => (
                 <div key={meta.id} className="meta-card">
-                  <h4>{meta.nombre}</h4>
+                  <div className="meta-header-info">
+                    <h4>{meta.nombre}</h4>
+                    {(
+                      (userData?.rol == 'Administrador') ||
+                      (userData?.rol == 'Miembro familiar' && !meta.es_familiar)
+                    ) && (
+                        <Edit size={17} className="editar-btn"
+                          onClick={() => {
+                            setSelectedMetaId(meta.id);
+                            setShowForm(true);
+                          }} />
+                      )}
+                  </div>
                   <div className="meta-header-info">
                     <div className="meta-fecha">
                       Fecha límite: {new Date(meta.fecha_limite).toLocaleDateString()}
                     </div>
-                    <div className={`meta-tipo ${meta.es_familiar ? 'familiar' : 'personal'}`}>
-                      {meta.es_familiar ? '🏠 Familiar' : '👤 Personal'}
-                    </div>
+                    {meta.es_familiar ? (
+                      <span className="estado familiar">
+                        <HouseHeart className="icon" /> Familiar
+                      </span>
+                    ) : (
+                      <span className="estado personal">
+                        <UserRound className="icon" /> Personal
+                      </span>
+                    )}
                   </div>
 
-                  <div className="meta-monto-info">
-                    <div className="monto-item monto-meta">
-                      <span className="monto-label">Meta</span>
-                      <span className="monto-valor">{formatCurrency(meta.monto_objetivo)}</span>
-                    </div>
-                    <div className="monto-item monto-ahorrado">
-                      <span className="monto-label">Ahorrado</span>
-                      <span className="monto-valor">{formatCurrency(meta.monto_actual)}</span>
-                    </div>
-                    <div className="monto-item monto-restante">
-                      <span className="monto-label">Restante</span>
-                      <span className="monto-valor">{formatCurrency(calcularRestante(meta))}</span>
-                    </div>
-                  </div>
 
                   <div className="progreso-container">
+                    <div className="progreso-text">
+                      <div>
+                        <span className="monto-valor">Meta: {formatCurrency(meta.monto_objetivo)}</span>
+                      </div>
+                      <span>{calcularProgreso(meta).toFixed(1)}% completado</span>
+                    </div>
                     <div className="progreso-bar">
                       <div
                         className="progreso-fill"
@@ -480,21 +486,19 @@ const Metas = () => {
                       ></div>
                     </div>
                     <div className="progreso-text">
-                      <span>{calcularProgreso(meta).toFixed(1)}% completado</span>
-                      <span>{formatCurrency(meta.monto_actual)} de {formatCurrency(meta.monto_objetivo)}</span>
+                      <div>
+                        <span className="monto-valor">{formatCurrency(meta.monto_actual)}</span>
+                        <span>Ahorrado</span>
+                      </div>
+                      <div>
+                        <span className="monto-valor">{formatCurrency(calcularRestante(meta))}</span>
+                        <span>Restante</span>
+                      </div>
                     </div>
+
                   </div>
 
                   <div className="meta-actions">
-                    <button
-                      className="editar-btn"
-                      onClick={() => {
-                        setSelectedMetaId(meta.id);
-                        setShowForm(true);
-                      }}
-                    >
-                      Editar
-                    </button>
                     <button
                       className="aporte-btn"
                       onClick={() => handleAbrirAporteModal(meta)}
@@ -513,7 +517,7 @@ const Metas = () => {
           <div className="metas-form">
             <h3>{selectedMetaId ? 'Editar Meta' : 'Nueva Meta'}</h3>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Nombre de la meta</label>
               <input
                 type="text"
@@ -524,7 +528,7 @@ const Metas = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Fecha límite</label>
               <input
                 type="date"
@@ -535,7 +539,7 @@ const Metas = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Monto objetivo (S/.)</label>
               <input
                 type="number"
@@ -548,8 +552,8 @@ const Metas = () => {
               />
             </div>
 
-            {userData?.familia_id && (
-              <div className="form-group checkbox-group">
+            {userData?.familia_id && userData?.rol == 'Administrador' && (
+              <div className="form-group-metas checkbox-group">
                 <label>
                   <input
                     type="checkbox"
@@ -607,7 +611,7 @@ const Metas = () => {
               </>
             )}
 
-            <div className="form-group">
+            <div className="form-group-metas">
               <label>Monto a asignar de ingresos (S/.)</label>
               <input
                 type="number"

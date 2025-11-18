@@ -91,7 +91,7 @@ const Dashboard = () => {
                 <tr key={m.id}>
                   <td>{m.comentario || "Sin descripcion"} </td>
                   <td>{m.conceptos.nombre}</td>
-                  <td>{new Date(m.fecha).toLocaleDateString()}</td>
+                  <td>{m.fecha}</td>
                   <td className={m.tipo === "egreso" ? "negativo" : "positivo"}>
                     {m.tipo === "egreso" ? "-" : "+"} S/. {m.monto}
                   </td>

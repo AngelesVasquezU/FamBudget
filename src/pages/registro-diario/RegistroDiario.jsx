@@ -5,6 +5,7 @@ import { GestorMovimiento } from "../../api/GestorMovimiento";
 import { GestorConcepto } from "../../api/GestorConcepto";
 import { GestorMetas } from "../../api/GestorMeta";
 import Button from '../../components/button/Button';
+import { CirclePlus } from 'lucide-react';
 
 import "../../styles/RegistroDiario.css";
 
@@ -172,47 +173,50 @@ const RegistroDiario = () => { // COD-001
       </div>
 
       <form className="registro-form" onSubmit={handleSubmit}>
-        <label>Fecha</label>
-        <input
-          type="date"
-          name="fecha"
-          value={form.fecha}
-          onChange={handleChange}
-          max={fechaActual}
-          required
-        />
-        <label>Concepto</label>
-        <div className="concepto-select-container">
-          <select
-            name="concepto_id"
-            value={form.concepto_id}
+        <div className="form-group-registro">
+          <label>Fecha</label>
+          <input
+            type="date"
+            name="fecha"
+            value={form.fecha}
             onChange={handleChange}
+            max={fechaActual}
             required
-            className="concepto-select"
-          >
-            <option value="">Selecciona un concepto</option>
-            {conceptos && conceptos.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => {
-              setNewConcept({ nombre: "", tipo: tipo, periodo: "diario" });
-              setShowNewConceptModal(true);
-            }}
-            className="btn-nuevo-concepto"
-          >
-            Nuevo
-          </button>
+          />
+        </div>
+        <div className="form-group-registro">
+          <label>Concepto</label>
+          <div className="concepto-select-container">
+            <select
+              name="concepto_id"
+              value={form.concepto_id}
+              onChange={handleChange}
+              required
+              className="concepto-select"
+            >
+              <option value="">Selecciona un concepto</option>
+              {conceptos && conceptos.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                setNewConcept({ nombre: "", tipo: tipo, periodo: "diario" });
+                setShowNewConceptModal(true);
+              }}
+              className="btn-nuevo-concepto"
+            >
+              <CirclePlus size={24} strokeWidth={2} />
+            </button>
+          </div>
         </div>
         {showNewConceptModal && (
           <div className="modal-overlay">
             <div className="modal-content">
               <h3>Nuevo Concepto</h3>
-
               <label>Nombre</label>
               <input
                 type="text"
@@ -247,62 +251,72 @@ const RegistroDiario = () => { // COD-001
           </div>
         )}
 
-        <label>Monto ({form.moneda})</label>
-        <input
-          type="number"
-          name="monto"
-          value={form.monto}
-          onChange={handleChange}
-          placeholder={`${form.moneda} 0.00`}
-          min={0.50}
-          step={0.10}
-          required
-        />
+        <div className="form-group-registro">
+          <label>Monto ({form.moneda})</label>
+          <input
+            type="number"
+            name="monto"
+            value={form.monto}
+            onChange={handleChange}
+            placeholder={`${form.moneda} 0.00`}
+            min={0.50}
+            step={0.10}
+            required
+          />
+        </div>
 
-        <label>Comenterio (opcional)</label>
-        <textarea
-          name="comentario"
-          value={form.comentario}
-          onChange={handleChange}
-          placeholder="Ej. compra de alimentos, salario mensual..."
-        ></textarea>
+        <div className="form-group-registro">
+          <label>Comenterio (opcional)</label>
+          <textarea
+            name="comentario"
+            value={form.comentario}
+            onChange={handleChange}
+            placeholder="Ej. compra de alimentos, salario mensual..."
+          ></textarea>
+        </div>
 
         {tipo === "ingreso" && (
           <>
             <hr />
             <h3>Meta (opcional)</h3>
 
-            <label>Meta asociada</label>
-            <select
-              name="meta_id"
-              value={form.meta_id}
-              onChange={handleChange}
-            >
-              <option value="">Ninguna</option>
-              {metas.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nombre}
-                </option>
-              ))}
-            </select>
+            <div className="form-group-registro">
+              <label>Meta asociada</label>
+              <select
+                name="meta_id"
+                value={form.meta_id}
+                onChange={handleChange}
+              >
+                <option value="">Ninguna</option>
+                {metas.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {form.meta_id && (
               <>
-                <label>Monto a destinar a la meta</label>
-                <input
-                  type="number"
-                  name="monto_meta"
-                  value={form.monto_meta}
-                  onChange={handleChange}
-                  placeholder={`${form.moneda} 0.00`}
-                  min={0.50}
-                  step={0.10}
-                />
+                <div className="form-group-registro">
+                  <label>Monto a destinar a la meta</label>
+                  <input
+                    type="number"
+                    name="monto_meta"
+                    value={form.monto_meta}
+                    onChange={handleChange}
+                    placeholder={`${form.moneda} 0.00`}
+                    min={0.50}
+                    step={0.10}
+                  />
+                </div>
               </>
             )}
           </>
         )}
-        <Button type="submit" mt="30px">Guardar Movimiento</Button>
+        <div class="btn-submit-registro">
+          <Button type="submit" >Guardar Movimiento</Button>
+        </div>
       </form>
       <p className={`mensaje ${tipoMensaje}`}>{message}</p>
 

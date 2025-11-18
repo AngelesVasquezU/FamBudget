@@ -3,6 +3,15 @@
     color: #1f2937;
 }
 
+.familia-container h2 {
+    margin-bottom: 20px;
+}
+
+.familia-container h3 {
+    font-size: 20px;
+    color: #1e2a44;
+}
+
 .familia-header {
     display: flex;
     justify-content: space-between;
@@ -28,7 +37,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background-color: #2563eb;
+    background-color: #284b96;
     color: white;
     border: none;
     border-radius: 8px;
@@ -38,7 +47,7 @@
 }
 
 .btn-agregar:hover {
-    background-color: #1e40af;
+    background-color: #4560b6;
 }
 
 .tabla-miembros {
@@ -161,7 +170,7 @@
 }
 
 .modal-body input {
-    padding: 0.6rem;
+    padding: 0.9rem;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -174,7 +183,7 @@
 }
 
 .btn-guardar {
-    background-color: #1976d2;
+    background-color: #2b3d76;
     color: white;
     border: none;
     border-radius: 8px;
@@ -189,7 +198,6 @@
     transform: scale(1.03);
 }
 
-/* --- Modal de confirmación --- */
 .modal-confirmacion {
     background: #fff;
     padding: 2rem;
@@ -251,7 +259,6 @@
     background: #1565c0;
 }
 
-/* --- Toast de éxito --- */
 .toast-exito {
     position: fixed;
     bottom: 20px;
@@ -263,6 +270,67 @@
     font-weight: 500;
     animation: aparecer 0.3s ease, desaparecer 0.3s ease 2.7s forwards;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.group-sin-familia {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.acciones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.group-items {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    gap: 12px;
+}
+
+.btn-eliminar-familia {
+    background: #d9534f;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.btn-eliminar-familia:hover {
+    background: #c9302c;
+}
+
+.modal-eliminar h3 {
+    color: #b00000;
+}
+
+.btn-confirmar.eliminar {
+    background: #d9534f;
+}
+
+.btn-confirmar.eliminar:hover {
+    background: #c9302c;
+}
+
+.alerta {
+    color: #b00000;
+    margin: 10px 0;
 }
 
 @keyframes fadeIn {

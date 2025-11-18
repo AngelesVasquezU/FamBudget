@@ -10,10 +10,10 @@ export class GestorFamilia {
         if (!user || !user.familia_id) return null;
 
         const { data, error } = await this.supabase
-        .from('familias')
-        .select('*')
-        .eq('id', user.familia_id)
-        .single();
+            .from('familias')
+            .select('*')
+            .eq('id', user.familia_id)
+            .single();
 
         if (error) throw error;
         return data;
@@ -22,9 +22,9 @@ export class GestorFamilia {
     //MCOD009-3
     async obtenerMiembros(familia_id) {
         const { data, error } = await this.supabase
-        .from('usuarios')
-        .select('id, nombre, correo, rol, parentesco')
-        .eq('familia_id', familia_id);
+            .from('usuarios')
+            .select('id, nombre, correo, rol, parentesco')
+            .eq('familia_id', familia_id);
 
         if (error) throw error;
         return data;
@@ -32,41 +32,51 @@ export class GestorFamilia {
 
     //MCOD009-4
     async crearFamilia(nombre) {
-    const { data, error } = await this.supabase
-        .from('familias')
-        .insert([{ nombre }])
-        .select()
-        .single();
-    if (error) throw error;
-    return data;
+        const user = await this.gestorUsuario.obtenerUsuario();
+        if (!user) throw new Error("No hay usuario autenticado");
+
+        const { data: familia, error: errorFamilia } = await this.supabase
+            .from('familias')
+            .insert([{ nombre }])
+            .select()
+            .single();
+        if (errorFamilia) throw errorFamilia;
+
+        const { error: errorUpdate } = await this.supabase
+            .from('usuarios')
+            .update({ familia_id: familia.id })
+            .eq('id', user.id);
+        if (errorUpdate) throw errorUpdate;
+
+        return familia;
     }
 
     //MCOD009-5
     async agregarMiembro(familia_id, correo, parentesco) {
-    const { data: usuario, error: errorUser } = await this.supabase
-        .from('usuarios')
-        .select('id, rol, familia_id')
-        .eq('correo', correo)
-        .single();
+        const { data: usuario, error: errorUser } = await this.supabase
+            .from('usuarios')
+            .select('id, rol, familia_id')
+            .eq('correo', correo)
+            .single();
 
-    if (errorUser || !usuario) throw new Error('Usuario no encontrado');
+        if (errorUser || !usuario) throw new Error('Usuario no encontrado');
 
-    if (usuario.rol === 'Administrador') {
-        throw new Error('No puedes agregar un administrador al grupo familiar');
-    }
+        if (usuario.rol === 'Administrador') {
+            throw new Error('No puedes agregar un administrador al grupo familiar');
+        }
 
-    if (usuario.familia_id && usuario.familia_id !== familia_id) {
-        throw new Error('Este usuario ya pertenece a otra familia');
-    }
+        if (usuario.familia_id && usuario.familia_id !== familia_id) {
+            throw new Error('Este usuario ya pertenece a otra familia');
+        }
 
-    const { error } = await this.supabase
-        .from('usuarios')
-        .update({ familia_id, parentesco })
-        .eq('id', usuario.id);
+        const { error } = await this.supabase
+            .from('usuarios')
+            .update({ familia_id, parentesco })
+            .eq('id', usuario.id);
 
-    if (error) throw error;
+        if (error) throw error;
 
-    return true;
+        return true;
     }
 
     //MCOD009-6
@@ -95,7 +105,7 @@ export class GestorFamilia {
         if (error) throw error;
         return true;
     }
-    
+
     //MCOD009-8
     async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
         const { data: miembro, error: errorMiembro } = await this.supabase
@@ -119,6 +129,41 @@ export class GestorFamilia {
             .eq("id", adminActualId);
 
         if (err1 || err2) throw new Error("Error al cambiar el rol");
+
+        return true;
+    }
+
+    //MCOD009-9
+    async eliminarFamilia() {
+        const user = await this.gestorUsuario.obtenerUsuario();
+        if (!user) throw new Error("No hay usuario autenticado");
+        if (!user.familia_id) throw new Error("No perteneces a ninguna familia");
+
+        if (user.rol !== "Administrador") {
+            throw new Error("Solo el administrador puede eliminar la familia");
+        }
+
+        const familiaId = user.familia_id;
+
+        const { error: errorMiembros } = await this.supabase
+            .from("usuarios")
+            .update({ familia_id: null, parentesco: null })
+            .eq("familia_id", familiaId)
+            .neq("rol", "Administrador");
+
+        if (errorMiembros) throw errorMiembros;
+
+        const { error: errorFamilia } = await this.supabase
+            .from("familias")
+            .delete()
+            .eq("id", familiaId);
+
+        await this.supabase
+            .from("usuarios")
+            .update({ familia_id: null, parentesco: null })
+            .eq("id", user.id);
+
+        if (errorFamilia) throw errorFamilia;
 
         return true;
     }

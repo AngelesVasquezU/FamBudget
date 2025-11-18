@@ -42,7 +42,7 @@ const Registro = () => { // COD008
       password,
       options: {
         data: {
-          parentesco: parentesco,
+          parentesco: parentesco || '',
           fullName: fullName,
           role: rol
         }
@@ -92,12 +92,11 @@ const Registro = () => { // COD008
             required
           />
           <Input
-            label="Parentesco"
+            label="Parentesco (opcional)"
             type="text"
-            name="fullName"
-            value={formData.fullName}
+            name="parentesco"
+            value={formData.parentesco}
             onChange={handleChange}
-            required
           />
           <Input
             label="Correo electrónico"
