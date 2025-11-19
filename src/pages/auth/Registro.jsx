@@ -36,7 +36,6 @@ const Registro = () => { // COD008
     }
 
     const rol = isAdmin ? 'Administrador' : 'Miembro familiar';
-    console.log("PARENTESCO QUE ESTOY ENVIANDO:", parentesco);
 
     const { error } = await supabase.auth.signUp({
       email,
