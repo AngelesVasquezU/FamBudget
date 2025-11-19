@@ -37,31 +37,63 @@ const Registro = () => { // COD008
 
     const rol = isAdmin ? 'Administrador' : 'Miembro familiar';
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          parentesco: parentesco || '',
-          fullName: fullName,
-          role: rol
+    try {
+      // 1. Registrar usuario en Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: rol
+          }
         }
+      });
+
+      if (authError) {
+        return setMessage(`Error al registrar usuario: ${authError.message}`);
       }
-    });
 
-    if (error) {
-      return setMessage(`Error al registrar usuario: ${error.message}`);
+      // 2. Crear o actualizar registro en la tabla usuarios
+      if (authData.user) {
+        console.log("Creando o actualizando registro en tabla usuarios...");
+        
+        const { error: dbError } = await supabase
+          .from('usuarios')
+          .upsert(
+            {
+              auth_id: authData.user.id,
+              nombre: fullName,
+              correo: email,
+              rol: rol,
+              parentesco: parentesco || null,
+              saldo_disponible: 0
+            },
+            { onConflict: 'auth_id' }
+          );
+
+        if (dbError) {
+          console.error('Error al upsert en usuarios:', dbError);
+          return setMessage(`Error al crear/actualizar el perfil: ${dbError.message}`);
+        }
+        
+        console.log("Registro en usuarios creado o actualizado exitosamente");
+      }
+
+      setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
+      setFormData({
+        email: '',
+        parentesco: '',
+        password: '',
+        confirmPassword: '',
+        fullName: '',
+        isAdmin: false
+      });
+
+    } catch (error) {
+      console.error('Error general:', error);
+      setMessage(`Error inesperado: ${error.message}`);
     }
-
-    setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
-    setFormData({
-      email: '',
-      parentesco: '',
-      password: '',
-      confirmPassword: '',
-      fullName: '',
-      isAdmin: false
-    });
   };
 
   return (
