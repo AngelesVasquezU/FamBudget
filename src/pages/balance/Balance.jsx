@@ -313,19 +313,16 @@ const Balance = () => {
         }
         const convertirFecha = (fechaStr) => {
           if (!fechaStr) return null;
-
-          // Si viene en formato ISO 'YYYY-MM-DD'
+          // Formato ISO 'YYYY-MM-DD'
           if (fechaStr.includes('-')) {
-            const [yyyy, mm, dd] = fechaStr.split('-');
+            const [yyyy, mm, dd] = fechaStr.split('-').map(Number);
             return new Date(yyyy, mm - 1, dd); // mes 0-indexed
           }
-
-          // Si viene en formato 'DD/MM/YYYY'
-          const parts = fechaStr.split('/');
-          if (parts.length === 3) {
-            return new Date(parts[2], parts[1] - 1, parts[0]);
+          // Formato 'DD/MM/YYYY'
+          if (fechaStr.includes('/')) {
+            const [dd, mm, yyyy] = fechaStr.split('/').map(Number);
+            return new Date(yyyy, mm - 1, dd);
           }
-
           return null;
         };
 
@@ -338,6 +335,9 @@ const Balance = () => {
           setGenerandoBalance(false);
           return;
         }
+        const formatDateToISO = (dateObj) => dateObj.toISOString().split('T')[0];
+        fechaInicioPeriodo = formatDateToISO(fechaInicioPeriodo);
+        fechaFinPeriodo = formatDateToISO(fechaFinPeriodo);
 
       } else {
         ({ fechaInicioPeriodo, fechaFinPeriodo } = calcularRangoPorPeriodo(periodo, fechaInicio, fechaFin));
@@ -481,64 +481,167 @@ const Balance = () => {
       fin: fechaFinFiltro.toISOString()
     };
   };
-
-
-  const agruparMovimientos = (movimientos, granularidad) => {
-    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const agruparMovimientos = (movimientos, granularidad, fechaInicioObj, fechaFinObj) => {
     const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const grupos = {};
 
-    movimientos.forEach((m) => {
+    // Función auxiliar para obtener el inicio de semana (domingo)
+    const obtenerInicioSemana = (fecha) => {
+      const d = new Date(fecha);
+      d.setDate(d.getDate() - d.getDay());
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+    // Función auxiliar para obtener el fin de semana (sábado)
+    const obtenerFinSemana = (inicioSemana) => {
+      const d = new Date(inicioSemana);
+      d.setDate(d.getDate() + 6);
+      d.setHours(23, 59, 59, 999);
+      return d;
+    };
+
+    // Función para generar clave de semana
+    const generarClaveSemana = (fecha) => {
+      let inicioSemana = obtenerInicioSemana(fecha);
+      let finSemana = obtenerFinSemana(inicioSemana);
+
+      // Recortar al rango permitido
+      if (inicioSemana < fechaInicioObj) {
+        inicioSemana = new Date(fechaInicioObj);
+      }
+      if (finSemana > fechaFinObj) {
+        finSemana = new Date(fechaFinObj);
+      }
+
+      return `${inicioSemana.toISOString().split("T")[0]}_${finSemana.toISOString().split("T")[0]}`;
+    };
+
+    // ---------- Generación de periodos ----------
+    const generarDias = () => {
+      let current = new Date(fechaInicioObj);
+      while (current <= fechaFinObj) {
+        const start = new Date(current);
+        const key = start.toISOString().split("T")[0];
+        const label = `${diasSemana[start.getDay()]} ${start.getDate()} ${meses[start.getMonth()]}`;
+        grupos[key] = { ingresos: 0, egresos: 0, label, fechaInicio: key, fechaFin: key };
+        current.setDate(current.getDate() + 1);
+      }
+    };
+
+    const generarSemanas = () => {
+      let current = obtenerInicioSemana(fechaInicioObj);
+
+      while (current <= fechaFinObj) {
+        let start = new Date(current);
+        let end = obtenerFinSemana(start);
+
+        // Recortar al rango real
+        if (start < fechaInicioObj) start = new Date(fechaInicioObj);
+        if (end > fechaFinObj) end = new Date(fechaFinObj);
+
+        const key = `${start.toISOString().split("T")[0]}_${end.toISOString().split("T")[0]}`;
+        const label = `${diasSemana[start.getDay()]} ${start.getDate()} ${meses[start.getMonth()]} - ${diasSemana[end.getDay()]} ${end.getDate()} ${meses[end.getMonth()]}`;
+        grupos[key] = {
+          ingresos: 0,
+          egresos: 0,
+          label,
+          fechaInicio: start.toISOString().split("T")[0],
+          fechaFin: end.toISOString().split("T")[0]
+        };
+
+        current.setDate(current.getDate() + 7);
+      }
+    };
+
+    const generarMeses = () => {
+      let current = new Date(fechaInicioObj.getFullYear(), fechaInicioObj.getMonth(), 1);
+      const finMes = new Date(fechaFinObj.getFullYear(), fechaFinObj.getMonth(), 1);
+
+      while (current <= finMes) {
+        const start = new Date(current.getFullYear(), current.getMonth(), 1);
+        const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+
+        // Recortar al rango
+        let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
+        let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
+
+        const key = `${start.getFullYear()}-${(start.getMonth() + 1).toString().padStart(2, "0")}`;
+        const label = meses[start.getMonth()];
+        grupos[key] = {
+          ingresos: 0,
+          egresos: 0,
+          label,
+          fechaInicio: startRecortado.toISOString().split("T")[0],
+          fechaFin: endRecortado.toISOString().split("T")[0]
+        };
+
+        current.setMonth(current.getMonth() + 1);
+      }
+    };
+
+    const generarTrimestres = () => {
+      let current = new Date(fechaInicioObj.getFullYear(), Math.floor(fechaInicioObj.getMonth() / 3) * 3, 1);
+      const finTrim = new Date(fechaFinObj.getFullYear(), Math.floor(fechaFinObj.getMonth() / 3) * 3, 1);
+
+      while (current <= finTrim) {
+        const start = new Date(current.getFullYear(), current.getMonth(), 1);
+        const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
+
+        // Recortar al rango
+        let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
+        let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
+
+        const trimestre = Math.floor(start.getMonth() / 3) + 1;
+        const key = `Q${trimestre}_${start.getFullYear()}`;
+        const label = `${meses[start.getMonth()]} - ${meses[end.getMonth()]}`;
+        grupos[key] = {
+          ingresos: 0,
+          egresos: 0,
+          label,
+          fechaInicio: startRecortado.toISOString().split("T")[0],
+          fechaFin: endRecortado.toISOString().split("T")[0]
+        };
+
+        current.setMonth(current.getMonth() + 3);
+      }
+    };
+
+    // ---------- Inicializar periodos ----------
+    if (granularidad === "dia") generarDias();
+    else if (granularidad === "semana") generarSemanas();
+    else if (granularidad === "mes") generarMeses();
+    else if (granularidad === "trimestre") generarTrimestres();
+
+    // ---------- Sumar movimientos ----------
+    movimientos.forEach(m => {
       const fecha = new Date(m.fecha);
-      let key, label, fechaInicio, fechaFin;
+      let key;
 
       if (granularidad === "dia") {
         key = fecha.toISOString().split("T")[0];
-        label = `${diasSemana[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]}`;
-        fechaInicio = key;
-        fechaFin = key;
-
       } else if (granularidad === "semana") {
-        const primerDiaAno = new Date(fecha.getFullYear(), 0, 1);
-        const semanaNum = Math.ceil(((fecha - primerDiaAno) / 86400000 + primerDiaAno.getDay() + 1) / 7);
-        key = `Semana ${semanaNum}`;
-
-        fechaInicio = new Date(primerDiaAno.getTime() + (semanaNum - 1) * 7 * 86400000);
-        fechaFin = new Date(fechaInicio.getTime() + 6 * 86400000);
-        label = `${diasSemana[fechaInicio.getDay()]} ${fechaInicio.getDate()} ${meses[fechaInicio.getMonth()]} - ${diasSemana[fechaFin.getDay()]} ${fechaFin.getDate()} ${meses[fechaFin.getMonth()]}`;
-
-        fechaInicio = fechaInicio.toISOString().split("T")[0];
-        fechaFin = fechaFin.toISOString().split("T")[0];
-
+        key = generarClaveSemana(fecha);
       } else if (granularidad === "mes") {
         key = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, "0")}`;
-        fechaInicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
-        fechaFin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
-        label = meses[fecha.getMonth()];
-
-        fechaInicio = fechaInicio.toISOString().split("T")[0];
-        fechaFin = fechaFin.toISOString().split("T")[0];
-
       } else if (granularidad === "trimestre") {
         const trimestre = Math.floor(fecha.getMonth() / 3) + 1;
-        key = `Q${trimestre} ${fecha.getFullYear()}`;
-        const primerMes = (trimestre - 1) * 3;
-        fechaInicio = new Date(fecha.getFullYear(), primerMes, 1);
-        fechaFin = new Date(fecha.getFullYear(), primerMes + 3, 0);
-
-        label = `${meses[primerMes]}-${meses[primerMes + 2]}`;
-
-        fechaInicio = fechaInicio.toISOString().split("T")[0];
-        fechaFin = fechaFin.toISOString().split("T")[0];
+        key = `Q${trimestre}_${fecha.getFullYear()}`;
       }
 
-      if (!grupos[key]) grupos[key] = { ingresos: 0, egresos: 0, label, fechaInicio, fechaFin };
+      if (!grupos[key]) {
+        console.warn(`Clave no encontrada: ${key} para fecha ${m.fecha}`);
+        return;
+      }
+
       if (m.tipo === "ingreso") grupos[key].ingresos += Number(m.monto);
       else grupos[key].egresos += Number(m.monto);
     });
 
     return Object.values(grupos);
   };
+
 
 
 
@@ -908,30 +1011,18 @@ const Balance = () => {
           return new Date(year, month - 1, day); // mes 0-11 en JS
         };
 
-        // const fechaInicioObj = parseFecha(balanceData.fechas.inicio);
-        // const fechaFinObj = parseFecha(balanceData.fechas.fin);
         const fechaInicioObj = parseFecha(fechaInicio);
         const fechaFinObj = parseFecha(fechaFin);
 
-        console.log("fecha inicio general: ", fechaInicio);
-        console.log("fecha fin en general: ", fechaFin);
-        console.log("fecha inicio de balance data: ", balanceData.fechas.inicio);
-        console.log("fecha fin de balance data: ", balanceData.fechas.fin);
-        console.log("fecha inicio: ", fechaInicioObj);
-        console.log("fecha fin: ", fechaFinObj);
-
         const dias = Math.ceil((fechaFinObj - fechaInicioObj) / (1000 * 60 * 60 * 24)) + 1;
-
-        console.log("Dias calculados: ", dias);
 
         let granularidad;
         if (dias <= 7) granularidad = "dia";
         else if (dias <= 35) granularidad = "semana";
         else if (dias <= 120) granularidad = "mes";
         else granularidad = "trimestre";
-        console.log("Granularidad: ", granularidad);
 
-        const graficoData = agruparMovimientos(balanceData.movimientos, granularidad);
+        const graficoData = agruparMovimientos(balanceData.movimientos, granularidad, fechaInicioObj, fechaFinObj);
 
         return (
           <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
@@ -997,13 +1088,14 @@ const Balance = () => {
                         {balanceData.resumen.tendencia}
                       </span>
                       <div className="ahorro-linea">
-                        <span>Ahorro</span>
+                        <span>Balance</span>
                         <span className={`ahorro-monto ${balanceData.resumen.ahorro >= 0 ? 'positivo' : 'negativo'}`}>
                           {formatCurrency(balanceData.resumen.ahorro)}
                         </span>
                       </div>
                     </div>
                   </div>
+
                   <div style={{ width: "100%", height: 300, minHeight: 300, marginTop: "20px" }}>
                     <BalanceChart data={graficoData} />
                   </div>
