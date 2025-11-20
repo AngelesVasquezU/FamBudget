@@ -3,7 +3,8 @@ export class GestorUsuario { // COD-006
     this.supabase = supabase;
   }
 
-  async obtenerIdUsuario() {  // MCOD006-2
+  // MCOD006-2
+  async obtenerIdUsuario() {
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
       if (error) throw error;
@@ -24,7 +25,8 @@ export class GestorUsuario { // COD-006
     }
   }
 
-  async obtenerUsuario() { // MCOD006-3
+  // MCOD006-3
+  async obtenerUsuario() {
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
       if (error) throw error;
@@ -43,5 +45,20 @@ export class GestorUsuario { // COD-006
       console.error("GestorUsuario error:", err);
       return null;
     }
+  }
+
+  // MCOD006-4
+  async obtenerUsuariosDeMiFamilia() {
+    const user = await this.obtenerUsuario();
+    if (!user || !user.familia_id) return [];
+
+    const { data, error } = await this.supabase
+      .from("usuarios")
+      .select("id, nombre, correo, rol")
+      .eq("familia_id", user.familia_id);
+
+    if (error) throw error;
+
+    return data;
   }
 }

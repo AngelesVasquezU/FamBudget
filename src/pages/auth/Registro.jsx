@@ -42,7 +42,7 @@ const Registro = () => { // COD008
       password,
       options: {
         data: {
-          parentesco: parentesco || '',
+          parentesco: parentesco?.trim() || null,
           fullName: fullName,
           role: rol
         }
