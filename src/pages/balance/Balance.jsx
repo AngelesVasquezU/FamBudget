@@ -18,8 +18,8 @@ const formatCurrency = (amount) => {
 const Balance = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [periodo, setPeriodo] = useState('');
   const [tipoBalance, setTipoBalance] = useState('');
-  const [tipoMovimiento, setTipoMovimiento] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [topEgresos, setTopEgresos] = useState([]);
@@ -56,7 +56,7 @@ const Balance = () => {
 
       const gestorUsuario = new GestorUsuario(supabase);
       const gestorMeta = new GestorMetas(supabase, gestorUsuario);
-      const gestorMovimiento = new GestorMovimiento(supabase, gestorMeta);
+      const gestorMovimiento = new GestorMovimiento(supabase, gestorMeta, gestorUsuario);
       const gestorConcepto = new GestorConcepto(supabase, gestorUsuario);
 
       return {
@@ -292,8 +292,8 @@ const Balance = () => {
       return;
     }
 
-    if (!tipoBalance || !tipoMovimiento) {
-      alert('Por favor selecciona tipo de balance y tipo de movimiento');
+    if (!tipoBalance || !periodo) {
+      alert('Selecciona tipo de balance y periodo');
       return;
     }
 
@@ -301,240 +301,91 @@ const Balance = () => {
     setError(null);
 
     try {
-      const user_id = user.id;
+      const userId = user.id;
+      let fechaInicioPeriodo, fechaFinPeriodo;
 
-      // Convertir fechas de DD/MM/AAAA a AAAA-MM-DD para Supabase
-      const convertirFecha = (fechaStr) => {
-        if (!fechaStr) return null;
-
-        // Si ya está en formato AAAA-MM-DD, retornar directamente
-        if (fechaStr.includes('-')) {
-          return fechaStr;
+      // --- Manejo de fechas según el periodo ---
+      if (periodo === 'personalizado') {
+        if (!fechaInicio || !fechaFin) {
+          alert("Por favor ingresa fechas válidas para el balance personalizado.");
+          setGenerandoBalance(false);
+          return;
         }
+        const convertirFecha = (fechaStr) => {
+          if (!fechaStr) return null;
 
-        // Convertir de DD/MM/AAAA a AAAA-MM-DD
-        const parts = fechaStr.split('/');
-        if (parts.length === 3) {
-          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        }
-        return fechaStr;
-      };
-
-      const fechaInicioISO = convertirFecha(fechaInicio);
-      const fechaFinISO = convertirFecha(fechaFin);
-
-      console.log('Fechas convertidas:', { fechaInicioISO, fechaFinISO });
-
-      if (!fechaInicioISO || !fechaFinISO) {
-        alert('Por favor ingresa fechas válidas en formato DD/MM/AAAA');
-        setGenerandoBalance(false);
-        return;
-      }
-
-      // Obtener datos del usuario y familia
-      const { data: usuario, error: errorUsuario } = await supabase
-        .from('usuarios')
-        .select('familia_id, saldo_disponible')
-        .eq('id', user_id)
-        .single();
-
-      if (errorUsuario) throw errorUsuario;
-
-      let movimientos = [];
-      let totalIngresos = 0;
-      let totalEgresos = 0;
-
-      // Configurar consulta base
-      let query = supabase
-        .from('movimientos')
-        .select(`
-        *,
-        conceptos:concepto_id(nombre, tipo)
-      `)
-        .gte('fecha', fechaInicioISO)
-        .lte('fecha', fechaFinISO)
-        .order('fecha', { ascending: false });
-
-      // Aplicar filtro de tipo de balance (personal o familiar)
-      if (tipoBalance === 'personal') {
-        query = query.eq('usuario_id', user_id);
-      } else if (tipoBalance === 'familiar' && usuario.familia_id) {
-        // Obtener todos los usuarios de la misma familia
-        const { data: usuariosFamilia, error: errorFamilia } = await supabase
-          .from('usuarios')
-          .select('id')
-          .eq('familia_id', usuario.familia_id);
-
-        if (errorFamilia) throw errorFamilia;
-
-        const usuariosIds = usuariosFamilia.map(u => u.id);
-
-        // Filtrar movimientos por los IDs de usuarios de la familia
-        query = query.in('usuario_id', usuariosIds);
-      } else if (tipoBalance === 'familiar' && !usuario.familia_id) {
-        alert('No perteneces a una familia. Mostrando balance personal.');
-        query = query.eq('usuario_id', user_id);
-      }
-
-      // Obtener movimientos según el tipo seleccionado
-      if (tipoMovimiento === 'todos') {
-        const { data: movimientosData, error } = await query;
-        if (error) throw error;
-        movimientos = movimientosData || [];
-
-        // Calcular totales
-        totalIngresos = movimientos
-          .filter(mov => mov.conceptos?.tipo === 'ingreso')
-          .reduce((sum, mov) => sum + parseFloat(mov.monto || 0), 0);
-
-        totalEgresos = movimientos
-          .filter(mov => mov.conceptos?.tipo === 'egreso')
-          .reduce((sum, mov) => sum + parseFloat(mov.monto || 0), 0);
-
-      } else if (tipoMovimiento === 'ahorro') {
-        // Consulta específica para ahorros
-        let ahorroQuery = supabase
-          .from('ahorro')
-          .select(`
-          *,
-          metas:meta_id(nombre),
-          movimientos:movimiento_id(*, conceptos:concepto_id(nombre, tipo))
-        `)
-          .gte('fecha_aporte', fechaInicioISO)
-          .lte('fecha_aporte', fechaFinISO);
-
-        // Para ahorros familiares, obtener ahorros de todos los usuarios de la familia
-        if (tipoBalance === 'familiar' && usuario.familia_id) {
-          const { data: usuariosFamilia, error: errorFamilia } = await supabase
-            .from('usuarios')
-            .select('id')
-            .eq('familia_id', usuario.familia_id);
-
-          if (errorFamilia) throw errorFamilia;
-
-          const usuariosIds = usuariosFamilia.map(u => u.id);
-
-          // Obtener metas de la familia o de los usuarios de la familia
-          const { data: metasFamilia, error: errorMetas } = await supabase
-            .from('metas')
-            .select('id')
-            .or(`familia_id.eq.${usuario.familia_id},usuario_id.in.(${usuariosIds.join(',')})`);
-
-          if (errorMetas) throw errorMetas;
-
-          const metasIds = metasFamilia.map(m => m.id);
-          ahorroQuery = ahorroQuery.in('meta_id', metasIds);
-        } else {
-          // Balance personal para ahorros
-          ahorroQuery = ahorroQuery.eq('metas.usuario_id', user_id);
-        }
-
-        const { data: ahorros, error: errorAhorros } = await ahorroQuery;
-        if (errorAhorros) throw errorAhorros;
-
-        const totalAhorro = ahorros?.reduce((sum, ahorro) => sum + parseFloat(ahorro.monto || 0), 0) || 0;
-
-        setBalanceData({
-          tipo: 'ahorro',
-          total: totalAhorro,
-          movimientos: ahorros?.map(ahorro => ({
-            id: ahorro.id,
-            monto: ahorro.monto,
-            fecha: ahorro.fecha_aporte,
-            concepto: ahorro.metas?.nombre || 'Ahorro',
-            tipo: 'ahorro'
-          })) || [],
-          resumen: {
-            totalIngresos: 0,
-            totalEgresos: 0,
-            ahorro: totalAhorro,
-            tendencia: totalAhorro > 0 ? 'Positiva' : 'Negativa',
-            conceptos: [
-              {
-                nombre: 'Ahorro',
-                ingresos: totalAhorro,
-                egresos: 0,
-                fechas: ahorros?.map(a => a.fecha_aporte?.split('T')[0]) || []
-              }
-            ]
+          // Si viene en formato ISO 'YYYY-MM-DD'
+          if (fechaStr.includes('-')) {
+            const [yyyy, mm, dd] = fechaStr.split('-');
+            return new Date(yyyy, mm - 1, dd); // mes 0-indexed
           }
-        });
-        setModalBalanceAbierto(true);
-        return;
+
+          // Si viene en formato 'DD/MM/YYYY'
+          const parts = fechaStr.split('/');
+          if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+          }
+
+          return null;
+        };
+
+
+        fechaInicioPeriodo = convertirFecha(fechaInicio);
+        fechaFinPeriodo = convertirFecha(fechaFin);
+
+        if (!fechaInicioPeriodo || !fechaFinPeriodo) {
+          alert("Formato de fecha inválido. Usa DD/MM/AAAA");
+          setGenerandoBalance(false);
+          return;
+        }
+
       } else {
-        // Para ingreso o egreso específico
-        const { data: movimientosData, error } = await query;
-        if (error) throw error;
-
-        // Filtrar por tipo de movimiento
-        movimientos = (movimientosData || []).filter(mov => mov.conceptos?.tipo === tipoMovimiento);
-
-        if (tipoMovimiento === 'ingreso') {
-          totalIngresos = movimientos.reduce((sum, mov) => sum + parseFloat(mov.monto || 0), 0);
-        } else {
-          totalEgresos = movimientos.reduce((sum, mov) => sum + parseFloat(mov.monto || 0), 0);
-        }
+        ({ fechaInicioPeriodo, fechaFinPeriodo } = calcularRangoPorPeriodo(periodo, fechaInicio, fechaFin));
       }
 
-      console.log('Movimientos obtenidos:', movimientos);
-      console.log('Totales calculados:', { totalIngresos, totalEgresos });
+      const balance = await gestores.gestorMovimiento.obtenerBalanceEntreFechas({
+        fechaInicio: fechaInicioPeriodo,
+        fechaFin: fechaFinPeriodo,
+        tipo: tipoBalance,
+        usuarioId: userId
+      });
 
-      // Agrupar movimientos por concepto para el formato de imagen
       const conceptosMap = {};
+      balance.movimientos.forEach(m => {
+        const conceptoId = m.concepto_id || m.id;
+        const nombre = m.conceptos?.nombre || m.concepto || 'Sin concepto';
+        const tipo = m.conceptos?.tipo || m.tipo;
+        const monto = Number(m.monto);
+        const fecha = m.fecha?.split('T')[0];
 
-      movimientos?.forEach(mov => {
-        if (mov.conceptos && mov.conceptos.nombre) {
-          const conceptoId = mov.conceptos.id;
-          const nombre = mov.conceptos.nombre;
-          const tipo = mov.conceptos.tipo;
-          const monto = parseFloat(mov.monto) || 0;
-          const fecha = mov.fecha?.split('T')[0];
+        if (!conceptosMap[conceptoId]) {
+          conceptosMap[conceptoId] = { id: conceptoId, nombre, tipo, ingresos: 0, egresos: 0, fechas: [] };
+        }
 
-          if (!conceptosMap[conceptoId]) {
-            conceptosMap[conceptoId] = {
-              id: conceptoId,
-              nombre: nombre,
-              tipo: tipo,
-              ingresos: 0,
-              egresos: 0,
-              fechas: []
-            };
-          }
+        if (tipo === 'ingreso') conceptosMap[conceptoId].ingresos += monto;
+        else if (tipo === 'egreso') conceptosMap[conceptoId].egresos += monto;
 
-          if (tipo === 'ingreso') {
-            conceptosMap[conceptoId].ingresos += monto;
-          } else {
-            conceptosMap[conceptoId].egresos += monto;
-          }
-
-          if (fecha && !conceptosMap[conceptoId].fechas.includes(fecha)) {
-            conceptosMap[conceptoId].fechas.push(fecha);
-          }
+        if (fecha && !conceptosMap[conceptoId].fechas.includes(fecha)) {
+          conceptosMap[conceptoId].fechas.push(fecha);
         }
       });
-      console.log('ConceptosMap después de agrupar:', conceptosMap);
-      const ahorro = totalIngresos - totalEgresos;
+
+      const ahorro = balance.totales.ingresos - balance.totales.egresos;
 
       setBalanceData({
-        tipo: tipoMovimiento,
-        total: tipoMovimiento === 'ingreso' ? totalIngresos : tipoMovimiento === 'egreso' ? totalEgresos : totalIngresos - totalEgresos,
-        movimientos: movimientos.map(mov => ({
-          id: mov.id,
-          monto: mov.monto,
-          fecha: mov.fecha,
-          concepto: mov.conceptos?.nombre,
-          tipo: mov.conceptos?.tipo || mov.tipo
-        })),
+        tipo: tipoBalance,
+        total: ahorro,
+        movimientos: balance.movimientos,
+        fechas: { inicio: fechaInicioPeriodo, fin: fechaFinPeriodo },
         resumen: {
-          totalIngresos,
-          totalEgresos,
+          totalIngresos: balance.totales.ingresos,
+          totalEgresos: balance.totales.egresos,
           ahorro,
           tendencia: ahorro >= 0 ? 'Positiva' : 'Negativa',
           conceptos: Object.values(conceptosMap)
         }
       });
 
-      // Abrir el modal después de generar los datos
       setModalBalanceAbierto(true);
 
     } catch (error) {
@@ -544,6 +395,55 @@ const Balance = () => {
       setGenerandoBalance(false);
     }
   };
+
+
+
+  // Función para obtener el rango de fechas según el periodo y en caso sea personalizado
+  const calcularRangoPorPeriodo = (periodo) => {
+    const hoy = new Date();
+    let fechaInicioPeriodo, fechaFinPeriodo;
+
+    const formatDate = (date) => date.toISOString().split('T')[0];
+
+    switch (periodo) {
+      case 'hoy':
+        fechaInicioPeriodo = formatDate(hoy);
+        fechaFinPeriodo = formatDate(hoy);
+        break;
+
+      case '7dias':
+        fechaInicioPeriodo = formatDate(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6));
+        fechaFinPeriodo = formatDate(hoy);
+        break;
+
+      case '30dias':
+        fechaInicioPeriodo = formatDate(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 29));
+        fechaFinPeriodo = formatDate(hoy);
+        break;
+
+      case 'mes_actual':
+        fechaInicioPeriodo = formatDate(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+        fechaFinPeriodo = formatDate(hoy);
+        break;
+
+      case 'año_actual':
+        fechaInicioPeriodo = formatDate(new Date(hoy.getFullYear(), 0, 1));
+        fechaFinPeriodo = formatDate(hoy);
+        break;
+
+      case 'personalizado':
+        fechaInicioPeriodo = fechaInicio;
+        fechaFinPeriodo = fechaFin;
+        break;
+
+      default:
+        fechaInicioPeriodo = formatDate(hoy);
+        fechaFinPeriodo = formatDate(hoy);
+    }
+
+    return { fechaInicioPeriodo, fechaFinPeriodo };
+  };
+
 
   // Función auxiliar para obtener el rango de fechas según el filtro
   const obtenerRangoFechas = (filtro) => {
@@ -581,6 +481,66 @@ const Balance = () => {
       fin: fechaFinFiltro.toISOString()
     };
   };
+
+
+  const agruparMovimientos = (movimientos, granularidad) => {
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const grupos = {};
+
+    movimientos.forEach((m) => {
+      const fecha = new Date(m.fecha);
+      let key, label, fechaInicio, fechaFin;
+
+      if (granularidad === "dia") {
+        key = fecha.toISOString().split("T")[0];
+        label = `${diasSemana[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]}`;
+        fechaInicio = key;
+        fechaFin = key;
+
+      } else if (granularidad === "semana") {
+        const primerDiaAno = new Date(fecha.getFullYear(), 0, 1);
+        const semanaNum = Math.ceil(((fecha - primerDiaAno) / 86400000 + primerDiaAno.getDay() + 1) / 7);
+        key = `Semana ${semanaNum}`;
+
+        fechaInicio = new Date(primerDiaAno.getTime() + (semanaNum - 1) * 7 * 86400000);
+        fechaFin = new Date(fechaInicio.getTime() + 6 * 86400000);
+        label = `${diasSemana[fechaInicio.getDay()]} ${fechaInicio.getDate()} ${meses[fechaInicio.getMonth()]} - ${diasSemana[fechaFin.getDay()]} ${fechaFin.getDate()} ${meses[fechaFin.getMonth()]}`;
+
+        fechaInicio = fechaInicio.toISOString().split("T")[0];
+        fechaFin = fechaFin.toISOString().split("T")[0];
+
+      } else if (granularidad === "mes") {
+        key = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, "0")}`;
+        fechaInicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+        fechaFin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+        label = meses[fecha.getMonth()];
+
+        fechaInicio = fechaInicio.toISOString().split("T")[0];
+        fechaFin = fechaFin.toISOString().split("T")[0];
+
+      } else if (granularidad === "trimestre") {
+        const trimestre = Math.floor(fecha.getMonth() / 3) + 1;
+        key = `Q${trimestre} ${fecha.getFullYear()}`;
+        const primerMes = (trimestre - 1) * 3;
+        fechaInicio = new Date(fecha.getFullYear(), primerMes, 1);
+        fechaFin = new Date(fecha.getFullYear(), primerMes + 3, 0);
+
+        label = `${meses[primerMes]}-${meses[primerMes + 2]}`;
+
+        fechaInicio = fechaInicio.toISOString().split("T")[0];
+        fechaFin = fechaFin.toISOString().split("T")[0];
+      }
+
+      if (!grupos[key]) grupos[key] = { ingresos: 0, egresos: 0, label, fechaInicio, fechaFin };
+      if (m.tipo === "ingreso") grupos[key].ingresos += Number(m.monto);
+      else grupos[key].egresos += Number(m.monto);
+    });
+
+    return Object.values(grupos);
+  };
+
+
 
   // Función base para cargar movimientos (reutilizable)
   const cargarMovimientosBase = async (filtrosAdicionales = {}, forzarFiltro = null) => {
@@ -942,11 +902,36 @@ const Balance = () => {
 
 
       {modalBalanceAbierto && balanceData && balanceData.resumen && (() => {
-        const graficoData = balanceData.resumen.conceptos.map(c => ({
-          fecha: c.fechas[0] || "—",
-          ingresos: c.ingresos || 0,
-          egresos: c.egresos || 0
-        }));
+        const parseFecha = (fechaStr) => {
+          if (!fechaStr) return null;
+          const [year, month, day] = fechaStr.split("-");
+          return new Date(year, month - 1, day); // mes 0-11 en JS
+        };
+
+        // const fechaInicioObj = parseFecha(balanceData.fechas.inicio);
+        // const fechaFinObj = parseFecha(balanceData.fechas.fin);
+        const fechaInicioObj = parseFecha(fechaInicio);
+        const fechaFinObj = parseFecha(fechaFin);
+
+        console.log("fecha inicio general: ", fechaInicio);
+        console.log("fecha fin en general: ", fechaFin);
+        console.log("fecha inicio de balance data: ", balanceData.fechas.inicio);
+        console.log("fecha fin de balance data: ", balanceData.fechas.fin);
+        console.log("fecha inicio: ", fechaInicioObj);
+        console.log("fecha fin: ", fechaFinObj);
+
+        const dias = Math.ceil((fechaFinObj - fechaInicioObj) / (1000 * 60 * 60 * 24)) + 1;
+
+        console.log("Dias calculados: ", dias);
+
+        let granularidad;
+        if (dias <= 7) granularidad = "dia";
+        else if (dias <= 35) granularidad = "semana";
+        else if (dias <= 120) granularidad = "mes";
+        else granularidad = "trimestre";
+        console.log("Granularidad: ", granularidad);
+
+        const graficoData = agruparMovimientos(balanceData.movimientos, granularidad);
 
         return (
           <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
@@ -963,7 +948,7 @@ const Balance = () => {
 
               <div className="panel-contenido">
                 <div className="balance-resumen-content">
-                  <div className="conceptos-resumen">
+                  {/* <div className="conceptos-resumen">
                     {balanceData.resumen.conceptos.map((concepto, index) => (
                       <div key={concepto.id || index} className="concepto-item">
                         <h3 className="concepto-nombre">{concepto.nombre}</h3>
@@ -988,7 +973,7 @@ const Balance = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </div> */}
 
                   <div className="totales-grid">
                     <div className="resumen-totales ingresos">
@@ -1117,47 +1102,91 @@ const Balance = () => {
             </div>
 
             <div className="filtro-group">
-              <label>Selecciona tipo de movimiento</label>
+              <label>Selecciona el período</label>
               <select
-                value={tipoMovimiento}
-                onChange={(e) => setTipoMovimiento(e.target.value)}
+                value={periodo}
                 className="select-filtro"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPeriodo(value);
+
+                  const hoy = new Date();
+                  const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()); // hora 00:00
+
+                  let inicio = null;
+                  let fin = hoyLocal;
+
+                  switch (value) {
+                    case "hoy":
+                      inicio = new Date(hoyLocal);
+                      break;
+
+                    case "7dias":
+                      inicio = new Date(hoyLocal);
+                      inicio.setDate(hoyLocal.getDate() - 6);
+                      break;
+
+                    case "30dias":
+                      inicio = new Date(hoyLocal);
+                      inicio.setDate(hoyLocal.getDate() - 29);
+                      break;
+
+                    case "mes_actual":
+                      inicio = new Date(hoyLocal.getFullYear(), hoyLocal.getMonth(), 1);
+                      break;
+
+                    case "año_actual":
+                      inicio = new Date(hoyLocal.getFullYear(), 0, 1);
+                      break;
+
+                    case "personalizado":
+                      return;
+                  }
+
+
+                  setFechaInicio(inicio.toISOString().split("T")[0]);
+                  setFechaFin(fin.toISOString().split("T")[0]);
+                }}
               >
-                <option value="">Seleccionar</option>
-                <option value="ingreso">Ingreso</option>
-                <option value="egreso">Egreso</option>
-                <option value="ahorro">Ahorro</option>
-                <option value="todos">Todos</option>
+                <option value="hoy">Hoy</option>
+                <option value="7dias">Últimos 7 días</option>
+                <option value="30dias">Últimos 30 días</option>
+                <option value="mes_actual">Mes actual</option>
+                <option value="año_actual">Año actual</option>
+                <option value="personalizado">Personalizado</option>
               </select>
             </div>
+            {periodo === "personalizado" && (
+              <>
+                <div className="fechas-group">
+                  <div className="fecha-input-group">
+                    <label>Fecha de Inicio</label>
+                    <div className="fecha-input-container">
+                      <input
+                        type="date"
+                        value={fechaInicio}
+                        onChange={(e) => setFechaInicio(e.target.value)}
+                        className="fecha-input"
+                        placeholder="DD/MM/AAAA"
+                      />
+                    </div>
+                  </div>
 
-            <div className="fechas-group">
-              <div className="fecha-input-group">
-                <label>Fecha de Inicio</label>
-                <div className="fecha-input-container">
-                  <input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    className="fecha-input"
-                    placeholder="DD/MM/AAAA"
-                  />
+                  <div className="fecha-input-group">
+                    <label>Fecha de Fin</label>
+                    <div className="fecha-input-container">
+                      <input
+                        type="date"
+                        value={fechaFin}
+                        onChange={(e) => setFechaFin(e.target.value)}
+                        className="fecha-input"
+                        placeholder="DD/MM/AAAA"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="fecha-input-group">
-                <label>Fecha de Fin</label>
-                <div className="fecha-input-container">
-                  <input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    className="fecha-input"
-                    placeholder="DD/MM/AAAA"
-                  />
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           <div className="balance-actions">

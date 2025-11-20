@@ -1,8 +1,10 @@
 export class GestorMovimiento { // COD-001
-  constructor(supabase, gestorMetas) {
+  constructor(supabase, gestorMetas, gestorUsuario) {
     this.supabase = supabase;
     this.gestorMetas = gestorMetas;
+    this.gestorUsuario = gestorUsuario;
   }
+
 
   // MCOD002-1
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
@@ -168,6 +170,59 @@ export class GestorMovimiento { // COD-001
 
     } catch (err) {
       console.error("ERROR en obtenerMovimientosUsuario:", err);
+      throw err;
+    }
+  }
+
+  // por poner MCOD002-4
+  async obtenerBalanceEntreFechas({ fechaInicio, fechaFin, tipo, usuarioId }) {
+    try {
+      let query = this.supabase
+        .from("movimientos")
+        .select("*")
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin);
+
+      if (tipo === "personal") {
+        query = query.eq("usuario_id", usuarioId);
+      }
+
+      else if (tipo === "familiar") {
+        const miembros = await this.gestorUsuario.obtenerUsuariosDeMiFamilia();
+        const ids = miembros.map(m => m.id);
+
+        if (ids.length === 0) {
+          return {
+            movimientos: [],
+            totales: { ingresos: 0, egresos: 0, balance: 0 }
+          };
+        }
+
+        query = query.in("usuario_id", ids);
+      }
+
+      const { data: movimientos, error } = await query;
+      if (error) throw error;
+
+      let ingresos = 0;
+      let egresos = 0;
+
+      movimientos.forEach(m => {
+        if (m.tipo === "ingreso") ingresos += Number(m.monto);
+        else egresos += Number(m.monto);
+      });
+
+      return {
+        movimientos,
+        totales: {
+          ingresos,
+          egresos,
+          balance: ingresos - egresos
+        }
+      };
+
+    } catch (err) {
+      console.error("Error en obtenerBalanceEntreFechas:", err);
       throw err;
     }
   }
