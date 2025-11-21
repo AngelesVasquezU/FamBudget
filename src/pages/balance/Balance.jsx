@@ -652,6 +652,9 @@ const Balance = () => {
     setCargandoMovimientos(true);
 
     try {
+      const usuariosFamilia = await gestores.gestorUsuario.obtenerUsuariosDeMiFamilia();
+      const idsFamilia = usuariosFamilia.map(u => u.id);
+
       let query = supabase
         .from('movimientos')
         .select(`
@@ -660,7 +663,7 @@ const Balance = () => {
         usuarios:usuario_id(nombre),
         ahorro:ahorro(monto)
       `)
-        .eq('usuario_id', user.id)
+        .in('usuario_id', idsFamilia)
         .order('fecha', { ascending: false });
 
       // Aplicar filtros adicionales (como concepto_id)
