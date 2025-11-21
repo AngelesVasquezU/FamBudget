@@ -7,7 +7,7 @@ import { FaUsers } from "react-icons/fa";
 import { ShieldUser } from 'lucide-react';
 import '../../styles/Familia.css';
 
-const Familia = () => {
+const Familia = () => { // VIEW-009
     const gestorUsuario = new GestorUsuario(supabase);
     const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
 
@@ -48,6 +48,9 @@ const Familia = () => {
             setIsLoading(false);
         }
     };
+
+    // MVIEW009-1
+    // Maneja la creación de una nueva familia.
     const handleCrearFamilia = async () => {
         if (!nuevaFamilia.nombre.trim()) {
             return alert("El nombre es obligatorio");
@@ -63,6 +66,9 @@ const Familia = () => {
             alert(error.message);
         }
     };
+
+    // MVIEW009-2
+    // Maneja la adición de un nuevo miembro a la familia.
     const handleAgregarMiembro = async () => {
         if (!nuevoMiembro.email.trim()) {
             return alert('Completa todos los campos');
@@ -79,6 +85,8 @@ const Familia = () => {
         }
     };
 
+    // MVIEW009-3
+    // Maneja la eliminación de un miembro de la familia.
     const handleEliminarMiembro = async (miembro) => {
         if (!window.confirm(`¿Seguro que deseas eliminar a ${miembro.nombre || miembro.email}?`)) return;
         try {

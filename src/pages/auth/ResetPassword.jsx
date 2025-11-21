@@ -6,12 +6,14 @@ import BackButton from '../../components/button/BackButton';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 
-const ResetPassword = () => {
+const ResetPassword = () => { // VIEW-003
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-
+  
+  // MVIEW003-1
+  // Maneja el envío del formulario de restablecimiento de contraseña.
   const handleSubmit = async (e) => {
     e.preventDefault();
 

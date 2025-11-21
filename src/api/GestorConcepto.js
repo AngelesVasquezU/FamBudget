@@ -1,10 +1,11 @@
-export class GestorConcepto { // COD-003
+export class GestorConcepto { // GES-001
   constructor(supabase, gestorUsuario) {
     this.supabase = supabase;
     this.gestorUsuario = gestorUsuario;
   }
   
-  // MCOD003-1
+  // MGES001-1
+  // Obtiene todos los conceptos asociados a la familia del usuario.
   async obtenerConceptos() {
     const user_id = await this.gestorUsuario.obtenerIdUsuario();
     if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
@@ -28,7 +29,8 @@ export class GestorConcepto { // COD-003
     return conceptos;
   }
 
-  // MCOD003-2
+  // MGES001-2
+  // Obtiene conceptos filtrados opcionalmente por tipo y por familia del usuario.
   async obtenerConceptosPorTipo(tipo) {    
     const user_id = await this.gestorUsuario.obtenerIdUsuario();
     if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
@@ -62,7 +64,8 @@ export class GestorConcepto { // COD-003
     return data;
   }
 
-  // MCOD003-3
+  // MGES001-3
+  // Verifica si existe un concepto con el mismo nombre (opcionalmente ignorando un ID).
   async existeNombre(nombre, ignorarId = null) {
     let query = this.supabase.from("conceptos").select("id").eq("nombre", nombre).limit(1);
 
@@ -75,6 +78,8 @@ export class GestorConcepto { // COD-003
     return !!(data && data.length > 0);
   }
 
+  // MGES001-4
+  // Crea un nuevo concepto, asegurando que la familia del usuario exista.
   async crearConcepto({ nombre, tipo, periodo }) {
     const user_id = await this.gestorUsuario.obtenerIdUsuario();
     if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
@@ -129,6 +134,8 @@ export class GestorConcepto { // COD-003
     return data;
   }
 
+  // MGES001-5
+  // Verifica si un concepto existe dentro de una familia.
   async existeNombreEnFamilia(nombre, familia_id, ignorarId = null) {
     let query = this.supabase
       .from("conceptos")
@@ -146,6 +153,8 @@ export class GestorConcepto { // COD-003
     return !!(data && data.length > 0);
   }
 
+  // MGES001-6
+  // Edita un concepto existente asegurando que no duplique nombres.
   async editarConcepto(id, { nombre, tipo, periodo }) {
     const yaExiste = await this.existeNombre(nombre, id);
     if (yaExiste) throw new Error("Ya existe otro concepto con ese nombre");

@@ -1,4 +1,4 @@
-export class GestorMovimiento { // COD-001
+export class GestorMovimiento { // GES-004
   constructor(supabase, gestorMetas, gestorUsuario) {
     this.supabase = supabase;
     this.gestorMetas = gestorMetas;
@@ -6,7 +6,9 @@ export class GestorMovimiento { // COD-001
   }
 
 
-  // MCOD002-1
+  // MGES004-1
+  // Crea un movimiento (ingreso/egreso), actualiza el saldo y,
+  // si está asociado a una meta, delega el manejo del ahorro al GestorMetas.
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
       console.log("Monto que se envía:", monto, typeof monto);
@@ -107,7 +109,8 @@ export class GestorMovimiento { // COD-001
     }
   }
 
-  // MCOD002-2  mejorado
+  // MGES004-2
+  // Calcula el total de ingresos o egresos del usuario, opcionalmente filtrado por fecha exacta.
   async obtenerTotalPorTipo(usuarioId, tipo, fecha = null) {
     let query = this.supabase
       .from("movimientos")
@@ -126,7 +129,8 @@ export class GestorMovimiento { // COD-001
     return data.reduce((acc, mov) => acc + parseFloat(mov.monto), 0);
   }
 
-  // Por poner MCOD002-3
+  // MGES004-3
+  // Obtiene los movimientos del usuario, permite filtrar por mes/año y orden.
   async obtenerMovimientosUsuario(usuarioId, opciones = {}) {
     try {
       const {
@@ -174,7 +178,9 @@ export class GestorMovimiento { // COD-001
     }
   }
 
-  // por poner MCOD002-4
+  // MGES004-4
+  // Obtiene movimientos entre fechas, puede ser personal o familiar,
+  // y calcula totales de ingresos, egresos y balance.
   async obtenerBalanceEntreFechas({ fechaInicio, fechaFin, tipo, usuarioId }) {
     try {
       let query = this.supabase

@@ -6,10 +6,12 @@ import BackButton from "../../components/button/BackButton";
 import Input from "../../components/input/Input";
 import Button from "../../components/button/Button";
 
-const SendEmail = () => {
+const SendEmail = () => { // VIEW-004
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
 
+  // MVIEW004-1
+  // Maneja el envío del formulario para enviar el enlace de recuperación de contraseña.
   const handleSubmit = async (e) => {
     e.preventDefault();
 

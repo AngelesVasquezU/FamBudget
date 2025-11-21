@@ -4,14 +4,14 @@ import { GestorConcepto } from '../../api/GestorConcepto';
 import { GestorUsuario } from "../../api/GestorUsuario";
 import '../../styles/Conceptos.css';
 
-const Conceptos = () => { // COD004
+const Conceptos = () => { // VIEW-006
   const gestorUsuario = new GestorUsuario(supabase);
   const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
 
-  const fetchConcepts = async () => { // MCOD004-3
+  const fetchConcepts = async () => {
     try {
       const data = await gestorConceptos.obtenerConceptos();
       setConcepts(data || []);
@@ -20,11 +20,11 @@ const Conceptos = () => { // COD004
     }
   };
 
-  useEffect(() => { // MCOD004-1 
+  useEffect(() => {
     fetchConcepts();
   }, []);
 
-  useEffect(() => { // MCOD004-2 
+  useEffect(() => { 
     if (selectedConceptId) {
       const concept = concepts.find(c => c.id === selectedConceptId);
       if (concept) setFormData(concept);
@@ -33,11 +33,15 @@ const Conceptos = () => { // COD004
     }
   }, [selectedConceptId, concepts]);
 
-  const handleChange = (e) => { // MCOD004-4 
+  // MVIEW006-1
+  // Maneja el cambio en los campos del formulario.
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = async () => { // MCOD004-5 
+  // MVIEW006-2
+  // Maneja el guardado de un concepto (crear o editar).
+  const handleSave = async () => {
     const tipo = formData.tipo.toLowerCase();
     const periodo = formData.periodo.toLowerCase();
     const nombre = formData.nombre.trim();
