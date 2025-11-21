@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
 import { GestorConcepto } from '../../api/GestorConcepto';
 import { GestorUsuario } from "../../api/GestorUsuario";
 import '../../styles/Conceptos.css';
 
 const Conceptos = () => { // VIEW-006
-  const gestorUsuario = new GestorUsuario(supabase);
-  const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
@@ -24,7 +21,7 @@ const Conceptos = () => { // VIEW-006
     fetchConcepts();
   }, []);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (selectedConceptId) {
       const concept = concepts.find(c => c.id === selectedConceptId);
       if (concept) setFormData(concept);
@@ -65,6 +62,9 @@ const Conceptos = () => { // VIEW-006
     }
   };
 
+
+  const gestorUsuario = new GestorUsuario(supabase);
+  const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
   return (
     <div className="concepts-container">
       <div className="concepts-summary">

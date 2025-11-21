@@ -11,9 +11,6 @@ export class GestorMovimiento { // GES-004
   // si está asociado a una meta, delega el manejo del ahorro al GestorMetas.
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     try {
-      console.log("Monto que se envía:", monto, typeof monto);
-      console.log("Usuario id en crear movimiento:", usuarioId);
-
       const { data: usuarioData, error: errorSaldo } = await this.supabase
         .from("usuarios")
         .select("saldo_disponible")
@@ -30,10 +27,7 @@ export class GestorMovimiento { // GES-004
         throw new Error('Usuario no encontrado en la base de datos');
       }
 
-      console.log("Usuario encontrado. Saldo actual:", usuarioData.saldo_disponible);
-
       const saldoActual = parseFloat(usuarioData.saldo_disponible) || 0;
-      console.log("Saldo actual numérico:", saldoActual);
 
       const { data: movimiento, error: movError } = await this.supabase
         .from("movimientos")
@@ -56,13 +50,6 @@ export class GestorMovimiento { // GES-004
       }
 
       if (tipo === "ingreso" && metaId && montoMeta) {
-        console.log("Llamando a agregarAhorro con:", {
-          metaId,
-          montoMeta,
-          usuarioId,
-          movimientoId: movimiento.id
-        });
-
         await this.gestorMetas.agregarAhorro(
           metaId,
           montoMeta,
@@ -70,17 +57,12 @@ export class GestorMovimiento { // GES-004
           movimiento.id
         );
 
-        console.log("agregarAhorro ya actualizó el saldo y la meta.");
-        console.log("No se recalcula saldo aquí para evitar duplicados.");
-
         return movimiento;
       }
 
       const nuevoSaldo = tipo === "ingreso"
         ? saldoActual + parseFloat(monto)
         : saldoActual - parseFloat(monto);
-
-      console.log("Nuevo saldo calculado:", nuevoSaldo);
 
       const { error: updateError } = await this.supabase
         .from("usuarios")
@@ -94,7 +76,6 @@ export class GestorMovimiento { // GES-004
         throw updateError;
       }
 
-      console.log("Saldo actualizado exitosamente a:", nuevoSaldo);
       return movimiento;
 
     } catch (err) {
