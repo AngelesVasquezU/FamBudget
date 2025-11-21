@@ -4,7 +4,7 @@ import { GestorUsuario } from "../../api/GestorUsuario";
 import { Pencil } from "lucide-react";
 import "../../styles/Cuenta.css";
 
-const Cuenta = () => {
+const Cuenta = () => { // VIEW-007
     const gestorUsuario = new GestorUsuario(supabase);
     const [usuario, setUsuario] = useState(null);
     const [editable, setEditable] = useState(false);
@@ -22,6 +22,8 @@ const Cuenta = () => {
         fetchUsuario();
     }, []);
 
+    // MVIEW007-1
+    // Maneja la actualización de los datos del usuario.
     const handleGuardar = async () => {
         try {
             const { error } = await supabase
@@ -40,6 +42,9 @@ const Cuenta = () => {
             alert("Error al actualizar los datos");
         }
     };
+
+    // MVIEW007-2
+    // Maneja la cancelación de la edición.
     const handleCancelar = () => {
         setFormData({
             nombre: usuario.nombre,

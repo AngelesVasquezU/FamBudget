@@ -14,7 +14,7 @@ const gestorMetas = new GestorMetas(supabase);
 const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
 const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 
-const RegistroDiario = () => { // COD-001
+const RegistroDiario = () => { // VIEW-011
   const [tipo, setTipo] = useState("ingreso");
   const MONEDAS = [
     { codigo: "PEN", simbolo: "S/.", nombre: "Soles" },
@@ -40,7 +40,7 @@ const RegistroDiario = () => { // COD-001
   const [showNewConceptModal, setShowNewConceptModal] = useState(false);
   const [newConcept, setNewConcept] = useState({ nombre: '', tipo: tipo, periodo: 'diario' });
 
-  useEffect(() => {  // MCOD001-1
+  useEffect(() => {
     const obtenerUsuario = async () => {
       const id = await gestorUsuario.obtenerIdUsuario();
       if (id) setUsuarioId(id);
@@ -49,7 +49,7 @@ const RegistroDiario = () => { // COD-001
     obtenerUsuario();
   }, []);
 
-  useEffect(() => {  // MCOD001-2
+  useEffect(() => {
     const cargarDatos = async () => {
       if (!usuarioId) {
         setMessage("Usuario no encontrado");
@@ -70,7 +70,7 @@ const RegistroDiario = () => { // COD-001
     if (usuarioId) cargarDatos();
   }, [tipo, usuarioId]);
 
-  useEffect(() => {  // MCOD001-3
+  useEffect(() => {
     const cargarResumen = async () => {
       if (!usuarioId) return;
 
@@ -87,10 +87,15 @@ const RegistroDiario = () => { // COD-001
     cargarResumen();
   }, [usuarioId, tipo]);
 
-  const handleChange = (e) => {   // MCOD001-4
+  // MVIEW011-1
+  // Maneja los cambios en el formulario de registro diario.
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
+
+  // MVIEW011-2
+  // Carga las metas del usuario.
   const cargarMetas = async () => {
     if (!usuarioId) return;
     try {
@@ -100,7 +105,10 @@ const RegistroDiario = () => { // COD-001
       console.error("Error al cargar metas:", error);
     }
   };
-  const handleSubmit = async (e) => {  // MCOD001-5
+
+  // MVIEW011-3
+  // Maneja el envío del formulario de registro diario.
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!usuarioId) {
       setMessage("No se encontró el usuario autenticado");
@@ -133,7 +141,9 @@ const RegistroDiario = () => { // COD-001
     }
   };
 
-  const handleAddNewConcept = async () => {   // MCOD001-6
+  // MVIEW011-4
+  // Maneja la adición de un nuevo concepto desde el modal.
+  const handleAddNewConcept = async () => {
     try {
       await gestorConceptos.crearConcepto({
         nombre: newConcept.nombre,

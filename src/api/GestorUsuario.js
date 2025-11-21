@@ -1,9 +1,11 @@
-export class GestorUsuario { // COD-006
-  constructor(supabase) { // MCOD006-1
+export class GestorUsuario { // GES-005
+  constructor(supabase) {
     this.supabase = supabase;
   }
 
-  // MCOD006-2
+  // MGES005-1
+  // Obtiene el ID interno del usuario en la tabla "usuarios",
+  // a partir del auth_id proporcionado por Supabase Auth.
   async obtenerIdUsuario() {
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
@@ -25,7 +27,9 @@ export class GestorUsuario { // COD-006
     }
   }
 
-  // MCOD006-3
+  // MGES005-2
+  // Retorna el registro completo del usuario en la tabla "usuarios"
+  // según su auth_id de Supabase.
   async obtenerUsuario() {
     try {
       const { data: authData, error } = await this.supabase.auth.getUser();
@@ -47,7 +51,9 @@ export class GestorUsuario { // COD-006
     }
   }
 
-  // MCOD006-4
+  // MGES005-3
+  // Obtiene todos los miembros que pertenecen a la misma familia
+  // que el usuario actualmente autenticado.
   async obtenerUsuariosDeMiFamilia() {
     const user = await this.obtenerUsuario();
     if (!user || !user.familia_id) return [];

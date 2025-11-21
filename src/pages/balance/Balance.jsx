@@ -15,7 +15,7 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const Balance = () => {
+const Balance = () => { // VIEW-005
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [periodo, setPeriodo] = useState('');
@@ -30,14 +30,13 @@ const Balance = () => {
   const [generandoBalance, setGenerandoBalance] = useState(false);
   const [error, setError] = useState(null);
 
-  // Estados para el panel de movimientos
   const [panelMovimientosAbierto, setPanelMovimientosAbierto] = useState(false);
   const [conceptos, setConceptos] = useState([]);
   const [conceptoSeleccionado, setConceptoSeleccionado] = useState(null);
   const [movimientosConcepto, setMovimientosConcepto] = useState([]);
   const [filtroTiempo, setFiltroTiempo] = useState('todos');
   const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
-  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null); // Nuevo estado para el modal de comentario
+  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
   const [modalBalanceAbierto, setModalBalanceAbierto] = useState(false);
 
   // Estados para el modal de edición
@@ -45,7 +44,7 @@ const Balance = () => {
   const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false);
   const [guardandoCambios, setGuardandoCambios] = useState(false);
 
-  // Inicializar gestores
+  // Carga los datos iniciales del balance al montar el componente.
   const gestores = (() => {
     try {
       console.log("Inicializando gestores con supabase:", supabase);
@@ -71,6 +70,7 @@ const Balance = () => {
     }
   })();
 
+  // Cargar datos iniciales
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       if (!gestores) {
@@ -105,6 +105,8 @@ const Balance = () => {
     cargarDatosIniciales();
   }, []);
 
+  // MVIEW005-1
+  // Carga el resumen de ingresos, egresos y top conceptos para el usuario.
   const cargarResumen = async (userId) => {
     if (!gestores) return;
 
@@ -200,7 +202,8 @@ const Balance = () => {
     }
   };
 
-  // Función para abrir el panel de movimientos
+  // MVIEW005-2
+  // Abre el panel lateral de movimientos y carga los datos iniciales.
   const abrirPanelMovimientos = async () => {
     if (!gestores || !user) {
       setError("Gestores o usuario no disponibles");
@@ -225,30 +228,34 @@ const Balance = () => {
     }
   };
 
+  // MVIEW005-3
+  // Carga todos los movimientos del usuario con el filtro de tiempo seleccionado.
   const manejarCambioFiltro = async (nuevoFiltro) => {
     setFiltroTiempo(nuevoFiltro);
 
     if (conceptoSeleccionado) {
       await cargarMovimientosPorConcepto(conceptoSeleccionado, nuevoFiltro);
     } else {
-      // Si no hay concepto seleccionado (es decir, estamos en "Todos los conceptos")
       await cargarTodosLosMovimientos(nuevoFiltro);
     }
   };
 
-  // Función para abrir el modal de edición
+  // MVIEW005-4
+  // Carga todos los movimientos del usuario con el filtro de tiempo dado.
   const abrirModalEdicion = (movimiento) => {
     setMovimientoEditando(movimiento);
     setModalEdicionAbierto(true);
   };
 
-  // Función para cerrar el modal de edición
+  // MVIEW005-5
+  // Cierra el modal de edición de movimiento.
   const cerrarModalEdicion = () => {
     setModalEdicionAbierto(false);
     setMovimientoEditando(null);
   };
 
-  // Función para guardar los cambios del movimiento
+  // MVIEW005-6
+  // Guarda los cambios realizados en un movimiento editado.
   const guardarMovimientoEditado = async () => {
     if (!movimientoEditando || !gestores) return;
 
@@ -261,13 +268,11 @@ const Balance = () => {
           monto: movimientoEditando.monto,
           fecha: movimientoEditando.fecha,
           comentario: movimientoEditando.comentario,
-          // Agrega aquí otros campos que quieras editar
         })
         .eq('id', movimientoEditando.id);
 
       if (error) throw error;
 
-      // Actualizar la lista de movimientos
       setMovimientosConcepto(prev =>
         prev.map(mov =>
           mov.id === movimientoEditando.id ? movimientoEditando : mov
@@ -275,7 +280,6 @@ const Balance = () => {
       );
 
       cerrarModalEdicion();
-      // Opcional: mostrar mensaje de éxito
       alert('Movimiento actualizado correctamente');
 
     } catch (error) {
@@ -286,6 +290,8 @@ const Balance = () => {
     }
   };
 
+  // MVIEW005-7
+  // Genera el balance según el tipo y periodo seleccionados.
   const generarBalance = async () => {
     if (!gestores || !user) {
       setError("Gestores o usuario no disponibles");
@@ -304,7 +310,6 @@ const Balance = () => {
       const userId = user.id;
       let fechaInicioPeriodo, fechaFinPeriodo;
 
-      // --- Manejo de fechas según el periodo ---
       if (periodo === 'personalizado') {
         if (!fechaInicio || !fechaFin) {
           alert("Por favor ingresa fechas válidas para el balance personalizado.");
@@ -313,12 +318,10 @@ const Balance = () => {
         }
         const convertirFecha = (fechaStr) => {
           if (!fechaStr) return null;
-          // Formato ISO 'YYYY-MM-DD'
           if (fechaStr.includes('-')) {
             const [yyyy, mm, dd] = fechaStr.split('-').map(Number);
-            return new Date(yyyy, mm - 1, dd); // mes 0-indexed
+            return new Date(yyyy, mm - 1, dd);
           }
-          // Formato 'DD/MM/YYYY'
           if (fechaStr.includes('/')) {
             const [dd, mm, yyyy] = fechaStr.split('/').map(Number);
             return new Date(yyyy, mm - 1, dd);
@@ -396,9 +399,8 @@ const Balance = () => {
     }
   };
 
-
-
-  // Función para obtener el rango de fechas según el periodo y en caso sea personalizado
+  //MVIEW005-8
+  // Calcula el rango de fechas según el periodo seleccionado.
   const calcularRangoPorPeriodo = (periodo) => {
     const hoy = new Date();
     let fechaInicioPeriodo, fechaFinPeriodo;
@@ -444,8 +446,8 @@ const Balance = () => {
     return { fechaInicioPeriodo, fechaFinPeriodo };
   };
 
-
-  // Función auxiliar para obtener el rango de fechas según el filtro
+  // MVIEW005-9
+  // Obtiene el rango de fechas según el filtro de tiempo seleccionado.
   const obtenerRangoFechas = (filtro) => {
     const hoy = new Date();
     let fechaInicioFiltro, fechaFinFiltro;
@@ -481,12 +483,14 @@ const Balance = () => {
       fin: fechaFinFiltro.toISOString()
     };
   };
+
+  // MVIEW005-10
+  // Agrupa movimientos según la granularidad y rango de fechas.
   const agruparMovimientos = (movimientos, granularidad, fechaInicioObj, fechaFinObj) => {
     const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
     const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const grupos = {};
 
-    // Función auxiliar para obtener el inicio de semana (domingo)
     const obtenerInicioSemana = (fecha) => {
       const d = new Date(fecha);
       d.setDate(d.getDate() - d.getDay());
@@ -494,7 +498,6 @@ const Balance = () => {
       return d;
     };
 
-    // Función auxiliar para obtener el fin de semana (sábado)
     const obtenerFinSemana = (inicioSemana) => {
       const d = new Date(inicioSemana);
       d.setDate(d.getDate() + 6);
@@ -502,12 +505,10 @@ const Balance = () => {
       return d;
     };
 
-    // Función para generar clave de semana
     const generarClaveSemana = (fecha) => {
       let inicioSemana = obtenerInicioSemana(fecha);
       let finSemana = obtenerFinSemana(inicioSemana);
 
-      // Recortar al rango permitido
       if (inicioSemana < fechaInicioObj) {
         inicioSemana = new Date(fechaInicioObj);
       }
@@ -518,7 +519,6 @@ const Balance = () => {
       return `${inicioSemana.toISOString().split("T")[0]}_${finSemana.toISOString().split("T")[0]}`;
     };
 
-    // ---------- Generación de periodos ----------
     const generarDias = () => {
       let current = new Date(fechaInicioObj);
       while (current <= fechaFinObj) {
@@ -537,7 +537,6 @@ const Balance = () => {
         let start = new Date(current);
         let end = obtenerFinSemana(start);
 
-        // Recortar al rango real
         if (start < fechaInicioObj) start = new Date(fechaInicioObj);
         if (end > fechaFinObj) end = new Date(fechaFinObj);
 
@@ -563,7 +562,6 @@ const Balance = () => {
         const start = new Date(current.getFullYear(), current.getMonth(), 1);
         const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
-        // Recortar al rango
         let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
         let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
 
@@ -589,7 +587,6 @@ const Balance = () => {
         const start = new Date(current.getFullYear(), current.getMonth(), 1);
         const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
 
-        // Recortar al rango
         let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
         let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
 
@@ -608,13 +605,11 @@ const Balance = () => {
       }
     };
 
-    // ---------- Inicializar periodos ----------
     if (granularidad === "dia") generarDias();
     else if (granularidad === "semana") generarSemanas();
     else if (granularidad === "mes") generarMeses();
     else if (granularidad === "trimestre") generarTrimestres();
 
-    // ---------- Sumar movimientos ----------
     movimientos.forEach(m => {
       const fecha = new Date(m.fecha);
       let key;
@@ -642,10 +637,8 @@ const Balance = () => {
     return Object.values(grupos);
   };
 
-
-
-
-  // Función base para cargar movimientos (reutilizable)
+  // MVIEW005-11
+  // Función base para cargar movimientos con filtros y manejo de errores.
   const cargarMovimientosBase = async (filtrosAdicionales = {}, forzarFiltro = null) => {
     if (!user) return;
 
@@ -698,17 +691,22 @@ const Balance = () => {
     }
   };
 
-  // Función para cargar movimientos por concepto específico
+  // MVIEW005-12
+  // Función para cargar movimientos por concepto seleccionado
   const cargarMovimientosPorConcepto = async (concepto, forzarFiltro = null) => {
     setConceptoSeleccionado(concepto);
     await cargarMovimientosBase({ concepto_id: concepto.id }, forzarFiltro);
   };
 
-  // Función para cargar todos los movimientos
+  // MVIEW005-13
+  // Función para cargar todos los movimientos sin filtrar por concepto
   const cargarTodosLosMovimientos = async (forzarFiltro = null) => {
     setConceptoSeleccionado(null);
     await cargarMovimientosBase({}, forzarFiltro);
   };
+
+  // MVIEW005-14
+  // Obtiene el texto descriptivo del rango de fechas según el filtro seleccionado.
   const obtenerTextoRangoFechas = (filtro) => {
     const hoy = new Date();
 

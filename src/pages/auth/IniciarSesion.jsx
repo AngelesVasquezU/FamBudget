@@ -7,17 +7,21 @@ import Input from "../../components/input/Input";
 import Button from "../../components/button/Button";
 import Message from "../../components/message/Message";
 
-const IniciarSesion = () => { // COD007
+const IniciarSesion = () => { // VIEW-001
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => { // MCOD007-1
+  // MVIEW001-1
+  // Maneja el cambio en los campos del formulario.
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => { // MCOD007-2
+  // MVIEW001-2
+  // Maneja el envío del formulario de inicio de sesión.
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
 

@@ -7,7 +7,7 @@ import { UserRound } from 'lucide-react';
 import { Edit } from 'lucide-react';
 import '../../styles/Metas.css';
 
-const Metas = () => {
+const Metas = () => { // VIEW-010
   const gestorUsuario = new GestorUsuario(supabase);
   const gestorMetas = new GestorMetas(supabase, gestorUsuario);
   const [metas, setMetas] = useState([]);
@@ -192,6 +192,8 @@ const Metas = () => {
     };
   }, [userData]);
 
+  // MVIEW010-1
+  // Maneja el cambio en los campos del formulario.
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -200,6 +202,8 @@ const Metas = () => {
     });
   };
 
+  // MVIEW010-2
+  // Maneja el guardado de una meta (crear o editar).
   const handleSave = async () => {
     const nombre = formData.nombre.trim();
     const fecha_limite = formData.fecha_limite;
@@ -276,6 +280,8 @@ const Metas = () => {
     }
   };
 
+  // MVIEW010-3
+  // Maneja la eliminación de una meta.
   const handleDelete = async () => {
     if (!selectedMetaId) {
       console.error('No hay meta seleccionada para eliminar');
@@ -308,6 +314,8 @@ const Metas = () => {
     }
   };
 
+  // MVIEW010-4
+  // Maneja la apertura del modal para aportar a una meta.
   const handleAbrirAporteModal = (meta) => {
     console.log('Abriendo modal de aporte para:', meta);
 
@@ -330,6 +338,8 @@ const Metas = () => {
     setShowAporteModal(true);
   };
 
+  // MVIEW010-5
+  // Maneja el aporte de ingresos a una meta.
   const handleAportar = async () => {
     console.log('Datos del aporte:', {
       metaAportando: metaAportando,
@@ -388,21 +398,29 @@ const Metas = () => {
     }
   };
 
+  // MVIEW010-6
+  // Maneja el cierre del modal de aporte.
   const handleCerrarAporteModal = () => {
     setShowAporteModal(false);
     setMetaAportando(null);
     setAporteMonto('');
   };
 
+  // MVIEW010-7
+  // Calcula el progreso de una meta en porcentaje.
   const calcularProgreso = (meta) => {
     if (!meta.monto_objetivo || meta.monto_objetivo === 0) return 0;
     return (meta.monto_actual / meta.monto_objetivo) * 100;
   };
 
+  // MVIEW010-8
+  // Calcula el monto restante para completar una meta.
   const calcularRestante = (meta) => {
     return meta.monto_objetivo - meta.monto_actual;
   };
 
+  // MVIEW010-9
+  // Formatea un monto como moneda local.
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-PE', {
       style: 'currency',

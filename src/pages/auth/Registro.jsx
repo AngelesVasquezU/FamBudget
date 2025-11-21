@@ -6,7 +6,7 @@ import BackButton from '../../components/button/BackButton';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 
-const Registro = () => { // COD008
+const Registro = () => { // VIEW-002
   const [formData, setFormData] = useState({
     email: '',
     parentesco: '',
@@ -17,7 +17,9 @@ const Registro = () => { // COD008
   });
   const [message, setMessage] = useState('');
 
-  const handleChange = (e) => { // MCOD008-1
+  // MVIEW002-1
+  // Maneja el cambio en los campos del formulario.
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
@@ -25,7 +27,9 @@ const Registro = () => { // COD008
     });
   };
 
-  const handleSubmit = async (e) => { // MCOD008-2
+  // MVIEW002-2
+  // Maneja el envío del formulario de registro.
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
 

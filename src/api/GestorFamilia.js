@@ -1,10 +1,11 @@
-export class GestorFamilia {
-    constructor(supabase, gestorUsuario) { //MCOD009-1
+export class GestorFamilia { // GES-002
+    constructor(supabase, gestorUsuario) {
         this.supabase = supabase;
         this.gestorUsuario = gestorUsuario;
     }
 
-    //MCOD009-2
+    //MGES002-1
+    // Obtiene los datos de la familia del usuario autenticado.
     async obtenerMiFamilia() {
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user || !user.familia_id) return null;
@@ -19,7 +20,8 @@ export class GestorFamilia {
         return data;
     }
 
-    //MCOD009-3
+    //MGES002-2
+    // Obtiene la lista de miembros de una familia.
     async obtenerMiembros(familia_id) {
         const { data, error } = await this.supabase
             .from('usuarios')
@@ -30,7 +32,8 @@ export class GestorFamilia {
         return data;
     }
 
-    //MCOD009-4
+    //MGES002-3
+    // Crea una nueva familia y asigna al usuario actual a ella.
     async crearFamilia(nombre) {
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user) throw new Error("No hay usuario autenticado");
@@ -51,7 +54,8 @@ export class GestorFamilia {
         return familia;
     }
 
-    //MCOD009-5
+    //MGES002-4
+    // Agrega un miembro existente (por correo) a una familia.
     async agregarMiembro(familia_id, correo, parentesco) {
         const { data: usuario, error: errorUser } = await this.supabase
             .from('usuarios')
@@ -79,7 +83,8 @@ export class GestorFamilia {
         return true;
     }
 
-    //MCOD009-6
+    //MGES002-5
+    // Actualiza el parentesco de un miembro dentro de la familia.
     async actualizarParentesco(usuario_id, nuevoParentesco) {
         const { error } = await this.supabase
             .from('usuarios')
@@ -90,7 +95,8 @@ export class GestorFamilia {
         return true;
     }
 
-    //MCOD009-7
+    //MGES002-6
+    // Elimina un miembro de la familia (excepto a la administradora).
     async eliminarMiembro(usuarioId) {
         const currentUserId = await this.gestorUsuario.obtenerIdUsuario();
         if (usuarioId === currentUserId) {
@@ -106,7 +112,8 @@ export class GestorFamilia {
         return true;
     }
 
-    //MCOD009-8
+    //MGES002-7
+    // Cambia el rol de administrador a otro miembro de la misma familia.
     async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
         const { data: miembro, error: errorMiembro } = await this.supabase
             .from("usuarios")
@@ -133,7 +140,8 @@ export class GestorFamilia {
         return true;
     }
 
-    //MCOD009-9
+    //MGES002-8
+    // Elimina la familia completa (solo el admin puede hacerlo).
     async eliminarFamilia() {
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user) throw new Error("No hay usuario autenticado");

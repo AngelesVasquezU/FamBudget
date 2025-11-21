@@ -5,13 +5,14 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-export class GestorMetas {
-  constructor(supabase, gestorUsuario) { // MCOD005-1
+export class GestorMetas { // GES-003
+  constructor(supabase, gestorUsuario) {
     this.supabase = supabase;
     this.gestorUsuario = gestorUsuario;
   }
 
-  // MCOD005-2
+  // MGES003-1
+  // Obtiene las metas visibles para un usuario: propias y familiares (si aplica).
   async obtenerMetas(usuarioId) {
     try {
       const { data: usuario, error: errorUsuario } = await this.supabase
@@ -53,7 +54,8 @@ export class GestorMetas {
     }
   }
 
-  // MCOD005-3
+  // MGES003-2
+  // Crea una nueva meta (personal o familiar).
   async crearMeta({ nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar = false }) {
     try {
       const { data, error } = await this.supabase
@@ -77,7 +79,8 @@ export class GestorMetas {
     }
   }
 
-  // MCOD005-4
+  // MGES003-3
+  // Edita una meta existente y actualiza si es familiar o personal.
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
       const user_id = await this.gestorUsuario.obtenerIdUsuario();
@@ -124,7 +127,8 @@ export class GestorMetas {
     }
   }
 
-  // MCOD005-5
+  // MGES003-4
+  // Elimina una meta por ID.
   async eliminarMeta(id) {
     const { error } = await this.supabase
       .from("metas")
@@ -136,7 +140,8 @@ export class GestorMetas {
     return true;
   }
 
-  // MCOD005-6
+  // MGES003-5
+  // Agrega un aporte de ahorro a una meta, valida saldos y metas completas.
   async agregarAhorro(metaId, monto, usuarioId, movimientoId = null) {
     try {
       if (!metaId || !usuarioId || !monto || monto <= 0) {
@@ -208,7 +213,8 @@ export class GestorMetas {
     }
   }
 
-  // MCOD005-7
+  // MGES003-6
+  // Obtiene el saldo disponible de un usuario.
   async obtenerSaldoDisponible(usuarioId) {
     try {
       console.log("Buscando saldo para usuario ID:", usuarioId);
@@ -232,7 +238,8 @@ export class GestorMetas {
     }
   }
 
-  // MCOD005-8
+  // MGES003-7
+  // Obtiene todos los aportes realizados a una meta, con detalles de movimientos y usuarios.
   async obtenerAportesPorMeta(metaId) {
     try {
       const { data, error } = await this.supabase

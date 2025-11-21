@@ -5,7 +5,7 @@ import { GestorMetas } from "../../api/GestorMeta";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
 import "../../styles/Dashboard.css";
 
-const Dashboard = () => {
+const Dashboard = () => { // VIEW-008
   const [isLoading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [ingresosTotales, setIngresosTotales] = useState(0);
@@ -100,12 +100,6 @@ const Dashboard = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Aquí va el gráfico 
-        <div className="dashboard-chart">
-          <h3>Mensual</h3>
-        </div>
-        */}
 
       </div>
     </div>
