@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../services/supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
 import { GestorConcepto } from "../../api/GestorConcepto";
