@@ -293,14 +293,15 @@ hr {
   margin: 4px 0;
   font-size: 1rem;
   color: #555;
+  font-weight: bold
 }
 
-.resumen-dia p:first-of-type {
+.resumen-dia p:nth-child(2) {
   color: rgb(80, 150, 80);
   font-weight: bold;
 }
 
-.resumen-dia p:last-of-type {
+.resumen-dia p:nth-child(3) {
   color: rgb(204, 46, 46);
   font-weight: bold;
 }

@@ -3,6 +3,10 @@ import { supabase } from "../../supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorMetas } from "../../api/GestorMeta";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
+import { MdAttachMoney } from "react-icons/md";
+import { IoMdTrendingUp } from "react-icons/io";
+import { IoMdTrendingDown } from "react-icons/io";
+
 import "../../styles/Dashboard.css";
 
 const Dashboard = () => { // VIEW-008
@@ -10,6 +14,7 @@ const Dashboard = () => { // VIEW-008
   const [user, setUser] = useState(null);
   const [ingresosTotales, setIngresosTotales] = useState(0);
   const [egresosTotales, setEgresosTotales] = useState(0);
+  const [ahorroTotal, setAhorroTotal] = useState(0);
   const [movimientos, setMovimientos] = useState([]);
 
   const gestorUsuario = new GestorUsuario(supabase);
@@ -31,11 +36,15 @@ const Dashboard = () => { // VIEW-008
         setMovimientos(movs);
         console.log("movimientos del usuarios: ", movs);
 
-        const ingresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "ingreso");
-        const egresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "egreso");
+        const hoy = new Date().toLocaleDateString('en-CA');
+        const ingresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "ingreso", hoy);
+        const egresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "egreso", hoy);
+
+        const ahorro = Math.round((ingresos - egresos)* 100) / 100;
 
         setIngresosTotales(ingresos);
         setEgresosTotales(egresos);
+        setAhorroTotal(ahorro);
       } catch (err) {
         console.error("Error cargando dashboard:", err);
       }
@@ -58,19 +67,42 @@ const Dashboard = () => { // VIEW-008
     <div className="dashboard">
       <div className="dashboard__header">
         <h1>¡Hola, {user?.nombre || "Bienvenido"}!</h1>
+        <p className="dashboard__subtitle">
+          Tu <span className="dashboard__highlight">Resumen</span> de hoy ({new Date().toLocaleDateString()})
+        </p>
       </div>
 
       <div className="dashboard-summary">
         <div className="summary-card ingreso">
-          <p>Ingresos</p>
-          <span>S/. {ingresosTotales}</span>
+            <div class="icon-box green-icon-bg">
+                <span class="icon-placeholder"><IoMdTrendingUp /></span>
+            </div>
+            <div className="details">
+                <div class="amount">S/. {ingresosTotales}</div>
+                <div class="label">Ingresos</div>
+            </div>
         </div>
-
+        
         <div className="summary-card egreso">
-          <p>Egresos</p>
-          <span>S/. {egresosTotales}</span>
+            <div class="icon-box red-icon-bg">
+                <span class="icon-placeholder"><IoMdTrendingDown /></span>
+            </div>
+            <div className="details">
+                <div class="amount">S/. {egresosTotales}</div> 
+                <div class="label">Egresos</div>
+            </div>
         </div>
-      </div>
+        
+        <div className={`summary-card balancecard ${ahorroTotal < 0 ? 'negativo' : ''}`}>
+            <div class="icon-box blue-icon-bg">
+                <span class="icon-placeholder"><MdAttachMoney /></span>
+            </div>
+            <div className="details">
+                <div class="amount">S/. {ahorroTotal}</div>
+                <div class="label">Balance</div>
+            </div>
+        </div>
+    </div>
 
       <div className="dashboard-lower">
 

@@ -107,7 +107,8 @@ export class GestorMovimiento { // GES-004
 
     if (error) throw error;
 
-    return data.reduce((acc, mov) => acc + parseFloat(mov.monto), 0);
+    const total = data.reduce((acc, mov) => acc + parseFloat(mov.monto), 0);
+    return Math.round(total * 100) / 100;
   }
 
   // MGES004-3

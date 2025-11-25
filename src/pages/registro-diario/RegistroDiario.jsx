@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { supabase } from "../../supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorMovimiento } from "../../api/GestorMovimiento";
 import { GestorConcepto } from "../../api/GestorConcepto";
 import { GestorMetas } from "../../api/GestorMeta";
 import Button from '../../components/button/Button';
 import { CirclePlus } from 'lucide-react';
+
 import "../../styles/RegistroDiario.css";
+
+const gestorUsuario = new GestorUsuario(supabase);
+const gestorMetas = new GestorMetas(supabase);
+const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
+const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 
 const RegistroDiario = () => { // VIEW-011
   const [tipo, setTipo] = useState("ingreso");
@@ -14,7 +21,7 @@ const RegistroDiario = () => { // VIEW-011
     { codigo: "USD", simbolo: "$", nombre: "Dólares" },
     { codigo: "EUR", simbolo: "€", nombre: "Euros" }
   ];
-  const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0 });
+  const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0, balance: 0 });
   const [tipoMensaje, setTipoMensaje] = useState("");
   const [conceptos, setConceptos] = useState([]);
   const [metas, setMetas] = useState([]);
@@ -33,6 +40,53 @@ const RegistroDiario = () => { // VIEW-011
   const [showNewConceptModal, setShowNewConceptModal] = useState(false);
   const [newConcept, setNewConcept] = useState({ nombre: '', tipo: tipo, periodo: 'diario' });
 
+  useEffect(() => {
+    const obtenerUsuario = async () => {
+      const id = await gestorUsuario.obtenerIdUsuario();
+      if (id) setUsuarioId(id);
+      else console.error("No se pudo obtener el usuario");
+    };
+    obtenerUsuario();
+  }, []);
+
+  useEffect(() => {
+    const cargarDatos = async () => {
+      if (!usuarioId) {
+        setMessage("Usuario no encontrado");
+        setTipoMensaje("error");
+        return;
+      }
+      try {
+        const conceptosData = await gestorConceptos.obtenerConceptosPorTipo(tipo);
+        setConceptos(conceptosData || []);
+        await cargarMetas();
+      } catch (error) {
+        console.error("Error al buscar usuario en tabla usuarios:", error);
+        setMessage("Error al buscar usuario", error);
+        setTipoMensaje("error");
+      }
+    };
+
+    if (usuarioId) cargarDatos();
+  }, [tipo, usuarioId]);
+
+  useEffect(() => {
+    const cargarResumen = async () => {
+      if (!usuarioId) return;
+
+      const fechaHoy = new Date().toISOString().slice(0, 10);
+      try {
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
+        const balance = Math.round((ingresos - egresos)* 100) / 100;
+        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 , balance: balance || 0 });
+      } catch (error) {
+        console.error("Error al obtener resumen diario:", error);
+      }
+    };
+
+    cargarResumen();
+  }, [usuarioId, tipo]);
 
   // MVIEW011-1
   // Maneja los cambios en el formulario de registro diario.
@@ -106,53 +160,6 @@ const RegistroDiario = () => { // VIEW-011
     }
   };
 
-  useEffect(() => {
-    const obtenerUsuario = async () => {
-      const id = await gestorUsuario.obtenerIdUsuario();
-      if (id) setUsuarioId(id);
-      else console.error("No se pudo obtener el usuario");
-    };
-    obtenerUsuario();
-  }, []);
-
-  useEffect(() => {
-    const cargarDatos = async () => {
-      if (!usuarioId) {
-        setMessage("Usuario no encontrado");
-        setTipoMensaje("error");
-        return;
-      }
-      try {
-        const conceptosData = await gestorConceptos.obtenerConceptosPorTipo(tipo);
-        setConceptos(conceptosData || []);
-        await cargarMetas();
-      } catch (error) {
-        console.error("Error al buscar usuario en tabla usuarios:", error);
-        setMessage("Error al buscar usuario", error);
-        setTipoMensaje("error");
-      }
-    };
-
-    if (usuarioId) cargarDatos();
-  }, [tipo, usuarioId]);
-
-  useEffect(() => {
-    const cargarResumen = async () => {
-      if (!usuarioId) return;
-
-      const fechaHoy = new Date().toISOString().slice(0, 10);
-      try {
-        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
-        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
-        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 });
-      } catch (error) {
-        console.error("Error al obtener resumen diario:", error);
-      }
-    };
-
-    cargarResumen();
-  }, [usuarioId, tipo]);
-
   return (
     <div className="registro-container">
       <h2>Registrar movimiento</h2>
@@ -160,6 +167,7 @@ const RegistroDiario = () => { // VIEW-011
         <h3>Resumen del día ({fechaActual})</h3>
         <p>Ingresos: {form.moneda} {resumenDia.ingresos.toFixed(2)}</p>
         <p>Egresos: {form.moneda} {resumenDia.egresos.toFixed(2)}</p>
+        <p>Balance: {form.moneda} {resumenDia.balance.toFixed(2)}</p>
       </div>
       <div className="tipo-selector">
         <button
@@ -264,7 +272,7 @@ const RegistroDiario = () => { // VIEW-011
             onChange={handleChange}
             placeholder={`${form.moneda} 0.00`}
             min={0.50}
-            step={0.10}
+            step={0.01}
             required
           />
         </div>
@@ -327,10 +335,5 @@ const RegistroDiario = () => { // VIEW-011
     </div >
   );
 };
-
-const gestorUsuario = new GestorUsuario(supabase);
-const gestorMetas = new GestorMetas(supabase);
-const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
-const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
 
 export default RegistroDiario;
