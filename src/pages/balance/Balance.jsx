@@ -262,6 +262,7 @@ const Balance = () => { // VIEW-005
     setGuardandoCambios(true);
 
     try {
+      console.log("datos de editando movimiento: ", movimientoEditando);
       const { error } = await supabase
         .from('movimientos')
         .update({
@@ -771,7 +772,7 @@ const Balance = () => { // VIEW-005
         <div className="panel-movimientos-overlay">
           <div className="panel-movimientos">
             <div className="panel-header">
-              <h2>Gastos e Ingresos</h2>
+              <h2>Movimientos registrados</h2>
               <button
                 className="cerrar-panel"
                 onClick={() => setPanelMovimientosAbierto(false)}
@@ -1117,6 +1118,23 @@ const Balance = () => { // VIEW-005
           <h2>Resumen</h2>
 
           <div className="conceptos-grid">
+             <div className="conceptos-columna">
+              <h3>Ingresos :</h3>
+              <ul>
+                {topIngresos.map((concepto, index) => (
+                  <li key={concepto.id || index}>
+                    • {concepto.nombre}
+                    <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
+                  </li>
+                ))}
+                {topIngresos.length === 0 && totalIngresos > 0 && (
+                  <li>• No se pudieron agrupar los ingresos por concepto</li>
+                )}
+                {topIngresos.length === 0 && totalIngresos === 0 && (
+                  <li>• No hay ingresos registrados</li>
+                )}
+              </ul>
+            </div>
             <div className="conceptos-columna">
               <h3>Egresos :</h3>
               <ul>
@@ -1134,34 +1152,16 @@ const Balance = () => { // VIEW-005
                 )}
               </ul>
             </div>
-
-            <div className="conceptos-columna">
-              <h3>Ingresos :</h3>
-              <ul>
-                {topIngresos.map((concepto, index) => (
-                  <li key={concepto.id || index}>
-                    • {concepto.nombre}
-                    <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
-                  </li>
-                ))}
-                {topIngresos.length === 0 && totalIngresos > 0 && (
-                  <li>• No se pudieron agrupar los ingresos por concepto</li>
-                )}
-                {topIngresos.length === 0 && totalIngresos === 0 && (
-                  <li>• No hay ingresos registrados</li>
-                )}
-              </ul>
-            </div>
           </div>
 
           <div className="resumen-totales">
             <div className="total-item">
-              <span>Total Egresos:</span>
-              <span className="total-monto">{formatCurrency(totalEgresos)}</span>
-            </div>
-            <div className="total-item">
               <span>Total Ingresos:</span>
               <span className="total-monto">{formatCurrency(totalIngresos)}</span>
+            </div>
+            <div className="total-item">
+              <span>Total Egresos:</span>
+              <span className="total-monto">{formatCurrency(totalEgresos)}</span>
             </div>
           </div>
 

@@ -21,7 +21,7 @@ const RegistroDiario = () => { // VIEW-011
     { codigo: "USD", simbolo: "$", nombre: "Dólares" },
     { codigo: "EUR", simbolo: "€", nombre: "Euros" }
   ];
-  const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0 });
+  const [resumenDia, setResumenDia] = useState({ ingresos: 0, egresos: 0, balance: 0 });
   const [tipoMensaje, setTipoMensaje] = useState("");
   const [conceptos, setConceptos] = useState([]);
   const [metas, setMetas] = useState([]);
@@ -78,7 +78,8 @@ const RegistroDiario = () => { // VIEW-011
       try {
         const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
         const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
-        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 });
+        const balance = Math.round((ingresos - egresos)* 100) / 100;
+        setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 , balance: balance || 0 });
       } catch (error) {
         console.error("Error al obtener resumen diario:", error);
       }
@@ -166,6 +167,7 @@ const RegistroDiario = () => { // VIEW-011
         <h3>Resumen del día ({fechaActual})</h3>
         <p>Ingresos: {form.moneda} {resumenDia.ingresos.toFixed(2)}</p>
         <p>Egresos: {form.moneda} {resumenDia.egresos.toFixed(2)}</p>
+        <p>Balance: {form.moneda} {resumenDia.balance.toFixed(2)}</p>
       </div>
       <div className="tipo-selector">
         <button
@@ -270,7 +272,7 @@ const RegistroDiario = () => { // VIEW-011
             onChange={handleChange}
             placeholder={`${form.moneda} 0.00`}
             min={0.50}
-            step={0.10}
+            step={0.01}
             required
           />
         </div>
