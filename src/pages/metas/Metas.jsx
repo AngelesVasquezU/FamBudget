@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
-import { GestorUsuario } from '../../api/GestorUsuario';
-import { GestorMetas } from '../../api/GestorMeta';
+import { providers } from "../../services/providers";
+import { supabase } from '../../services/supabaseClient';
 import { HouseHeart } from 'lucide-react';
 import { UserRound } from 'lucide-react';
 import { Edit } from 'lucide-react';
 import '../../styles/Metas.css';
 
+const { gestorMetas }  = providers;
+
 const Metas = () => { // VIEW-010
-  const gestorUsuario = new GestorUsuario(supabase);
-  const gestorMetas = new GestorMetas(supabase, gestorUsuario);
   const [metas, setMetas] = useState([]);
   const [selectedMetaId, setSelectedMetaId] = useState(null);
   const [formData, setFormData] = useState({

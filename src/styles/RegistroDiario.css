@@ -219,13 +219,13 @@ hr {
 }
 
 .modal-buttons button:first-child {
-  background-color: #2a4672;
+  background-color: #888888;
   color: white;
   margin-right: 10px;
 }
 
 .modal-buttons button:last-child {
-  background-color: #888888;
+  background-color: #2a4672;
   color: white;
 }
 

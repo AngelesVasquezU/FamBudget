@@ -1,10 +1,9 @@
-export class GestorMovimiento { // GES-004
+export class GestorMovimientos { // GES-004
   constructor(supabase, gestorMetas, gestorUsuario) {
     this.supabase = supabase;
     this.gestorMetas = gestorMetas;
     this.gestorUsuario = gestorUsuario;
   }
-
 
   // MGES004-1
   // Crea un movimiento (ingreso/egreso), actualiza el saldo y,

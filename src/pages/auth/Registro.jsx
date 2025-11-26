@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { supabase } from '../../supabaseClient';
+import { useState } from 'react';
+import { providers } from '../../services/providers';
 import '../../styles/Registro.css';
 import fondo from '../../assets/fondo.png';
 import BackButton from '../../components/button/BackButton';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 
+const gestorAuth = providers;
+  
 const Registro = () => { // VIEW-002
   const [formData, setFormData] = useState({
     email: '',
@@ -41,31 +43,29 @@ const Registro = () => { // VIEW-002
 
     const rol = isAdmin ? 'Administrador' : 'Miembro familiar';
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          parentesco: parentesco?.trim() || null,
-          fullName: fullName,
-          role: rol
-        }
-      }
-    });
+    try {
+      await gestorAuth.register({
+        email,
+        password,
+        fullName,
+        parentesco: parentesco?.trim() || null,
+        role: rol
+      });
 
-    if (error) {
-      return setMessage(`Error al registrar usuario: ${error.message}`);
+      setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
+      setFormData({
+        email: '',
+        parentesco: '',
+        password: '',
+        confirmPassword: '',
+        fullName: '',
+        isAdmin: false
+      });
+
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
+      setMessage(`Error al registrar usuario: ${error.message}`);
     }
-
-    setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
-    setFormData({
-      email: '',
-      parentesco: '',
-      password: '',
-      confirmPassword: '',
-      fullName: '',
-      isAdmin: false
-    });
   };
 
   return (

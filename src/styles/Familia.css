@@ -224,10 +224,10 @@
     margin-top: 10px;
 }
 
-.modal-buttons {
+.modal-button {
     margin-top: 1.5rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     gap: 1rem;
 }
 
@@ -246,7 +246,7 @@
 }
 
 .btn-confirmar {
-    background: #1976d2;
+    background: #d21c19;
     color: #fff;
     border: none;
     padding: 0.5rem 1.2rem;
@@ -256,7 +256,7 @@
 }
 
 .btn-confirmar:hover {
-    background: #1565c0;
+    background: #c03a15;
 }
 
 .toast-exito {

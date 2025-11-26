@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { supabase } from '../../supabaseClient';
-import '../../styles/IniciarSesion.css';
+import { useState } from 'react';
+import { providers } from '../../services/providers';
 import { useNavigate } from 'react-router-dom';
+import '../../styles/IniciarSesion.css';
 import fondo from '../../assets/fondo.png';
 import Input from "../../components/input/Input";
 import Button from "../../components/button/Button";
 import Message from "../../components/message/Message";
+
+const { gestorAuth } = providers;
 
 const IniciarSesion = () => { // VIEW-001
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -25,17 +27,16 @@ const IniciarSesion = () => { // VIEW-001
     e.preventDefault();
     const { email, password } = formData;
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const user = await gestorAuth.login(email, password);
 
-    if (error) {
-      setMessage({ text: "Credenciales Inválidas", type: "error" });
-      setTimeout(() => setMessage(null), 3000);
-
-    } else {
+      setMessage({ text: "Inicio de sesión exitoso", type: "success" });
       setTimeout(() => navigate('/dashboard'), 1000);
+
+    } catch (err) {
+      console.error("Error login:", err);
+      setMessage({ text: "Credenciales inválidas", type: "error" });
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 

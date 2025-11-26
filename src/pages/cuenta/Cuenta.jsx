@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../services/supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { Pencil } from "lucide-react";
 import "../../styles/Cuenta.css";

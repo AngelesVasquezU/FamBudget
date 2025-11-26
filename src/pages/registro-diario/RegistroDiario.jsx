@@ -1,20 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { supabase } from "../../services/supabaseClient";
-import { GestorUsuario } from "../../api/GestorUsuario";
-import { GestorMovimiento } from "../../api/GestorMovimiento";
-import { GestorConcepto } from "../../api/GestorConcepto";
-import { GestorMetas } from "../../api/GestorMeta";
+// VIEW-011
+/**
+ * RegistroDiario.jsx
+ *
+ * Componente de React que permite registrar movimientos diarios
+ * de ingresos y egresos, con soporte para asociarlos a conceptos y metas.
+ *
+ * Funcionalidades:
+ *  - Mostrar resumen del día
+ *  - Seleccionar tipo de movimiento (Ingreso/Egreso)
+ *  - Registrar nuevo concepto
+ *  - Asociar monto a metas (opcional)
+ */
+
+import { useEffect, useState } from "react";
+import { providers } from "../../services/providers";
 import Button from '../../components/button/Button';
 import { CirclePlus } from 'lucide-react';
-
 import "../../styles/RegistroDiario.css";
 
-const gestorUsuario = new GestorUsuario(supabase);
-const gestorMetas = new GestorMetas(supabase);
-const gestorMovimientos = new GestorMovimiento(supabase, gestorMetas);
-const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
+const { gestorUsuario, gestorMetas, gestorMovimientos, gestorConceptos } = providers;
 
-const RegistroDiario = () => { // VIEW-011
+const RegistroDiario = () => {
   const [tipo, setTipo] = useState("ingreso");
   const MONEDAS = [
     { codigo: "PEN", simbolo: "S/.", nombre: "Soles" },
@@ -89,14 +95,20 @@ const RegistroDiario = () => { // VIEW-011
   }, [usuarioId, tipo]);
 
   // MVIEW011-1
-  // Maneja los cambios en el formulario de registro diario.
+  /**
+   * Maneja los cambios en los campos del formulario de registro diario.
+   * @param {Event} e - Evento del input
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
   // MVIEW011-2
-  // Carga las metas del usuario.
+  /**
+   * Carga las metas del usuario desde el gestorMetas
+   * y las almacena en el estado `metas`.
+   */
   const cargarMetas = async () => {
     if (!usuarioId) return;
     try {
@@ -108,7 +120,11 @@ const RegistroDiario = () => { // VIEW-011
   };
 
   // MVIEW011-3
-  // Maneja el envío del formulario de registro diario.
+  /**
+   * Maneja el envío del formulario de registro diario.
+   * Crea un nuevo movimiento usando gestorMovimientos.
+   * @param {Event} e - Evento submit
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!usuarioId) {
@@ -143,7 +159,10 @@ const RegistroDiario = () => { // VIEW-011
   };
 
   // MVIEW011-4
-  // Maneja la adición de un nuevo concepto desde el modal.
+  /**
+   * Maneja la creación de un nuevo concepto desde el modal.
+   * Actualiza la lista de conceptos en el estado.
+   */
   const handleAddNewConcept = async () => {
     try {
       await gestorConceptos.crearConcepto({
@@ -256,8 +275,8 @@ const RegistroDiario = () => { // VIEW-011
               </select>
 
               <div className="modal-buttons">
-                <button type="button" onClick={handleAddNewConcept}>Agregar</button>
                 <button type="button" onClick={() => setShowNewConceptModal(false)}>Cancelar</button>
+                <button type="button" onClick={handleAddNewConcept}>Agregar</button>
               </div>
             </div>
           </div>

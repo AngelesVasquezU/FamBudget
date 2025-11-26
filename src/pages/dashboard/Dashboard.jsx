@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../services/supabaseClient";
 import { GestorUsuario } from "../../api/GestorUsuario";
 import { GestorMetas } from "../../api/GestorMeta";
-import { GestorMovimiento } from "../../api/GestorMovimiento";
+import { GestorMovimientos } from "../../api/GestorMovimientos";
 import { MdAttachMoney } from "react-icons/md";
 import { IoMdTrendingUp } from "react-icons/io";
 import { IoMdTrendingDown } from "react-icons/io";
@@ -19,7 +19,7 @@ const Dashboard = () => { // VIEW-008
 
   const gestorUsuario = new GestorUsuario(supabase);
   const gestorMeta = new GestorMetas(supabase, gestorUsuario);
-  const gestorMovimiento = new GestorMovimiento(supabase, gestorMeta);
+  const gestorMovimientos = new GestorMovimientos(supabase, gestorMeta, gestorUsuario);
 
   useEffect(() => {
     const cargar = async () => {
@@ -28,17 +28,16 @@ const Dashboard = () => { // VIEW-008
         const usuario = await gestorUsuario.obtenerUsuario();
         setUser(usuario);
 
-        const movs = await gestorMovimiento.obtenerMovimientosUsuario(usuario.id, {
+        const movs = await gestorMovimientos.obtenerMovimientosUsuario(usuario.id, {
           limit: 4,
           ordenar: "desc"
         });
 
         setMovimientos(movs);
-        console.log("movimientos del usuarios: ", movs);
 
         const hoy = new Date().toLocaleDateString('en-CA');
-        const ingresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "ingreso", hoy);
-        const egresos = await gestorMovimiento.obtenerTotalPorTipo(usuario.id, "egreso", hoy);
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "ingreso", hoy);
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "egreso", hoy);
 
         const ahorro = Math.round((ingresos - egresos)* 100) / 100;
 
@@ -74,32 +73,32 @@ const Dashboard = () => { // VIEW-008
 
       <div className="dashboard-summary">
         <div className="summary-card ingreso">
-            <div class="icon-box green-icon-bg">
-                <span class="icon-placeholder"><IoMdTrendingUp /></span>
+            <div className="icon-box green-icon-bg">
+                <span className="icon-placeholder"><IoMdTrendingUp /></span>
             </div>
             <div className="details">
-                <div class="amount">S/. {ingresosTotales}</div>
-                <div class="label">Ingresos</div>
+                <div className="amount">S/. {ingresosTotales}</div>
+                <div className="label">Ingresos</div>
             </div>
         </div>
         
         <div className="summary-card egreso">
-            <div class="icon-box red-icon-bg">
-                <span class="icon-placeholder"><IoMdTrendingDown /></span>
+            <div className="icon-box red-icon-bg">
+                <span className="icon-placeholder"><IoMdTrendingDown /></span>
             </div>
             <div className="details">
-                <div class="amount">S/. {egresosTotales}</div> 
-                <div class="label">Egresos</div>
+                <div className="amount">S/. {egresosTotales}</div> 
+                <div className="label">Egresos</div>
             </div>
         </div>
         
         <div className={`summary-card balancecard ${ahorroTotal < 0 ? 'negativo' : ''}`}>
-            <div class="icon-box blue-icon-bg">
-                <span class="icon-placeholder"><MdAttachMoney /></span>
+            <div className="icon-box blue-icon-bg">
+                <span className="icon-placeholder"><MdAttachMoney /></span>
             </div>
             <div className="details">
-                <div class="amount">S/. {ahorroTotal}</div>
-                <div class="label">Balance</div>
+                <div className="amount">S/. {ahorroTotal}</div>
+                <div className="label">Balance</div>
             </div>
         </div>
     </div>

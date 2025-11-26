@@ -1,9 +1,9 @@
-export class GestorConcepto { // GES-001
+export class GestorConceptos { // GES-001
   constructor(supabase, gestorUsuario) {
     this.supabase = supabase;
     this.gestorUsuario = gestorUsuario;
   }
-  
+
   // MGES001-1
   // Obtiene todos los conceptos asociados a la familia del usuario.
   async obtenerConceptos() {
@@ -31,7 +31,7 @@ export class GestorConcepto { // GES-001
 
   // MGES001-2
   // Obtiene conceptos filtrados opcionalmente por tipo y por familia del usuario.
-  async obtenerConceptosPorTipo(tipo) {    
+  async obtenerConceptosPorTipo(tipo) {
     const user_id = await this.gestorUsuario.obtenerIdUsuario();
     if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
 
@@ -40,10 +40,10 @@ export class GestorConcepto { // GES-001
       .select('familia_id')
       .eq('id', user_id)
       .single();
-    
+
     if (errorUsuario) throw errorUsuario;
     if (!usuario) throw new Error('Usuario no encontrado');
-    
+
     let query = this.supabase
       .from("conceptos")
       .select("*")
@@ -89,47 +89,47 @@ export class GestorConcepto { // GES-001
       .select('familia_id, nombre')
       .eq('id', user_id)
       .single();
-    
+
     if (errorUsuario) throw errorUsuario;
     if (!usuario) throw new Error('Usuario no encontrado');
-    
+
     let familia_id = usuario.familia_id;
-    
+
     if (!familia_id) {
       const { data: nuevaFamilia, error: errorFamilia } = await this.supabase
         .from('familias')
-        .insert([{ 
+        .insert([{
           nombre: `Familia de ${usuario.nombre || 'Usuario'}`
         }])
         .select()
         .single();
-        
+
       if (errorFamilia) throw errorFamilia;
-      
+
       const { error: errorUpdate } = await this.supabase
         .from('usuarios')
         .update({ familia_id: nuevaFamilia.id })
         .eq('id', user_id);
-        
+
       if (errorUpdate) throw errorUpdate;
-      
+
       familia_id = nuevaFamilia.id;
     }
 
     const yaExiste = await this.existeNombreEnFamilia(nombre, familia_id);
     if (yaExiste) throw new Error("El concepto ya existe en esta familia");
-    
+
     const { data, error } = await this.supabase
       .from("conceptos")
-      .insert([{ 
-        nombre, 
-        tipo, 
+      .insert([{
+        nombre,
+        tipo,
         periodo,
         familia_id: familia_id
       }])
       .select()
       .single();
-      
+
     if (error) throw error;
     return data;
   }

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
-import { GestorConcepto } from '../../api/GestorConcepto';
+import { supabase } from '../../services/supabaseClient';
+import { GestorConceptos } from '../../api/GestorConceptos';
 import { GestorUsuario } from "../../api/GestorUsuario";
 import '../../styles/Conceptos.css';
 
 const Conceptos = () => { // VIEW-006
   const gestorUsuario = new GestorUsuario(supabase);
-  const gestorConceptos = new GestorConcepto(supabase, gestorUsuario);
+  const gestorConceptos = new GestorConceptos(supabase, gestorUsuario);
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
@@ -122,7 +122,6 @@ const Conceptos = () => { // VIEW-006
           </select>
         </div>
         <div className="form-buttons">
-          <button className="save-btn" onClick={handleSave}>Guardar</button>
           <button
             className="new-btn-concept"
             onClick={() => {
@@ -130,6 +129,7 @@ const Conceptos = () => { // VIEW-006
               setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
             }}
           >Nuevo</button>
+          <button className="save-btn" onClick={handleSave}>Guardar</button>
         </div>
       </div>
     </div>

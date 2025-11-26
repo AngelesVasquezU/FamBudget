@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../services/supabaseClient';
 import { GestorUsuario } from "../api/GestorUsuario";
 import { GestorFamilia } from "../api/GestorFamilia";
 

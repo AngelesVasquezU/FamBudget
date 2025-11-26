@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../services/supabaseClient';
 import { GestorFamilia } from '../../api/GestorFamilia';
 import { GestorUsuario } from '../../api/GestorUsuario';
 import { Home, PlusCircle, Edit, Trash2, Users, X } from 'lucide-react';
@@ -284,7 +284,7 @@ const Familia = () => { // VIEW-009
                             </p>
                             <p className="alerta">⚠️ Dejarás de ser administrador de la familia.</p>
 
-                            <div className="modal-buttons">
+                            <div className="modal-button">
                                 <button
                                     className="btn-cancelar"
                                     onClick={() => setMostrarConfirmacion(false)}
@@ -330,7 +330,7 @@ const Familia = () => { // VIEW-009
 
                         <p className="alerta">Esta acción no se puede deshacer.</p>
 
-                        <div className="modal-buttons">
+                        <div className="modal-button">
                             <button
                                 className="btn-cancelar"
                                 onClick={() => setMostrarEliminarFamilia(false)}
