@@ -1,32 +1,20 @@
-// VIEW-005
 /**
- * Balance.jsx - VERSIÓN REFACTORIZADA
- * 
- * @description Componente principal para la gestión y visualización de balances financieros.
- * Permite a los usuarios visualizar resúmenes de ingresos/egresos, generar balances 
- * personalizados por períodos, ver movimientos detallados por concepto, editar movimientos
- * y visualizar gráficos de tendencias financieras.
- * 
- * @version 2.0.0
- * @date 2025
- * 
- * @dependencies
- * - React (useState, useEffect)
- * - react-icons/fa (FaEdit, FaEye)
- * - providers (gestorUsuario, gestorMovimientos, gestorConceptos)
- * - BalanceChart (componente de gráficos)
- * 
- * @features
- * - Resumen de top 3 ingresos y egresos por concepto
- * - Generación de balances personales y familiares
- * - Filtrado temporal de movimientos (día, semana, quincena, mes)
- * - Edición de movimientos existentes
- * - Visualización de gráficos con agrupación automática
- * - Panel lateral para explorar movimientos por concepto
- * 
- * @architecture
- * Utiliza gestores de servicios para todas las operaciones con datos.
- * Implementa modales y paneles laterales para una mejor UX.
+ * VIEW-005 — Balance.jsx 
+ * -------------------------------------------------------------
+ * Vista encargada de mostrar el balance financiero del usuario.
+ *
+ * Funcionalidades principales:
+ * - Resumen mensual (ingresos, egresos y balance).
+ * - Visualización de los conceptos más usados.
+ * - Panel lateral para revisar movimientos por concepto o periodo.
+ * - Edición de movimientos mediante modal.
+ * - Generación de balances personalizados y familiares.
+ *
+ * Gestores utilizados:
+ * - GestorUsuario
+ * - GestorMovimientos
+ * - GestorConceptos
+ *
  */
 
 import { useEffect, useState } from "react";
@@ -54,9 +42,7 @@ const { gestorUsuario, gestorMovimientos, gestorConceptos } = providers;
  * Componente principal de gestión de balances financieros
  */
 const Balance = () => {
-  // ============================================================
   // ESTADOS DEL COMPONENTE
-  // ============================================================
 
   // Estados de carga y error
   const [isLoading, setIsLoading] = useState(true);
@@ -93,10 +79,7 @@ const Balance = () => {
   // Estados de edición
   const [movimientoEditando, setMovimientoEditando] = useState(null);
 
-  // ============================================================
   // EFECTOS Y CARGA INICIAL
-  // ============================================================
-
   /**
    * Efecto de inicialización del componente
    * Se ejecuta una vez al montar el componente
@@ -130,10 +113,7 @@ const Balance = () => {
     cargarDatosIniciales();
   }, []);
 
-  // ============================================================
-  // FUNCIONES DE CARGA DE DATOS - REFACTORIZADAS
-  // ============================================================
-
+  // FUNCIONES DE CARGA DE DATOS
   /**
    * MVIEW005-1
    * Carga el resumen financiero del usuario usando solo gestores
@@ -175,9 +155,7 @@ const Balance = () => {
     }
   };
 
-  // ============================================================
   // FUNCIONES DEL PANEL DE MOVIMIENTOS
-  // ============================================================
 
   /**
    * MVIEW005-2
@@ -223,9 +201,7 @@ const Balance = () => {
     }
   };
 
-  // ============================================================
-  // FUNCIONES DE EDICIÓN DE MOVIMIENTOS - REFACTORIZADAS
-  // ============================================================
+  // FUNCIONES DE EDICIÓN DE MOVIMIENTOS
 
   /**
    * MVIEW005-4
@@ -270,7 +246,6 @@ const Balance = () => {
 
       console.log("Movimiento actualizado:", movimientoActualizado);
 
-      // Actualizar estado local
       setMovimientosConcepto(prev =>
         prev.map(mov =>
           mov.id === movimientoEditando.id ? movimientoEditando : mov
@@ -288,9 +263,7 @@ const Balance = () => {
     }
   };
 
-  // ============================================================
   // FUNCIONES DE GENERACIÓN DE BALANCE
-  // ============================================================
 
   /**
    * MVIEW005-7
@@ -388,6 +361,58 @@ const Balance = () => {
         }
       });
 
+      const usuariosMap = {};
+      const totalFamiliarEgresos = balance.totales.egresos || 0;
+
+      balance.movimientos.forEach(m => {
+        const usuario = m.usuarios?.nombre || "Desconocido";
+        const monto = Number(m.monto);
+        const tipo = m.tipo;
+        const concepto = m.conceptos?.nombre || "Sin concepto";
+
+        if (!usuariosMap[usuario]) {
+          usuariosMap[usuario] = {
+            nombre: usuario,
+            ingresos: 0,
+            egresos: 0,
+            total: 0,
+            movimientos: [],
+            topConcepto: {},     // almacenamos sumatoria por concepto
+            participacion: 0,     // % del total familiar
+            topConceptoNombre: "",
+            topConceptoMonto: 0
+          };
+        }
+
+        if (tipo === "ingreso") usuariosMap[usuario].ingresos += monto;
+        else usuariosMap[usuario].egresos += monto;
+
+        usuariosMap[usuario].movimientos.push(m);
+
+        if (tipo === "egreso") {
+          if (!usuariosMap[usuario].topConcepto[concepto]) {
+            usuariosMap[usuario].topConcepto[concepto] = 0;
+          }
+          usuariosMap[usuario].topConcepto[concepto] += monto;
+        }
+      });
+
+      Object.keys(usuariosMap).forEach(usuario => {
+        const u = usuariosMap[usuario];
+        u.total = u.ingresos - u.egresos;
+        u.participacion = totalFamiliarEgresos
+          ? (u.egresos / totalFamiliarEgresos) * 100
+          : 0;
+
+        const conceptosOrdenados = Object.entries(u.topConcepto)
+          .sort((a, b) => b[1] - a[1]);
+
+        if (conceptosOrdenados.length > 0) {
+          u.topConceptoNombre = conceptosOrdenados[0][0];
+          u.topConceptoMonto = conceptosOrdenados[0][1];
+        }
+      });
+
       const ahorro = balance.totales.ingresos - balance.totales.egresos;
 
       setBalanceData({
@@ -401,7 +426,8 @@ const Balance = () => {
           ahorro,
           tendencia: ahorro >= 0 ? 'Positiva' : 'Negativa',
           conceptos: Object.values(conceptosMap)
-        }
+        },
+        usuarios: Object.values(usuariosMap)
       });
 
       setModalBalanceAbierto(true);
@@ -414,9 +440,7 @@ const Balance = () => {
     }
   };
 
-  // ============================================================
   // FUNCIONES DE CÁLCULO DE FECHAS
-  // ============================================================
 
   /**
    * MVIEW005-8
@@ -515,9 +539,7 @@ const Balance = () => {
     };
   };
 
-  // ============================================================
   // FUNCIONES DE AGRUPACIÓN DE MOVIMIENTOS
-  // ============================================================
 
   /**
    * MVIEW005-10
@@ -1174,6 +1196,42 @@ const Balance = () => {
                       <BalanceChart data={graficoData} />
                     </div>
   
+                    {tipoBalance === "familiar" && balanceData.usuarios && (
+                      <div className="detalle-por-persona">
+                        <h2 style={{ marginTop: "30px" }}>Resumen por Persona</h2>
+
+                        <table className="tabla-personas">
+                          <thead>
+                            <tr>
+                              <th>Persona</th>
+                              <th>Ingresos</th>
+                              <th>Egresos</th>
+                              <th>Balance</th>
+                              <th>% Gastos</th>
+                              <th>Concepto más gastado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {balanceData.usuarios.map((u) => (
+                              <tr key={u.nombre}>
+                                <td>{u.nombre}</td>
+                                <td className="positivo">{formatCurrency(u.ingresos)}</td>
+                                <td className="negativo">{formatCurrency(u.egresos)}</td>
+                                <td className={u.total >= 0 ? "positivo" : "negativo"}>
+                                  {formatCurrency(u.total)}
+                                </td>
+                                <td>{u.participacion.toFixed(1)}%</td>
+                                <td>
+                                  {u.topConceptoNombre
+                                    ? `${u.topConceptoNombre} (${formatCurrency(u.topConceptoMonto)})`
+                                    : "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1269,6 +1327,7 @@ const Balance = () => {
                   className="select-filtro"
                   onChange={(e) => {
                     const value = e.target.value;
+                    console.log("Período seleccionado:", value);
                     setPeriodo(value);
   
                     const hoy = new Date();
@@ -1309,6 +1368,7 @@ const Balance = () => {
                     setFechaFin(fin.toISOString().split("T")[0]);
                   }}
                 >
+                  <option value="">Seleccionar</option>
                   <option value="hoy">Hoy</option>
                   <option value="7dias">Últimos 7 días</option>
                   <option value="30dias">Últimos 30 días</option>

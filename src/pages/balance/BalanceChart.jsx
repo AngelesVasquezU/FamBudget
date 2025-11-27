@@ -1,4 +1,24 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+
+const CustomLegend = () => (
+  <div style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: "40px",
+    marginTop: "20px",
+    fontSize: "14px"
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <div style={{ width: 14, height: 14, background: "#2a4672", borderRadius: 3 }}></div>
+      <span>Ingresos</span>
+    </div>
+
+    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <div style={{ width: 14, height: 14, background: "#ff6b6b", borderRadius: 3 }}></div>
+      <span>Egresos</span>
+    </div>
+  </div>
+);
 
 // Componente para mostrar el gráfico de balance con barras de ingresos y egresos.
 export default function BalanceChart({ data }) {
@@ -26,8 +46,10 @@ export default function BalanceChart({ data }) {
                         }}
                     />
 
-                    <Bar dataKey="ingresos" fill="#2a4672" radius={[4, 4, 0, 0]} barSize={50} />
-                    <Bar dataKey="egresos" fill="#ff6b6b" radius={[4, 4, 0, 0]} barSize={50} />
+                    <Bar dataKey="ingresos" name="Ingresos" fill="#2a4672" radius={[4, 4, 0, 0]} barSize={50} />
+                    <Bar dataKey="egresos"  name="Egresos" fill="#ff6b6b" radius={[4, 4, 0, 0]} barSize={50} />
+                    <Legend content={<CustomLegend />} />
+
                 </BarChart>
             </ResponsiveContainer>
         </div>

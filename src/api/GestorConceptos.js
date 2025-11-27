@@ -1,21 +1,16 @@
+// GES-001
 /**
- * GestorConceptos
- * ----------------
- * Responsable de administrar todas las operaciones relacionadas con
- * los conceptos financieros del sistema (categorías de ingreso o egreso).
+ * GestorConceptos – Gestión de conceptos financieros
  *
- * Identificador de módulo: GES-001
+ * Clase encargada de administrar todas las operaciones relacionadas con
+ * los conceptos (categorías de ingreso/egreso) asociados a cada familia.
  *
  * Funcionalidades principales:
- * - Obtener conceptos por usuario y familia
- * - Filtrar conceptos por tipo (ingreso/egreso)
- * - Validar existencia de nombres duplicados
- * - Crear nuevos conceptos
+ * - Obtener conceptos del usuario y su familia
+ * - Filtrar conceptos por tipo
+ * - Validar nombres duplicados
+ * - Crear conceptos (creando familia si no existe)
  * - Editar conceptos existentes
- *
- * Este gestor actúa como la capa intermedia entre la interfaz y la base
- * de datos (Supabase), asegurando que los conceptos estén correctamente
- * vinculados a la familia del usuario.
  */
 export class GestorConceptos { // GES-001
 
@@ -30,10 +25,7 @@ export class GestorConceptos { // GES-001
     this.gestorUsuario = gestorUsuario;
   }
 
-  // ============================================================
   // MGES001-1 — Obtener conceptos de la familia del usuario
-  // ============================================================
-
   /**
    * Obtiene todos los conceptos asociados a la familia del usuario autenticado.
    *
@@ -69,17 +61,14 @@ export class GestorConceptos { // GES-001
     return conceptos;
   }
 
-  // ============================================================
   // MGES001-2 — Obtener conceptos filtrados por tipo
-  // ============================================================
-
   /**
    * Obtiene los conceptos filtrados opcionalmente por tipo.
    *
    * Si el usuario pertenece a una familia, solo se retornan los conceptos
-   * de esa familia. Si no tiene familia, se retornan conceptos globales.
+   * de esa familia. 
    *
-   * @param {string|null} tipo - "ingreso" | "egreso" | null para todos.
+   * @param {string|null} tipo - "ingreso" | "egreso".
    * @returns {Promise<Array>} Conceptos filtrados.
    * @throws {Error} Si falla la consulta o no se encuentra el usuario.
    */
@@ -115,42 +104,35 @@ export class GestorConceptos { // GES-001
     return data;
   }
 
-  // ============================================================
-  // MGES001-3 — Verificar existencia de un nombre
-  // ============================================================
-
+  // MGES001-3 — Verificar duplicado dentro de familia
   /**
-   * Verifica si existe un concepto con un nombre específico.
+   * Verifica si un concepto existe dentro de una familia específica.
    *
-   * Útil para validar antes de crear o editar.
-   *
-   * @param {string} nombre - Nombre del concepto a verificar.
-   * @param {string|null} ignorarId - ID opcional para excluir (cuando se edita).
-   * @returns {Promise<boolean>} True si existe, false si no.
+   * @param {string} nombre - Nombre del concepto.
+   * @param {string} familia_id - Familia donde buscar.
+   * @param {string|null} ignorarId - ID opcional a ignorar.
+   * @returns {Promise<boolean>}
    */
-  async existeNombre(nombre, ignorarId = null) {
+  async existeNombreEnFamilia(nombre, familia_id, ignorarId = null) {
     let query = this.supabase
       .from("conceptos")
       .select("id")
       .eq("nombre", nombre)
+      .eq("familia_id", familia_id)
       .limit(1);
 
     if (ignorarId) query = query.neq("id", ignorarId);
 
     const { data, error } = await query;
     if (error && error.code !== 'PGRST116') throw error;
+
     return !!(data && data.length > 0);
   }
 
-  // ============================================================
   // MGES001-4 — Crear un nuevo concepto
-  // ============================================================
-
   /**
    * Crea un nuevo concepto para la familia del usuario.
-   *
-   * Si el usuario no pertenece a ninguna familia, se crea una y se asigna.
-   *
+   * 
    * @param {Object} params
    * @param {string} params.nombre - Nombre del concepto.
    * @param {"ingreso"|"egreso"} params.tipo - Tipo del concepto.
@@ -174,7 +156,6 @@ export class GestorConceptos { // GES-001
 
     let familia_id = usuario.familia_id;
 
-    // Crear familia si no existe
     if (!familia_id) {
       const { data: nuevaFamilia, error: errorFamilia } = await this.supabase
         .from('familias')
@@ -210,42 +191,10 @@ export class GestorConceptos { // GES-001
     return data;
   }
 
-  // ============================================================
-  // MGES001-5 — Verificar duplicado dentro de familia
-  // ============================================================
-
+  // MGES001-5 — Editar un concepto
   /**
-   * Verifica si un concepto existe dentro de una familia específica.
-   *
-   * @param {string} nombre - Nombre del concepto.
-   * @param {string} familia_id - Familia donde buscar.
-   * @param {string|null} ignorarId - ID opcional a ignorar.
-   * @returns {Promise<boolean>}
-   */
-  async existeNombreEnFamilia(nombre, familia_id, ignorarId = null) {
-    let query = this.supabase
-      .from("conceptos")
-      .select("id")
-      .eq("nombre", nombre)
-      .eq("familia_id", familia_id)
-      .limit(1);
-
-    if (ignorarId) query = query.neq("id", ignorarId);
-
-    const { data, error } = await query;
-    if (error && error.code !== 'PGRST116') throw error;
-
-    return !!(data && data.length > 0);
-  }
-
-  // ============================================================
-  // MGES001-6 — Editar un concepto
-  // ============================================================
-
-  /**
-   * Edita un concepto existente.
-   *
-   * Valida previamente que no exista otro concepto con el mismo nombre.
+   * Edita un concepto existente validando que no exista otro
+   * con el mismo nombre dentro de la misma familia.
    *
    * @param {string} id - ID del concepto.
    * @param {Object} params
@@ -257,16 +206,31 @@ export class GestorConceptos { // GES-001
    * @throws {Error} Si ya existe duplicado o falla Supabase.
    */
   async editarConcepto(id, { nombre, tipo, periodo }) {
-    const yaExiste = await this.existeNombre(nombre, id);
-    if (yaExiste) throw new Error("Ya existe otro concepto con ese nombre");
+    // Obtener familia del concepto actual
+    const { data: conceptoActual, error: errorConcepto } = await this.supabase
+      .from("conceptos")
+      .select("familia_id")
+      .eq("id", id)
+      .single();
+
+    if (errorConcepto) throw errorConcepto;
+    if (!conceptoActual) throw new Error("Concepto no encontrado");
+
+    const familia_id = conceptoActual.familia_id;
+
+    // Validar duplicado dentro de la misma familia
+    const yaExiste = await this.existeNombreEnFamilia(nombre, familia_id, id);
+    if (yaExiste) throw new Error("Ya existe otro concepto con ese nombre en esta familia");
 
     const { data, error } = await this.supabase
-      .from('conceptos')
+      .from("conceptos")
       .update({ nombre, tipo, periodo })
-      .eq('id', id)
-      .select();
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) throw error;
+
     return data;
   }
 }

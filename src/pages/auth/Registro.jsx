@@ -6,7 +6,7 @@ import BackButton from '../../components/button/BackButton';
 import Input from '../../components/input/Input';
 import Button from '../../components/button/Button';
 
-const gestorAuth = providers;
+const { gestorAuth } = providers;
   
 const Registro = () => { // VIEW-002
   const [formData, setFormData] = useState({
@@ -52,7 +52,9 @@ const Registro = () => { // VIEW-002
         role: rol
       });
 
-      setMessage(`Registro exitoso como ${rol}. Revisa tu correo para confirmar tu cuenta.`);
+      await gestorAuth.logout();
+
+      setMessage(`Registro exitoso como ${rol}`);
       setFormData({
         email: '',
         parentesco: '',

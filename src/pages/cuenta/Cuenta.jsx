@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../services/supabaseClient";
-import { GestorUsuario } from "../../api/GestorUsuario";
+import { providers } from "../../services/providers";
 import { Pencil } from "lucide-react";
 import "../../styles/Cuenta.css";
 
 const Cuenta = () => { // VIEW-007
-    const gestorUsuario = new GestorUsuario(supabase);
+    const { gestorUsuario } = providers;
     const [usuario, setUsuario] = useState(null);
     const [editable, setEditable] = useState(false);
     const [formData, setFormData] = useState({ nombre: "", parentesco: "" });
@@ -26,17 +25,14 @@ const Cuenta = () => { // VIEW-007
     // Maneja la actualización de los datos del usuario.
     const handleGuardar = async () => {
         try {
-            const { error } = await supabase
-                .from("usuarios")
-                .update({
-                    nombre: formData.nombre.trim(),
-                    parentesco: formData.parentesco.trim(),
-                })
-                .eq("id", usuario.id);
+            await gestorUsuario.actualizarUsuario(usuario.id, {
+            nombre: formData.nombre,
+            parentesco: formData.parentesco
+            });
 
-            if (error) throw error;
             alert("Datos actualizados correctamente");
             setEditable(false);
+
         } catch (err) {
             console.error(err);
             alert("Error al actualizar los datos");

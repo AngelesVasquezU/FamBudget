@@ -1,22 +1,17 @@
+// GES-004
 /**
- * GestorMovimientos
- * -----------------
- * Responsable de administrar todas las operaciones relacionadas con los
- * movimientos financieros del usuario (ingresos, egresos, filtrado,
- * cálculo de totales, balance, top de conceptos, etc.).
+ * GestorMovimientos – Gestión de movimientos financieros.
  *
- * Identificador de módulo: GES-004
+ * Funcionalidades:
+ * - ingresos
+ * - egresos
+ * - filtrado
+ * - balance
+ * - totales
+ * - análisis por conceptos
  *
- * Este gestor es el punto central para toda interacción entre la capa de
- * aplicación y las tablas:
- * - movimientos
- * - usuarios
- * - conceptos
- * - ahorro (vía gestorMetas cuando aplica)
- *
- * Algunas operaciones (como la creación de movimientos) se delegan ahora
- * a funciones SQL (RPC) para cumplir buenas prácticas de seguridad.
  */
+
 export class GestorMovimientos {
 
   /**
@@ -32,30 +27,24 @@ export class GestorMovimientos {
     this.gestorUsuario = gestorUsuario;
   }
 
-  // ============================================================
   // MGES004-1 — Crear Movimiento
-  // ============================================================
-
   /**
-   * Crea un movimiento financiero (ingreso o egreso).
-   *
-   * Esta función ya no realiza lógica manual en JavaScript. En su lugar,
-   * delega la operación a la función SQL `crear_movimiento`, la cual:
-   * - inserta el movimiento
-   * - valida saldos
-   * - actualiza saldo del usuario
-   * - registra ahorro si está asociado a una meta
-   * - actualiza el estado de dicha meta
+   * Crea un nuevo movimiento financiero mediante la función RPC
+   * `crear_movimiento`, que gestiona:
+   * - inserción del movimiento
+   * - validación del saldo
+   * - actualización de saldo del usuario
+   * - registro de ahorro y actualización de metas
    *
    * @param {Object} params
    * @param {string} params.usuarioId - ID del usuario dueño del movimiento.
-   * @param {string|null} params.conceptoId - Concepto asociado al movimiento.
+   * @param {string|null} params.conceptoId - Concepto asociado.
    * @param {"ingreso"|"egreso"} params.tipo - Tipo de movimiento.
    * @param {number|string} params.monto - Monto del movimiento.
    * @param {string|null} params.comentario - Comentario opcional.
    * @param {string} params.fecha - Fecha en formato YYYY-MM-DD.
    * @param {string|null} params.metaId - ID de la meta asociada (si aplica).
-   * @param {number|null} params.montoMeta - Monto destinado al ahorro en la meta.
+   * @param {number|null} params.montoMeta - Monto destinado a la meta.
    *
    * @returns {Promise<string>} ID del movimiento creado.
    * @throws {Error} Si la función RPC retorna algún error.
@@ -76,10 +65,7 @@ export class GestorMovimientos {
     return data;
   }
 
-  // ============================================================
   // MGES004-2 — Total por Tipo
-  // ============================================================
-
   /**
    * Calcula el total de ingresos o egresos de un usuario.
    *
@@ -90,9 +76,9 @@ export class GestorMovimientos {
    * @param {string} usuarioId - ID del usuario.
    * @param {"ingreso"|"egreso"} tipo - Tipo de movimiento.
    * @param {Object} [opciones]
-   * @param {string|null} [opciones.fecha]
-   * @param {number|null} [opciones.mes]
-   * @param {number|null} [opciones.año]
+   * @param {string|null} [opciones.fecha] - Fecha exacta (YYYY-MM-DD).
+   * @param {number|null} [opciones.mes] - Mes a filtrar.
+   * @param {number|null} [opciones.año] - Año a filtrar.
    *
    * @returns {Promise<number>} Total acumulado.
    */
@@ -120,10 +106,7 @@ export class GestorMovimientos {
     return Math.round(total * 100) / 100;
   }
 
-  // ============================================================
   // MGES004-3 — Movimientos del Usuario
-  // ============================================================
-
   /**
    * Obtiene los movimientos registrados por un usuario.
    * Permite filtrar por:
@@ -133,12 +116,12 @@ export class GestorMovimientos {
    *
    * Incluye los datos del concepto mediante relación.
    *
-   * @param {string} usuarioId
-   * @param {Object} opciones
-   * @param {number} [opciones.limit=50]
-   * @param {"asc"|"desc"} [opciones.ordenar="desc"]
-   * @param {number|null} [opciones.mes]
-   * @param {number|null} [opciones.año]
+   * @param {string} usuarioId - Usuario dueño de los movimientos.
+   * @param {Object} opciones - Opciones de filtrado.
+   * @param {number} [opciones.limit=50] - Cantidad de registros.
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden.
+   * @param {number|null} [opciones.mes] - Mes a filtrar.
+   * @param {number|null} [opciones.año] - Año a filtrar.
    *
    * @returns {Promise<Array>} Lista de movimientos.
    */
@@ -184,31 +167,28 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-4 — Balance entre Fechas
-  // ============================================================
-
   /**
-   * Obtiene el balance (ingresos, egresos y total) dentro de un rango
-   * de fechas. Puede ser:
-   * - personal (solo del usuario)
-   * - familiar (todos los miembros de la familia)
+   * Obtiene movimientos y balance dentro de un rango de fechas.
+   * Puede ser modo personal o familiar.
    *
    * @param {Object} params
-   * @param {string} params.fechaInicio
-   * @param {string} params.fechaFin
+   * @param {string} params.fechaInicio - Fecha inicial (YYYY-MM-DD).
+   * @param {string} params.fechaFin - Fecha final (YYYY-MM-DD).
    * @param {"personal"|"familiar"} params.tipo
    * @param {string} params.usuarioId
    *
-   * @returns {Promise<Object>}
-   *   movimientos: Array
-   *   totales: { ingresos: number, egresos: number, balance: number }
+   * @returns {Promise<Object>} Movimientos y totales.
    */
   async obtenerBalanceEntreFechas({ fechaInicio, fechaFin, tipo, usuarioId }) {
     try {
       let query = this.supabase
         .from("movimientos")
-        .select("*")
+        .select(`
+          *,
+          usuarios:usuario_id(id, nombre),
+          conceptos:concepto_id(id, nombre, tipo)
+        `)
         .gte("fecha", fechaInicio)
         .lte("fecha", fechaFin);
 
@@ -254,18 +234,14 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-5 — Movimientos con Conceptos
-  // ============================================================
-
   /**
-   * Obtiene movimientos del usuario junto con su información de
-   * concepto, útil para análisis (top categorías de ingresos/egresos).
+   * Obtiene movimientos del usuario con datos completos del concepto.
    *
    * @param {string} usuarioId
    * @param {Object} opciones
-   * @param {number} [opciones.limit=100]
-   * @param {"asc"|"desc"} [opciones.ordenar="desc"]
+   * @param {number} [opciones.limit=100] - Cantidad de registros
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden
    *
    * @returns {Promise<Array>}
    */
@@ -303,16 +279,13 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-6 — Actualizar Movimiento
-  // ============================================================
-
   /**
-   * Actualiza los campos permitidos de un movimiento:
+   * Actualiza campos editables de un movimiento:
    * - monto
    * - fecha
    * - comentario
-   *
+   * 
    * @param {string} movimientoId
    * @param {Object} datosActualizados
    *
@@ -344,10 +317,7 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-7 — Filtro Avanzado
-  // ============================================================
-
   /**
    * Obtiene movimientos aplicando filtros avanzados:
    * - lista de usuarios
@@ -356,17 +326,15 @@ export class GestorMovimientos {
    * - orden
    * - límite
    *
-   * Incluye JOINs con conceptos, usuarios y ahorro.
+   * @param {Object} opciones - Opciones del filtro.
+   * @param {string[]} opciones.usuariosIds - IDs de usuarios.
+   * @param {string|null} [opciones.conceptoId] - Concepto.
+   * @param {string|null} [opciones.fechaInicio] - Fecha inicial.
+   * @param {string|null} [opciones.fechaFin] - Fecha final.
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden.
+   * @param {number|null} [opciones.limit] - Límite.
    *
-   * @param {Object} opciones
-   * @param {string[]} opciones.usuariosIds
-   * @param {string|null} [opciones.conceptoId]
-   * @param {string|null} [opciones.fechaInicio]
-   * @param {string|null} [opciones.fechaFin]
-   * @param {"asc"|"desc"} [opciones.ordenar="desc"]
-   * @param {number|null} [opciones.limit]
-   *
-   * @returns {Promise<Array>}
+   * @returns {Promise<Array>} Movimientos filtrados.
    */
   async obtenerMovimientosFiltrados(opciones = {}) {
     try {
@@ -410,20 +378,17 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-8 — Resumen por Conceptos
-  // ============================================================
-
   /**
    * Calcula el resumen agregado por conceptos:
    * - Top 3 ingresos
    * - Top 3 egresos
    * - Listado completo de ambas categorías
    *
-   * @param {string} usuarioId
+   * @param {string} usuarioId - Usuario a analizar.
    * @param {Object} opciones
-   * @param {number|null} opciones.mes
-   * @param {number|null} opciones.año
+   * @param {number|null} opciones.mes - Mes del análisis.
+   * @param {number|null} opciones.año - Año del análisis.
    *
    * @returns {Promise<Object>}
    */
@@ -488,10 +453,7 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-9 — Movimiento por ID
-  // ============================================================
-
   /**
    * Obtiene un movimiento por ID con toda su información relacionada:
    * - concepto
@@ -522,10 +484,7 @@ export class GestorMovimientos {
     }
   }
 
-  // ============================================================
   // MGES004-10 — Eliminar Movimiento
-  // ============================================================
-
   /**
    * Elimina un movimiento del sistema.
    *

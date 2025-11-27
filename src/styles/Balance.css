@@ -1003,3 +1003,41 @@
         align-self: flex-end;
     }
 }
+
+.detalle-por-persona{
+    margin: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0px 20px 20px 20px;
+}
+
+.detalle-por-persona h2 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+.tabla-personas {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tabla-personas th,
+.tabla-personas td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.positivo {
+  color: #0f8a4b;
+  font-weight: bold;
+}
+
+.negativo {
+  color: #c0392b;
+  font-weight: bold;
+}

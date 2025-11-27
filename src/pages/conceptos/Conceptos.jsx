@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabaseClient';
-import { GestorConceptos } from '../../api/GestorConceptos';
-import { GestorUsuario } from "../../api/GestorUsuario";
+import { providers } from '../../services/providers';
 import '../../styles/Conceptos.css';
 
-const Conceptos = () => { // VIEW-006
-  const gestorUsuario = new GestorUsuario(supabase);
-  const gestorConceptos = new GestorConceptos(supabase, gestorUsuario);
+const Conceptos = () => { // VIEW-
+  const { gestorConceptos } = providers;
   const [concepts, setConcepts] = useState([]);
   const [selectedConceptId, setSelectedConceptId] = useState(null);
   const [formData, setFormData] = useState({ nombre: '', tipo: 'ingreso', periodo: 'diario' });

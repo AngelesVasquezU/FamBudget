@@ -22,18 +22,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabaseClient';
-import { GestorFamilia } from '../../api/GestorFamilia';
-import { GestorUsuario } from '../../api/GestorUsuario';
-import { Home, PlusCircle, Edit, Trash2, Users, X } from 'lucide-react';
+import { providers } from '../../services/providers';
+import { Home, PlusCircle, Trash2, X } from 'lucide-react';
 import { FaUsers } from "react-icons/fa";
 import { ShieldUser } from 'lucide-react';
 import '../../styles/Familia.css';
 
 const Familia = () => { // VIEW-009
-    const gestorUsuario = new GestorUsuario(supabase);
-    const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
-
+    const { gestorFamilia, gestorUsuario } = providers;
+    
     const [mostrarEliminarFamilia, setMostrarEliminarFamilia] = useState(false);
 
     const [mostrarModalCrear, setMostrarModalCrear] = useState(false);

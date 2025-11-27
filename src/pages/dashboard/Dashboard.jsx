@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../services/supabaseClient";
-import { GestorUsuario } from "../../api/GestorUsuario";
-import { GestorMetas } from "../../api/GestorMeta";
-import { GestorMovimientos } from "../../api/GestorMovimientos";
+import { providers } from "../../services/providers";
 import { MdAttachMoney } from "react-icons/md";
 import { IoMdTrendingUp } from "react-icons/io";
 import { IoMdTrendingDown } from "react-icons/io";
 
 import "../../styles/Dashboard.css";
+
+const { gestorUsuario, gestorMovimientos } = providers;
 
 const Dashboard = () => { // VIEW-008
   const [isLoading, setLoading] = useState(true);
@@ -16,10 +15,6 @@ const Dashboard = () => { // VIEW-008
   const [egresosTotales, setEgresosTotales] = useState(0);
   const [ahorroTotal, setAhorroTotal] = useState(0);
   const [movimientos, setMovimientos] = useState([]);
-
-  const gestorUsuario = new GestorUsuario(supabase);
-  const gestorMeta = new GestorMetas(supabase, gestorUsuario);
-  const gestorMovimientos = new GestorMovimientos(supabase, gestorMeta, gestorUsuario);
 
   useEffect(() => {
     const cargar = async () => {

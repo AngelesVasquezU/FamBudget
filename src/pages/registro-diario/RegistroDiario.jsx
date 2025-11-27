@@ -1,16 +1,27 @@
 // VIEW-011
 /**
  * RegistroDiario.jsx
+ * -------------------------------------------------------------
+ * Vista encargada de registrar movimientos diarios de ingresos 
+ * y egresos, permitiendo asociarlos a conceptos y metas.
  *
- * Componente de React que permite registrar movimientos diarios
- * de ingresos y egresos, con soporte para asociarlos a conceptos y metas.
+ * Funcionalidades principales:
+ * - Mostrar resumen financiero del día.
+ * - Registrar ingresos y egresos con concepto asociado.
+ * - Crear nuevos conceptos desde la vista.
+ * - Asociar ingresos a metas (opcional).
  *
- * Funcionalidades:
- *  - Mostrar resumen del día
- *  - Seleccionar tipo de movimiento (Ingreso/Egreso)
- *  - Registrar nuevo concepto
- *  - Asociar monto a metas (opcional)
+ * Gestores utilizados:
+ * - GestorUsuario
+ * - GestorMovimientos
+ * - GestorConceptos
+ * - GestorMetas
+ *
+ * La vista se centra únicamente en manejar estados del formulario
+ * y eventos del usuario. Toda la lógica de datos y operaciones con
+ * la base de datos se delega a los gestores correspondientes.
  */
+
 
 import { useEffect, useState } from "react";
 import { providers } from "../../services/providers";
@@ -18,9 +29,9 @@ import Button from '../../components/button/Button';
 import { CirclePlus } from 'lucide-react';
 import "../../styles/RegistroDiario.css";
 
-const { gestorUsuario, gestorMetas, gestorMovimientos, gestorConceptos } = providers;
 
 const RegistroDiario = () => {
+  const { gestorUsuario, gestorMetas, gestorMovimientos, gestorConceptos } = providers;
   const [tipo, setTipo] = useState("ingreso");
   const MONEDAS = [
     { codigo: "PEN", simbolo: "S/.", nombre: "Soles" },
@@ -97,7 +108,10 @@ const RegistroDiario = () => {
   // MVIEW011-1
   /**
    * Maneja los cambios en los campos del formulario de registro diario.
-   * @param {Event} e - Evento del input
+   * Actualiza el estado interno del formulario con el valor ingresado.
+   *
+   * @param {Event} e - Evento generado por el input.
+   * @returns {void}
    */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,8 +120,10 @@ const RegistroDiario = () => {
 
   // MVIEW011-2
   /**
-   * Carga las metas del usuario desde el gestorMetas
-   * y las almacena en el estado `metas`.
+   * Carga las metas del usuario autenticado utilizando el GestorMetas.
+   * Actualiza el estado local `metas` con los resultados obtenidos.
+   *
+   * @returns {Promise<void>}
    */
   const cargarMetas = async () => {
     if (!usuarioId) return;
@@ -122,8 +138,16 @@ const RegistroDiario = () => {
   // MVIEW011-3
   /**
    * Maneja el envío del formulario de registro diario.
-   * Crea un nuevo movimiento usando gestorMovimientos.
-   * @param {Event} e - Evento submit
+   * Crea un nuevo movimiento utilizando el GestorMovimientos
+   * y actualiza el mensaje de confirmación o error.
+   *
+   * Flujo:
+   * - Valida usuario autenticado.
+   * - Envía los datos del formulario al gestor.
+   * - Limpia formulario y actualiza UI.
+   *
+   * @param {Event} e - Evento submit del formulario.
+   * @returns {Promise<void>}
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -160,8 +184,11 @@ const RegistroDiario = () => {
 
   // MVIEW011-4
   /**
-   * Maneja la creación de un nuevo concepto desde el modal.
-   * Actualiza la lista de conceptos en el estado.
+   * Crea un nuevo concepto desde el modal.
+   * Utiliza GestorConceptos para registrar el concepto
+   * y luego recarga la lista de conceptos disponibles.
+   *
+   * @returns {Promise<void>}
    */
   const handleAddNewConcept = async () => {
     try {

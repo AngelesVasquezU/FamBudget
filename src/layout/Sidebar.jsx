@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../services/supabaseClient';
-import { GestorUsuario } from "../api/GestorUsuario";
-import { GestorFamilia } from "../api/GestorFamilia";
+import { providers } from '../services/providers';
 
 import {
   Home,
@@ -26,8 +24,7 @@ const Sidebar = ({
   const [user, setUser] = useState(null);
   const [family, setFamily] = useState(null);
 
-  const gestorUsuario = new GestorUsuario(supabase);
-  const gestorFamilia = new GestorFamilia(supabase, gestorUsuario);
+  const { gestorUsuario, gestorFamilia } = providers;
 
   const location = useLocation();
   useEffect(() => {
