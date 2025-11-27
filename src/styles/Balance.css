@@ -151,14 +151,15 @@
 
 .total-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 20px;
 }
 
 .total-item span:first-child {
-    color: var(--text-light);
-    font-size: 0.9rem;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: bold;
 }
 
 .total-monto {
@@ -613,11 +614,19 @@
   margin: 0 auto;
 }
 
+.container-actions{
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    flex-shrink: 0; 
+    gap: 1rem;
+}
+
 .resumen-totales {
   background: #f8f9fa;
-  padding: 1rem;
+  padding: 1.2rem;
   border-radius: 8px;
-  margin: 0.75rem 0;
+  margin: 0 0;
   border: 1px solid #e9ecef;
 }
 .resumen-totales.ingresos {

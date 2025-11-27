@@ -17,8 +17,8 @@ export default function BalanceChart({ data }) {
                             return (
                                 <div style={{ background: "#fff", padding: "10px", border: "1px solid #ccc" }}>
                                     <p><strong>{d.label}</strong></p>
-                                    <p>Ingresos: {d.ingresos}</p>
-                                    <p>Egresos: {d.egresos}</p>
+                                    <p>Ingresos: S/. {d.ingresos}</p>
+                                    <p>Egresos: S/. {d.egresos}</p>
                                     <p>Desde: {d.fechaInicio}</p>
                                     <p>Hasta: {d.fechaFin}</p>
                                 </div>

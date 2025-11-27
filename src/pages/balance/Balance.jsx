@@ -1,32 +1,35 @@
 // VIEW-005
 /**
- * Balance.jsx
+ * Balance.jsx - VERSIÓN REFACTORIZADA
  * 
  * @description Componente principal para la gestión y visualización de balances financieros.
- * Permite a los usuarios generar reportes detallados de sus movimientos financieros,
- * visualizar resúmenes por conceptos y analizar tendencias de ingresos/egresos.
+ * Permite a los usuarios visualizar resúmenes de ingresos/egresos, generar balances 
+ * personalizados por períodos, ver movimientos detallados por concepto, editar movimientos
+ * y visualizar gráficos de tendencias financieras.
  * 
- * @features
- * - Generación de balances por diferentes periodos (día, semana, mes, trimestre, personalizado)
- * - Visualización de top 3 conceptos de ingresos y egresos
- * - Panel lateral para explorar movimientos por concepto
- * - Edición de movimientos individuales
- * - Gráficos interactivos de tendencias financieras
- * - Filtros temporales configurables
+ * @version 2.0.0
+ * @date 2025
  * 
  * @dependencies
- * - React hooks (useEffect, useState)
- * - Supabase para consultas de base de datos
- * - Servicios de providers (gestorUsuario, gestorConceptos, gestorMovimientos)
- * - React Icons para iconografía
- * - BalanceChart para visualización de gráficos
+ * - React (useState, useEffect)
+ * - react-icons/fa (FaEdit, FaEye)
+ * - providers (gestorUsuario, gestorMovimientos, gestorConceptos)
+ * - BalanceChart (componente de gráficos)
  * 
- * @version 1.0.0
- * @date 2025
+ * @features
+ * - Resumen de top 3 ingresos y egresos por concepto
+ * - Generación de balances personales y familiares
+ * - Filtrado temporal de movimientos (día, semana, quincena, mes)
+ * - Edición de movimientos existentes
+ * - Visualización de gráficos con agrupación automática
+ * - Panel lateral para explorar movimientos por concepto
+ * 
+ * @architecture
+ * Utiliza gestores de servicios para todas las operaciones con datos.
+ * Implementa modales y paneles laterales para una mejor UX.
  */
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../services/supabaseClient";
 import { providers } from "../../services/providers";
 import { FaEdit, FaEye } from 'react-icons/fa';
 import BalanceChart from "../../pages/balance/BalanceChart";
@@ -34,12 +37,8 @@ import "../../styles/Balance.css";
 
 /**
  * Formatea un número como moneda peruana (PEN)
- * 
- * @function formatCurrency
  * @param {number} amount - Monto a formatear
- * @returns {string} Monto formateado con símbolo de moneda y separadores
- * @example
- * formatCurrency(1500.50) // "S/ 1,500.50"
+ * @returns {string} Monto formateado (ej: "S/ 1,234.56")
  */
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('es-PE', {
@@ -52,52 +51,58 @@ const { gestorUsuario, gestorMovimientos, gestorConceptos } = providers;
 
 /**
  * Balance Component
- * 
- * @component
- * @returns {JSX.Element} Interfaz completa de gestión de balances
+ * Componente principal de gestión de balances financieros
  */
 const Balance = () => {
+  // ============================================================
+  // ESTADOS DEL COMPONENTE
+  // ============================================================
+
+  // Estados de carga y error
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [generandoBalance, setGenerandoBalance] = useState(false);
+  const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
+  const [guardandoCambios, setGuardandoCambios] = useState(false);
+
+  // Estados de datos principales
   const [user, setUser] = useState(null);
-  const [periodo, setPeriodo] = useState('');
-  const [tipoBalance, setTipoBalance] = useState('');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [conceptos, setConceptos] = useState([]);
   const [topEgresos, setTopEgresos] = useState([]);
   const [topIngresos, setTopIngresos] = useState([]);
   const [totalEgresos, setTotalEgresos] = useState(0);
   const [totalIngresos, setTotalIngresos] = useState(0);
-  const [balanceData, setBalanceData] = useState(null);
-  const [generandoBalance, setGenerandoBalance] = useState(false);
-  const [error, setError] = useState(null);
-  const [panelMovimientosAbierto, setPanelMovimientosAbierto] = useState(false);
-  const [conceptos, setConceptos] = useState([]);
-  const [conceptoSeleccionado, setConceptoSeleccionado] = useState(null);
+  const [totalBalance, setTotalBalance] = useState(0);
   const [movimientosConcepto, setMovimientosConcepto] = useState([]);
-  const [filtroTiempo, setFiltroTiempo] = useState('todos');
-  const [cargandoMovimientos, setCargandoMovimientos] = useState(false);
-  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
-  const [modalBalanceAbierto, setModalBalanceAbierto] = useState(false);
-  const [movimientoEditando, setMovimientoEditando] = useState(null);
-  const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false);
-  const [guardandoCambios, setGuardandoCambios] = useState(false);
+  const [balanceData, setBalanceData] = useState(null);
 
+  // Estados de UI y modales
+  const [panelMovimientosAbierto, setPanelMovimientosAbierto] = useState(false);
+  const [modalBalanceAbierto, setModalBalanceAbierto] = useState(false);
+  const [modalEdicionAbierto, setModalEdicionAbierto] = useState(false);
+  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
+  const [conceptoSeleccionado, setConceptoSeleccionado] = useState(null);
+
+  // Estados de filtros y parámetros
+  const [periodo, setPeriodo] = useState('');
+  const [tipoBalance, setTipoBalance] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [filtroTiempo, setFiltroTiempo] = useState('todos');
+
+  // Estados de edición
+  const [movimientoEditando, setMovimientoEditando] = useState(null);
+
+  // ============================================================
   // EFECTOS Y CARGA INICIAL
+  // ============================================================
+
   /**
    * Efecto de inicialización del componente
-   * Carga el usuario autenticado y su resumen financiero
-   * 
-   * @effect
-   * @dependencies []
+   * Se ejecuta una vez al montar el componente
+   * Carga el usuario y el resumen financiero inicial
    */
   useEffect(() => {
-    /**
-     * Función asíncrona para cargar datos iniciales
-     * 
-     * @async
-     * @function cargarDatosIniciales
-     * @throws {Error} Si no se puede obtener el usuario
-     */
     const cargarDatosIniciales = async () => {
       setIsLoading(true);
       setError(null);
@@ -125,29 +130,26 @@ const Balance = () => {
     cargarDatosIniciales();
   }, []);
 
-  // FUNCIONES DE CARGA DE DATOS
+  // ============================================================
+  // FUNCIONES DE CARGA DE DATOS - REFACTORIZADAS
+  // ============================================================
 
   /**
    * MVIEW005-1
-   * Carga el resumen financiero del usuario
-   * 
-   * Obtiene:
-   * - Totales de ingresos y egresos
-   * - Top 3 conceptos de mayor movimiento en cada categoría
-   * 
-   * @async
-   * @function cargarResumen
+   * Carga el resumen financiero del usuario usando solo gestores
    * @param {string} userId - ID del usuario
-   * @throws {Error} Si falla la consulta a la base de datos
-   * @returns {Promise<void>}
    */
   const cargarResumen = async (userId) => {
     try {
       console.log("Cargando resumen para usuario:", userId);
 
+      const hoy = new Date();
+      const mes = hoy.getMonth() + 1;
+      const año = hoy.getFullYear();
+
       // Obtener totales usando métodos del gestor
-      const ingresosTotales = await gestorMovimientos.obtenerTotalPorTipo(userId, "ingreso");
-      const egresosTotales = await gestorMovimientos.obtenerTotalPorTipo(userId, "egreso");
+      const ingresosTotales = await gestorMovimientos.obtenerTotalPorTipo(userId, "ingreso", { mes, año });
+      const egresosTotales = await gestorMovimientos.obtenerTotalPorTipo(userId, "egreso", { mes, año });
 
       console.log("Ingresos totales:", ingresosTotales);
       console.log("Egresos totales:", egresosTotales);
@@ -155,78 +157,17 @@ const Balance = () => {
       setTotalEgresos(egresosTotales || 0);
       setTotalIngresos(ingresosTotales || 0);
 
-      // Consulta directa para obtener movimientos con conceptos
-      const { data: movimientos, error } = await supabase
-        .from('movimientos')
-        .select(`
-          id,
-          monto,
-          concepto_id,
-          conceptos (
-            id,
-            nombre,
-            tipo
-          )
-        `)
-        .eq('usuario_id', userId)
-        .order('fecha', { ascending: false })
-        .limit(100);
+      const balanceTotal = Math.round((ingresosTotales - egresosTotales)* 100) / 100;
 
-      if (error) {
-        console.error("Error obteniendo movimientos:", error);
-        return;
-      }
+      setTotalBalance(balanceTotal || 0);
 
-      console.log("Movimientos obtenidos:", movimientos);
+      const resumen = await gestorMovimientos.calcularResumenConceptos(userId, { mes, año });
 
-      // Procesamiento de datos para top conceptos
-      const conceptosMap = {};
+      console.log("Top 3 egresos:", resumen.topEgresos);
+      console.log("Top 3 ingresos:", resumen.topIngresos);
 
-      movimientos?.forEach(mov => {
-        if (mov.conceptos && mov.conceptos.nombre) {
-          const conceptoId = mov.conceptos.id;
-          const nombre = mov.conceptos.nombre;
-          const tipo = mov.conceptos.tipo;
-          const monto = parseFloat(mov.monto) || 0;
-
-          // Validar que el monto sea positivo
-          if (monto > 0) {
-            if (!conceptosMap[conceptoId]) {
-              conceptosMap[conceptoId] = {
-                id: conceptoId,
-                nombre: nombre,
-                tipo: tipo,
-                total: 0
-              };
-            }
-            conceptosMap[conceptoId].total += monto;
-          }
-        }
-      });
-
-      console.log("Conceptos mapeados:", conceptosMap);
-
-      // Separar por tipo y ordenar
-      const egresosArray = Object.values(conceptosMap).filter(c => c.tipo === 'egreso');
-      const ingresosArray = Object.values(conceptosMap).filter(c => c.tipo === 'ingreso');
-
-      console.log("Todos los egresos:", egresosArray);
-      console.log("Todos los ingresos:", ingresosArray);
-
-      // Obtener top 3 de cada categoría
-      const topEgresos = egresosArray
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 3);
-
-      const topIngresos = ingresosArray
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 3);
-
-      console.log("Top 3 egresos:", topEgresos);
-      console.log("Top 3 ingresos:", topIngresos);
-
-      setTopEgresos(topEgresos);
-      setTopIngresos(topIngresos);
+      setTopEgresos(resumen.topEgresos);
+      setTopIngresos(resumen.topIngresos);
 
     } catch (error) {
       console.error('Error cargando resumen:', error);
@@ -234,16 +175,14 @@ const Balance = () => {
     }
   };
 
+  // ============================================================
   // FUNCIONES DEL PANEL DE MOVIMIENTOS
+  // ============================================================
 
   /**
    * MVIEW005-2
    * Abre el panel lateral de movimientos y carga datos iniciales
-   * 
-   * @async
-   * @function abrirPanelMovimientos
-   * @throws {Error} Si el usuario no está disponible
-   * @returns {Promise<void>}
+   * Carga la lista completa de conceptos y todos los movimientos
    */
   const abrirPanelMovimientos = async () => {
     if (!user) {
@@ -255,7 +194,7 @@ const Balance = () => {
     setCargandoMovimientos(true);
 
     try {
-      // Cargar lista completa de conceptos
+      // Cargar lista completa de conceptos usando gestor
       const todosConceptos = await gestorConceptos.obtenerConceptos();
       setConceptos(todosConceptos || []);
 
@@ -272,11 +211,7 @@ const Balance = () => {
   /**
    * MVIEW005-3
    * Maneja el cambio de filtro temporal y recarga los movimientos
-   * 
-   * @async
-   * @function manejarCambioFiltro
-   * @param {string} nuevoFiltro - Nuevo filtro a aplicar (todos, dia, semana, quincena, mes)
-   * @returns {Promise<void>}
+   * @param {string} nuevoFiltro - Nuevo filtro a aplicar ('todos', 'dia', 'semana', 'quincena', 'mes')
    */
   const manejarCambioFiltro = async (nuevoFiltro) => {
     setFiltroTiempo(nuevoFiltro);
@@ -289,20 +224,13 @@ const Balance = () => {
   };
 
   // ============================================================
-  // FUNCIONES DE EDICIÓN DE MOVIMIENTOS
+  // FUNCIONES DE EDICIÓN DE MOVIMIENTOS - REFACTORIZADAS
   // ============================================================
 
   /**
    * MVIEW005-4
    * Abre el modal de edición con el movimiento seleccionado
-   * 
-   * @function abrirModalEdicion
    * @param {Object} movimiento - Movimiento a editar
-   * @param {string} movimiento.id - ID del movimiento
-   * @param {number} movimiento.monto - Monto del movimiento
-   * @param {string} movimiento.fecha - Fecha del movimiento
-   * @param {string} movimiento.comentario - Comentario del movimiento
-   * @returns {void}
    */
   const abrirModalEdicion = (movimiento) => {
     setMovimientoEditando(movimiento);
@@ -312,9 +240,6 @@ const Balance = () => {
   /**
    * MVIEW005-5
    * Cierra el modal de edición y limpia el estado
-   * 
-   * @function cerrarModalEdicion
-   * @returns {void}
    */
   const cerrarModalEdicion = () => {
     setModalEdicionAbierto(false);
@@ -323,17 +248,8 @@ const Balance = () => {
 
   /**
    * MVIEW005-6
-   * Guarda los cambios realizados en un movimiento
-   * 
-   * Actualiza en la base de datos:
-   * - Monto
-   * - Fecha
-   * - Comentario
-   * 
-   * @async
-   * @function guardarMovimientoEditado
-   * @throws {Error} Si falla la actualización en la base de datos
-   * @returns {Promise<void>}
+   * Guarda los cambios realizados en un movimiento usando el gestor
+   * Actualiza el estado local y muestra confirmación
    */
   const guardarMovimientoEditado = async () => {
     if (!movimientoEditando) return;
@@ -341,19 +257,18 @@ const Balance = () => {
     setGuardandoCambios(true);
 
     try {
-      console.log("datos de editando movimiento: ", movimientoEditando);
+      console.log("Actualizando movimiento:", movimientoEditando);
 
-      // Actualización en Supabase
-      const { error } = await supabase
-        .from('movimientos')
-        .update({
+      const movimientoActualizado = await gestorMovimientos.actualizarMovimiento(
+        movimientoEditando.id,
+        {
           monto: movimientoEditando.monto,
           fecha: movimientoEditando.fecha,
-          comentario: movimientoEditando.comentario,
-        })
-        .eq('id', movimientoEditando.id);
+          comentario: movimientoEditando.comentario
+        }
+      );
 
-      if (error) throw error;
+      console.log("Movimiento actualizado:", movimientoActualizado);
 
       // Actualizar estado local
       setMovimientosConcepto(prev =>
@@ -373,27 +288,19 @@ const Balance = () => {
     }
   };
 
+  // ============================================================
   // FUNCIONES DE GENERACIÓN DE BALANCE
+  // ============================================================
 
   /**
    * MVIEW005-7
    * Genera un balance financiero basado en los parámetros seleccionados
-   * 
-   * Proceso:
-   * 1. Valida parámetros de entrada
-   * 2. Calcula el rango de fechas según el periodo
-   * 3. Obtiene movimientos del rango
-   * 4. Agrupa por conceptos y calcula totales
-   * 5. Genera resumen con tendencias
-   * 
-   * @async
-   * @function generarBalance
-   * @throws {Error} Si faltan parámetros o falla la consulta
-   * @returns {Promise<void>}
+   * Procesa movimientos, agrupa por concepto y calcula totales
+   * Abre modal con resultados visualizados en gráfico
    */
   const generarBalance = async () => {
     if (!user) {
-      setError("Usuario no disponibles");
+      setError("Usuario no disponible");
       return;
     }
 
@@ -409,7 +316,6 @@ const Balance = () => {
       const userId = user.id;
       let fechaInicioPeriodo, fechaFinPeriodo;
 
-      // Manejo de periodo personalizado
       if (periodo === 'personalizado') {
         if (!fechaInicio || !fechaFin) {
           alert("Por favor ingresa fechas válidas para el balance personalizado.");
@@ -417,13 +323,6 @@ const Balance = () => {
           return;
         }
 
-        /**
-         * Convierte string de fecha a objeto Date
-         * Soporta formatos: YYYY-MM-DD y DD/MM/YYYY
-         * 
-         * @param {string} fechaStr - String de fecha a convertir
-         * @returns {Date|null} Objeto Date o null si el formato es inválido
-         */
         const convertirFecha = (fechaStr) => {
           if (!fechaStr) return null;
           if (fechaStr.includes('-')) {
@@ -451,11 +350,9 @@ const Balance = () => {
         fechaFinPeriodo = formatDateToISO(fechaFinPeriodo);
 
       } else {
-        // Cálculo automático según periodo predefinido
         ({ fechaInicioPeriodo, fechaFinPeriodo } = calcularRangoPorPeriodo(periodo, fechaInicio, fechaFin));
       }
 
-      // Obtener balance del gestor
       const balance = await gestorMovimientos.obtenerBalanceEntreFechas({
         fechaInicio: fechaInicioPeriodo,
         fechaFin: fechaFinPeriodo,
@@ -517,22 +414,14 @@ const Balance = () => {
     }
   };
 
+  // ============================================================
   // FUNCIONES DE CÁLCULO DE FECHAS
+  // ============================================================
 
   /**
    * MVIEW005-8
    * Calcula el rango de fechas según el periodo seleccionado
-   * 
-   * Periodos soportados:
-   * - hoy: Solo el día actual
-   * - 7dias: Últimos 7 días
-   * - 30dias: Últimos 30 días
-   * - mes_actual: Desde inicio del mes hasta hoy
-   * - año_actual: Desde inicio del año hasta hoy
-   * - personalizado: Rango definido por el usuario
-   * 
-   * @function calcularRangoPorPeriodo
-   * @param {string} periodo - Tipo de periodo a calcular
+   * @param {string} periodo - Tipo de periodo ('hoy', '7dias', '30dias', 'mes_actual', 'año_actual', 'personalizado')
    * @returns {Object} Objeto con fechaInicioPeriodo y fechaFinPeriodo en formato ISO
    */
   const calcularRangoPorPeriodo = (periodo) => {
@@ -583,10 +472,8 @@ const Balance = () => {
   /**
    * MVIEW005-9
    * Obtiene el rango de fechas según el filtro temporal seleccionado
-   * 
-   * @function obtenerRangoFechas
-   * @param {string} filtro - Tipo de filtro (dia, semana, quincena, mes)
-   * @returns {Object|null} Objeto con inicio y fin en formato ISO, o null si filtro no válido
+   * @param {string} filtro - Tipo de filtro ('dia', 'semana', 'quincena', 'mes')
+   * @returns {Object|null} Objeto con inicio y fin en formato ISO, o null si filtro es 'todos'
    */
   const obtenerRangoFechas = (filtro) => {
     const hoy = new Date();
@@ -628,24 +515,19 @@ const Balance = () => {
     };
   };
 
+  // ============================================================
   // FUNCIONES DE AGRUPACIÓN DE MOVIMIENTOS
+  // ============================================================
 
   /**
    * MVIEW005-10
-   * Agrupa movimientos según la granularidad especificada
-   * 
-   * Granularidades soportadas:
-   * - dia: Agrupa por cada día individual
-   * - semana: Agrupa por semanas (lun-dom)
-   * - mes: Agrupa por mes calendario
-   * - trimestre: Agrupa por trimestre (Q1, Q2, Q3, Q4)
-   * 
-   * @function agruparMovimientos
-   * @param {Array<Object>} movimientos - Lista de movimientos a agrupar
-   * @param {string} granularidad - Nivel de agrupación (dia, semana, mes, trimestre)
+   * Agrupa movimientos según la granularidad especificada (día, semana, mes, trimestre)
+   * Genera todos los períodos del rango aunque no tengan movimientos
+   * @param {Array} movimientos - Lista de movimientos a agrupar
+   * @param {string} granularidad - Nivel de agrupación ('dia', 'semana', 'mes', 'trimestre')
    * @param {Date} fechaInicioObj - Fecha de inicio del rango
    * @param {Date} fechaFinObj - Fecha de fin del rango
-   * @returns {Array<Object>} Array de grupos con totales de ingresos y egresos
+   * @returns {Array} Array de objetos con ingresos, egresos y labels por período
    */
   const agruparMovimientos = (movimientos, granularidad, fechaInicioObj, fechaFinObj) => {
     const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -654,8 +536,6 @@ const Balance = () => {
 
     /**
      * Calcula el inicio de la semana (domingo) para una fecha dada
-     * @param {Date} fecha - Fecha de referencia
-     * @returns {Date} Fecha del inicio de la semana
      */
     const obtenerInicioSemana = (fecha) => {
       const d = new Date(fecha);
@@ -666,8 +546,6 @@ const Balance = () => {
 
     /**
      * Calcula el fin de la semana dado el inicio
-     * @param {Date} inicioSemana - Fecha de inicio de semana
-     * @returns {Date} Fecha del fin de la semana
      */
     const obtenerFinSemana = (inicioSemana) => {
       const d = new Date(inicioSemana);
@@ -678,8 +556,6 @@ const Balance = () => {
 
     /**
      * Genera clave única para una semana, ajustada al rango de fechas
-     * @param {Date} fecha - Fecha dentro de la semana
-     * @returns {string} Clave en formato "YYYY-MM-DD_YYYY-MM-DD"
      */
     const generarClaveSemana = (fecha) => {
       let inicioSemana = obtenerInicioSemana(fecha);
@@ -719,7 +595,6 @@ const Balance = () => {
         let start = new Date(current);
         let end = obtenerFinSemana(start);
 
-        // Ajustar al rango del balance
         if (start < fechaInicioObj) start = new Date(fechaInicioObj);
         if (end > fechaFinObj) end = new Date(fechaFinObj);
 
@@ -748,7 +623,6 @@ const Balance = () => {
         const start = new Date(current.getFullYear(), current.getMonth(), 1);
         const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
-        // Recortar al rango del balance
         let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
         let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
 
@@ -777,7 +651,6 @@ const Balance = () => {
         const start = new Date(current.getFullYear(), current.getMonth(), 1);
         const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
 
-        // Recortar al rango del balance
         let startRecortado = start < fechaInicioObj ? new Date(fechaInicioObj) : new Date(start);
         let endRecortado = end > fechaFinObj ? new Date(fechaFinObj) : new Date(end);
 
@@ -819,7 +692,6 @@ const Balance = () => {
         key = `Q${trimestre}_${fecha.getFullYear()}`;
       }
 
-      // Validar existencia del grupo
       if (!grupos[key]) {
         console.warn(`Clave no encontrada: ${key} para fecha ${m.fecha}`);
         return;
@@ -837,19 +709,9 @@ const Balance = () => {
 
   /**
    * MVIEW005-11
-   * Función base para cargar movimientos con filtros opcionales
-   * 
-   * Características:
-   * - Filtra por usuario y familia del usuario
-   * - Aplica filtros adicionales personalizados
-   * - Maneja filtros temporales (día, semana, quincena, mes)
-   * 
-   * @async
-   * @function cargarMovimientosBase
-   * @param {Object} filtrosAdicionales - Filtros específicos a aplicar (ej: {concepto_id: 123})
-   * @param {string|null} forzarFiltro - Filtro temporal a forzar, sobrescribe filtroTiempo
-   * @throws {Error} Si falla la consulta a la base de datos
-   * @returns {Promise<void>}
+   * Función base para cargar movimientos con filtros usando el gestor
+   * @param {Object} filtrosAdicionales - Filtros específicos (ej: {concepto_id: 123})
+   * @param {string|null} forzarFiltro - Filtro temporal a forzar
    */
   const cargarMovimientosBase = async (filtrosAdicionales = {}, forzarFiltro = null) => {
     if (!user) return;
@@ -857,29 +719,22 @@ const Balance = () => {
     setCargandoMovimientos(true);
 
     try {
-      // Obtener usuarios de la familia para incluir sus movimientos
+      // Obtener usuarios de la familia
       const usuariosFamilia = await gestorUsuario.obtenerUsuariosDeMiFamilia();
       const idsFamilia = usuariosFamilia.map(u => u.id);
 
-      // Construir query base con joins
-      let query = supabase
-        .from('movimientos')
-        .select(`
-        *,
-        conceptos:concepto_id(*),
-        usuarios:usuario_id(nombre),
-        ahorro:ahorro(monto)
-      `)
-        .in('usuario_id', idsFamilia)
-        .order('fecha', { ascending: false });
-
-      // Aplicar filtros adicionales dinámicamente
-      Object.keys(filtrosAdicionales).forEach(key => {
-        query = query.eq(key, filtrosAdicionales[key]);
-      });
-
-      // Determinar filtro temporal a aplicar
+      // Determinar filtro temporal
       const filtroAAplicar = forzarFiltro !== null ? forzarFiltro : filtroTiempo;
+
+      const opciones = {
+        usuariosIds: idsFamilia,
+        ordenar: 'desc'
+      };
+
+      // Aplicar filtro por concepto si existe
+      if (filtrosAdicionales.concepto_id) {
+        opciones.conceptoId = filtrosAdicionales.concepto_id;
+      }
 
       // Aplicar filtro temporal si no es "todos"
       if (filtroAAplicar !== 'todos') {
@@ -887,17 +742,12 @@ const Balance = () => {
 
         if (rangoFechas) {
           console.log(`Filtro ${filtroAAplicar}: ${rangoFechas.inicio} a ${rangoFechas.fin}`);
-
-          query = query
-            .gte('fecha', rangoFechas.inicio)
-            .lte('fecha', rangoFechas.fin);
+          opciones.fechaInicio = rangoFechas.inicio;
+          opciones.fechaFin = rangoFechas.fin;
         }
       }
 
-      // Ejecutar query
-      const { data: movimientos, error } = await query;
-
-      if (error) throw error;
+      const movimientos = await gestorMovimientos.obtenerMovimientosFiltrados(opciones);
 
       console.log('Movimientos encontrados:', movimientos);
       setMovimientosConcepto(movimientos || []);
@@ -913,14 +763,8 @@ const Balance = () => {
   /**
    * MVIEW005-12
    * Carga movimientos filtrados por concepto específico
-   * 
-   * @async
-   * @function cargarMovimientosPorConcepto
    * @param {Object} concepto - Concepto por el cual filtrar
-   * @param {string} concepto.id - ID del concepto
-   * @param {string} concepto.nombre - Nombre del concepto
    * @param {string|null} forzarFiltro - Filtro temporal opcional a forzar
-   * @returns {Promise<void>}
    */
   const cargarMovimientosPorConcepto = async (concepto, forzarFiltro = null) => {
     setConceptoSeleccionado(concepto);
@@ -930,31 +774,20 @@ const Balance = () => {
   /**
    * MVIEW005-13
    * Carga todos los movimientos sin filtrar por concepto
-   * 
-   * @async
-   * @function cargarTodosLosMovimientos
    * @param {string|null} forzarFiltro - Filtro temporal opcional a forzar
-   * @returns {Promise<void>}
    */
   const cargarTodosLosMovimientos = async (forzarFiltro = null) => {
     setConceptoSeleccionado(null);
     await cargarMovimientosBase({}, forzarFiltro);
   };
 
-  // ============================================================
   // FUNCIONES DE UTILIDAD Y FORMATEO
-  // ============================================================
 
   /**
    * MVIEW005-14
    * Genera texto descriptivo del rango de fechas según el filtro
-   * 
-   * @function obtenerTextoRangoFechas
-   * @param {string} filtro - Tipo de filtro (dia, semana, quincena, mes)
+   * @param {string} filtro - Tipo de filtro ('dia', 'semana', 'quincena', 'mes')
    * @returns {string} Descripción del rango de fechas en formato legible
-   * @example
-   * obtenerTextoRangoFechas('dia') // "(Hoy: 25/11/2024)"
-   * obtenerTextoRangoFechas('mes') // "(Este mes: 01/11/2024 - 30/11/2024)"
    */
   const obtenerTextoRangoFechas = (filtro) => {
     const hoy = new Date();
@@ -983,556 +816,553 @@ const Balance = () => {
     }
   };
 
-
-  if (isLoading) {
+  // RENDERIZADO DEL COMPONENTE
+  
+    if (isLoading) {
+      return (
+        <div className="balance">
+          <div className="loading">Cargando...</div>
+        </div>
+      );
+    }
+  
+    if (error) {
+      return (
+        <div className="balance">
+          <div className="error-message">
+            <h2>Error</h2>
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()}>Reintentar</button>
+          </div>
+        </div>
+      );
+    }
+  
     return (
       <div className="balance">
-        <div className="loading">Cargando...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="balance">
-        <div className="error-message">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()}>Reintentar</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="balance">
-      {panelMovimientosAbierto && (
-        <div className="panel-movimientos-overlay">
-          <div className="panel-movimientos">
-            <div className="panel-header">
-              <h2>Movimientos registrados</h2>
-              <button
-                className="cerrar-panel"
-                onClick={() => setPanelMovimientosAbierto(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="panel-contenido">
-              <div className="conceptos-lista">
-                <h3>Conceptos</h3>
-                <div className="concepto-todos-container">
-                  <button
-                    className={`concepto-todos ${!conceptoSeleccionado ? 'seleccionado' : ''}`}
-                    onClick={() => cargarTodosLosMovimientos()}
-                  >
-                    <strong>Todos los Conceptos</strong>
-                  </button>
-                </div>
-                <ul>
-                  {conceptos.map(concepto => (
-                    <li
-                      key={concepto.id}
-                      className={conceptoSeleccionado?.id === concepto.id ? 'seleccionado' : ''}
-                      onClick={() => cargarMovimientosPorConcepto(concepto)}
-                    >
-                      <strong>{concepto.nombre}</strong>
-                      <span className="tipo-concepto">
-                        ({concepto.tipo === 'egreso' ? 'Egreso' : 'Ingreso'})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="movimientos-detalle">
-                <div className="detalle-header">
-                  <div className="filtro-tiempo">
-                    <select
-                      value={filtroTiempo}
-                      onChange={(e) => manejarCambioFiltro(e.target.value)}
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="dia">Día</option>
-                      <option value="semana">Semana</option>
-                      <option value="quincena">Quincena</option>
-                      <option value="mes">Mes</option>
-                    </select>
-
-                    {filtroTiempo !== 'todos' && (
-                      <span className="rango-fechas-info">
-                        {obtenerTextoRangoFechas(filtroTiempo)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {cargandoMovimientos ? (
-                  <div className="cargando-movimientos">Cargando movimientos...</div>
-                ) : (
-                  <div className="tabla-movimientos-container">
-                    {movimientosConcepto.length > 0 ? (
-                      <table className="tabla-movimientos">
-                        <thead>
-                          <tr>
-                            <th>Perfil</th>
-                            <th>Fecha</th>
-                            <th>Monto</th>
-                            <th>Ahorro</th>
-                            <th style={{ textAlign: 'center' }}>Comentario</th>
-                            <th style={{ textAlign: 'center' }}>Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {movimientosConcepto.map(movimiento => (
-                            <tr key={movimiento.id}>
-                              <td>{movimiento.usuarios?.nombre || 'Usuario'}</td>
-                              <td>{movimiento.fecha}</td>
-                              <td className={movimiento.conceptos?.tipo === 'egreso' ? 'negativo' : 'positivo'}>
-                                {movimiento.conceptos?.tipo === 'egreso' ? '-' : '+'}
-                                {formatCurrency(movimiento.monto)}
-                              </td>
-                              <td>
-                                {movimiento.ahorro && movimiento.ahorro.length > 0
-                                  ? formatCurrency(movimiento.ahorro[0].monto)
-                                  : 'S/.0.00'
-                                }
-                              </td>
-                              <td>
-                                <div className="celda-comentario">
-                                  {movimiento.comentario ? (
-                                    <FaEye
-                                      className="icono-comentario"
-                                      onClick={() => setComentarioSeleccionado(movimiento.comentario)}
-                                      title="Ver comentario completo"
-                                    />
-                                  ) : (
-                                    'Sin comentario'
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <div className="celda-comentario">
-                                  <button
-                                    className="btn-editar"
-                                    title="Editar movimiento"
-                                    onClick={() => abrirModalEdicion(movimiento)}
-                                  >
-                                    <FaEdit size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="sin-movimientos">
-                        No hay movimientos para mostrar con los filtros seleccionados
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modalEdicionAbierto && movimientoEditando && (
-        <div className="modal-edicion-overlay" onClick={cerrarModalEdicion}>
-          <div className="modal-edicion" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-edicion-header">
-              <h3>Editar Movimiento</h3>
-              <button
-                className="cerrar-modal"
-                onClick={cerrarModalEdicion}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-edicion-content">
-              <div className="form-group">
-                <label>Monto:</label>
-                <input
-                  type="number"
-                  value={movimientoEditando.monto}
-                  onChange={(e) => setMovimientoEditando({
-                    ...movimientoEditando,
-                    monto: parseFloat(e.target.value)
-                  })}
-                  className="input-edicion"
-                  step="0.01"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Fecha:</label>
-                <input
-                  type="date"
-                  value={movimientoEditando.fecha}
-                  onChange={(e) => setMovimientoEditando({
-                    ...movimientoEditando,
-                    fecha: e.target.value
-                  })}
-                  className="input-edicion"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Comentario:</label>
-                <textarea
-                  value={movimientoEditando.comentario || ''}
-                  onChange={(e) => setMovimientoEditando({
-                    ...movimientoEditando,
-                    comentario: e.target.value
-                  })}
-                  className="textarea-edicion"
-                  rows="4"
-                  placeholder="Agregar comentario..."
-                />
-              </div>
-            </div>
-
-            <div className="modal-edicion-footer">
-              <button
-                className="btn-cancelar"
-                onClick={cerrarModalEdicion}
-                disabled={guardandoCambios}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-guardar"
-                onClick={guardarMovimientoEditado}
-                disabled={guardandoCambios}
-              >
-                {guardandoCambios ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {comentarioSeleccionado && (
-        <div className="modal-comentario-overlay" onClick={() => setComentarioSeleccionado(null)}>
-          <div className="modal-comentario" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-comentario-header">
-              <h3>Comentario Completo</h3>
-              <button
-                className="cerrar-modal"
-                onClick={() => setComentarioSeleccionado(null)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-comentario-content">
-              <p>{comentarioSeleccionado}</p>
-            </div>
-            <div className="modal-comentario-footer">
-              <button
-                className="btn-cerrar-modal"
-                onClick={() => setComentarioSeleccionado(null)}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {modalBalanceAbierto && balanceData && balanceData.resumen && (() => {
-        const parseFecha = (fechaStr) => {
-          if (!fechaStr) return null;
-          const [year, month, day] = fechaStr.split("-");
-          return new Date(year, month - 1, day); // mes 0-11 en JS
-        };
-
-        const fechaInicioObj = parseFecha(fechaInicio);
-        const fechaFinObj = parseFecha(fechaFin);
-
-        const dias = Math.ceil((fechaFinObj - fechaInicioObj) / (1000 * 60 * 60 * 24)) + 1;
-
-        let granularidad;
-        if (dias <= 7) granularidad = "dia";
-        else if (dias <= 35) granularidad = "semana";
-        else if (dias <= 120) granularidad = "mes";
-        else granularidad = "trimestre";
-
-        const graficoData = agruparMovimientos(balanceData.movimientos, granularidad, fechaInicioObj, fechaFinObj);
-
-        return (
-          <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
-            <div className="panel-movimientos" onClick={(e) => e.stopPropagation()}>
+        {panelMovimientosAbierto && (
+          <div className="panel-movimientos-overlay">
+            <div className="panel-movimientos">
               <div className="panel-header">
-                <h2>Resumen de Ganancias</h2>
+                <h2>Movimientos registrados</h2>
                 <button
                   className="cerrar-panel"
-                  onClick={() => setModalBalanceAbierto(false)}
+                  onClick={() => setPanelMovimientosAbierto(false)}
                 >
                   ×
                 </button>
               </div>
-
+  
               <div className="panel-contenido">
-                <div className="balance-resumen-content">
-                  {/* <div className="conceptos-resumen">
-                      {balanceData.resumen.conceptos.map((concepto, index) => (
-                        <div key={concepto.id || index} className="concepto-item">
-                          <h3 className="concepto-nombre">{concepto.nombre}</h3>
-                          <div className="concepto-detalles">
-                            {concepto.ingresos > 0 && (
-                              <div className="concepto-linea">
-                                <span>Ingresos</span>
-                                <span className="monto-positivo">{formatCurrency(concepto.ingresos)}</span>
-                              </div>
-                            )}
-                            {concepto.egresos > 0 && (
-                              <div className="concepto-linea">
-                                <span>Egresos</span>
-                                <span className="monto-negativo">{formatCurrency(concepto.egresos)}</span>
-                              </div>
-                            )}
-                            <div className="concepto-fechas">
-                              {concepto.fechas.slice(0, 3).map((fecha, i) => (
-                                <span key={i} className="fecha-item">{fecha}</span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div> */}
-
-                  <div className="totales-grid">
-                    <div className="resumen-totales ingresos">
-                      <div className="total-linea">
-                        <span className="total-label">TOTAL INGRESOS:</span>
-                        <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
-                      </div>
-                    </div>
-                    <div className="resumen-totales egresos">
-                      <div className="total-linea">
-                        <span className="total-label">TOTAL EGRESOS:</span>
-                        <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
-                      </div>
-                    </div>
+                <div className="conceptos-lista">
+                  <h3>Conceptos</h3>
+                  <div className="concepto-todos-container">
+                    <button
+                      className={`concepto-todos ${!conceptoSeleccionado ? 'seleccionado' : ''}`}
+                      onClick={() => cargarTodosLosMovimientos()}
+                    >
+                      <strong>Todos los Conceptos</strong>
+                    </button>
                   </div>
-
-                  <div className="resumen-tendencias">
-                    <h3 className="tendencias-titulo">Tendencias:</h3>
-                    <div className="tendencias-content">
-                      <span className={`tendencia ${balanceData.resumen.tendencia.toLowerCase()}`}>
-                        {balanceData.resumen.tendencia}
-                      </span>
-                      <div className="ahorro-linea">
-                        <span>Balance</span>
-                        <span className={`ahorro-monto ${balanceData.resumen.ahorro >= 0 ? 'positivo' : 'negativo'}`}>
-                          {formatCurrency(balanceData.resumen.ahorro)}
+                  <ul>
+                    {conceptos.map(concepto => (
+                      <li
+                        key={concepto.id}
+                        className={conceptoSeleccionado?.id === concepto.id ? 'seleccionado' : ''}
+                        onClick={() => cargarMovimientosPorConcepto(concepto)}
+                      >
+                        <strong>{concepto.nombre}</strong>
+                        <span className="tipo-concepto">
+                          ({concepto.tipo === 'egreso' ? 'Egreso' : 'Ingreso'})
                         </span>
-                      </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+  
+                <div className="movimientos-detalle">
+                  <div className="detalle-header">
+                    <div className="filtro-tiempo">
+                      <select
+                        value={filtroTiempo}
+                        onChange={(e) => manejarCambioFiltro(e.target.value)}
+                      >
+                        <option value="todos">Todos</option>
+                        <option value="dia">Día</option>
+                        <option value="semana">Semana</option>
+                        <option value="quincena">Quincena</option>
+                        <option value="mes">Mes</option>
+                      </select>
+  
+                      {filtroTiempo !== 'todos' && (
+                        <span className="rango-fechas-info">
+                          {obtenerTextoRangoFechas(filtroTiempo)}
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <div style={{ width: "100%", height: 300, minHeight: 300, marginTop: "20px" }}>
-                    <BalanceChart data={graficoData} />
-                  </div>
-
+  
+                  {cargandoMovimientos ? (
+                    <div className="cargando-movimientos">Cargando movimientos...</div>
+                  ) : (
+                    <div className="tabla-movimientos-container">
+                      {movimientosConcepto.length > 0 ? (
+                        <table className="tabla-movimientos">
+                          <thead>
+                            <tr>
+                              <th>Perfil</th>
+                              <th>Fecha</th>
+                              <th>Monto</th>
+                              <th>Ahorro</th>
+                              <th style={{ textAlign: 'center' }}>Comentario</th>
+                              <th style={{ textAlign: 'center' }}>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {movimientosConcepto.map(movimiento => (
+                              <tr key={movimiento.id}>
+                                <td>{movimiento.usuarios?.nombre || 'Usuario'}</td>
+                                <td>{movimiento.fecha}</td>
+                                <td className={movimiento.conceptos?.tipo === 'egreso' ? 'negativo' : 'positivo'}>
+                                  {movimiento.conceptos?.tipo === 'egreso' ? '-' : '+'}
+                                  {formatCurrency(movimiento.monto)}
+                                </td>
+                                <td>
+                                  {movimiento.ahorro && movimiento.ahorro.length > 0
+                                    ? formatCurrency(movimiento.ahorro[0].monto)
+                                    : 'S/.0.00'
+                                  }
+                                </td>
+                                <td>
+                                  <div className="celda-comentario">
+                                    {movimiento.comentario ? (
+                                      <FaEye
+                                        className="icono-comentario"
+                                        onClick={() => setComentarioSeleccionado(movimiento.comentario)}
+                                        title="Ver comentario completo"
+                                      />
+                                    ) : (
+                                      'Sin comentario'
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div className="celda-comentario">
+                                    <button
+                                      className="btn-editar"
+                                      title="Editar movimiento"
+                                      onClick={() => abrirModalEdicion(movimiento)}
+                                    >
+                                      <FaEdit size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="sin-movimientos">
+                          No hay movimientos para mostrar con los filtros seleccionados
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        )
-      })()}
-
-      <div className="balance__header">
-        <h1>Balance</h1>
-      </div>
-
-      <div className="balance-resumen">
-        <div className="resumen-card">
-          <h2>Resumen</h2>
-
-          <div className="conceptos-grid">
-            <div className="conceptos-columna">
-              <h3>Ingresos :</h3>
-              <ul>
-                {topIngresos.map((concepto, index) => (
-                  <li key={concepto.id || index}>
-                    • {concepto.nombre}
-                    <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
-                  </li>
-                ))}
-                {topIngresos.length === 0 && totalIngresos > 0 && (
-                  <li>• No se pudieron agrupar los ingresos por concepto</li>
-                )}
-                {topIngresos.length === 0 && totalIngresos === 0 && (
-                  <li>• No hay ingresos registrados</li>
-                )}
-              </ul>
-            </div>
-            <div className="conceptos-columna">
-              <h3>Egresos :</h3>
-              <ul>
-                {topEgresos.map((concepto, index) => (
-                  <li key={concepto.id || index}>
-                    • {concepto.nombre}
-                    <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
-                  </li>
-                ))}
-                {topEgresos.length === 0 && totalEgresos > 0 && (
-                  <li>• No se pudieron agrupar los egresos por concepto</li>
-                )}
-                {topEgresos.length === 0 && totalEgresos === 0 && (
-                  <li>• No hay egresos registrados</li>
-                )}
-              </ul>
+        )}
+  
+        {modalEdicionAbierto && movimientoEditando && (
+          <div className="modal-edicion-overlay" onClick={cerrarModalEdicion}>
+            <div className="modal-edicion" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-edicion-header">
+                <h3>Editar Movimiento</h3>
+                <button
+                  className="cerrar-modal"
+                  onClick={cerrarModalEdicion}
+                >
+                  ×
+                </button>
+              </div>
+  
+              <div className="modal-edicion-content">
+                <div className="form-group">
+                  <label>Monto:</label>
+                  <input
+                    type="number"
+                    value={movimientoEditando.monto}
+                    onChange={(e) => setMovimientoEditando({
+                      ...movimientoEditando,
+                      monto: parseFloat(e.target.value)
+                    })}
+                    className="input-edicion"
+                    step="0.01"
+                  />
+                </div>
+  
+                <div className="form-group">
+                  <label>Fecha:</label>
+                  <input
+                    type="date"
+                    value={movimientoEditando.fecha}
+                    onChange={(e) => setMovimientoEditando({
+                      ...movimientoEditando,
+                      fecha: e.target.value
+                    })}
+                    className="input-edicion"
+                  />
+                </div>
+  
+                <div className="form-group">
+                  <label>Comentario:</label>
+                  <textarea
+                    value={movimientoEditando.comentario || ''}
+                    onChange={(e) => setMovimientoEditando({
+                      ...movimientoEditando,
+                      comentario: e.target.value
+                    })}
+                    className="textarea-edicion"
+                    rows="4"
+                    placeholder="Agregar comentario..."
+                  />
+                </div>
+              </div>
+  
+              <div className="modal-edicion-footer">
+                <button
+                  className="btn-cancelar"
+                  onClick={cerrarModalEdicion}
+                  disabled={guardandoCambios}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn-guardar"
+                  onClick={guardarMovimientoEditado}
+                  disabled={guardandoCambios}
+                >
+                  {guardandoCambios ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className="resumen-totales">
-            <div className="total-item">
-              <span>Total Ingresos:</span>
-              <span className="total-monto">{formatCurrency(totalIngresos)}</span>
-            </div>
-            <div className="total-item">
-              <span>Total Egresos:</span>
-              <span className="total-monto">{formatCurrency(totalEgresos)}</span>
+        )}
+  
+        {comentarioSeleccionado && (
+          <div className="modal-comentario-overlay" onClick={() => setComentarioSeleccionado(null)}>
+            <div className="modal-comentario" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-comentario-header">
+                <h3>Comentario Completo</h3>
+                <button
+                  className="cerrar-modal"
+                  onClick={() => setComentarioSeleccionado(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="modal-comentario-content">
+                <p>{comentarioSeleccionado}</p>
+              </div>
+              <div className="modal-comentario-footer">
+                <button
+                  className="btn-cerrar-modal"
+                  onClick={() => setComentarioSeleccionado(null)}
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className="resumen-actions">
-            <button
-              className="btn-ver-movimientos"
-              onClick={abrirPanelMovimientos}
-            >
-              Ver Movimientos
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="balance-personalizado">
-        <div className="personalizado-card">
-          <h2>Balance Personalizado</h2>
-
-          <div className="filtros-section">
-            <div className="filtro-group">
-              <label>Selecciona tipo de balance</label>
-              <select
-                value={tipoBalance}
-                onChange={(e) => setTipoBalance(e.target.value)}
-                className="select-filtro"
-              >
-                <option value="">Seleccionar</option>
-                <option value="personal">Personal</option>
-                <option value="familiar">Familiar</option>
-              </select>
-            </div>
-
-            <div className="filtro-group">
-              <label>Selecciona el período</label>
-              <select
-                value={periodo}
-                className="select-filtro"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setPeriodo(value);
-
-                  const hoy = new Date();
-                  const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()); // hora 00:00
-
-                  let inicio = null;
-                  let fin = hoyLocal;
-
-                  switch (value) {
-                    case "hoy":
-                      inicio = new Date(hoyLocal);
-                      break;
-
-                    case "7dias":
-                      inicio = new Date(hoyLocal);
-                      inicio.setDate(hoyLocal.getDate() - 6);
-                      break;
-
-                    case "30dias":
-                      inicio = new Date(hoyLocal);
-                      inicio.setDate(hoyLocal.getDate() - 29);
-                      break;
-
-                    case "mes_actual":
-                      inicio = new Date(hoyLocal.getFullYear(), hoyLocal.getMonth(), 1);
-                      break;
-
-                    case "año_actual":
-                      inicio = new Date(hoyLocal.getFullYear(), 0, 1);
-                      break;
-
-                    case "personalizado":
-                      return;
-                  }
-
-
-                  setFechaInicio(inicio.toISOString().split("T")[0]);
-                  setFechaFin(fin.toISOString().split("T")[0]);
-                }}
-              >
-                <option value="hoy">Hoy</option>
-                <option value="7dias">Últimos 7 días</option>
-                <option value="30dias">Últimos 30 días</option>
-                <option value="mes_actual">Mes actual</option>
-                <option value="año_actual">Año actual</option>
-                <option value="personalizado">Personalizado</option>
-              </select>
-            </div>
-            {periodo === "personalizado" && (
-              <>
-                <div className="fechas-group">
-                  <div className="fecha-input-group">
-                    <label>Fecha de Inicio</label>
-                    <div className="fecha-input-container">
-                      <input
-                        type="date"
-                        value={fechaInicio}
-                        onChange={(e) => setFechaInicio(e.target.value)}
-                        className="fecha-input"
-                        placeholder="DD/MM/AAAA"
-                      />
+        )}
+  
+  
+        {modalBalanceAbierto && balanceData && balanceData.resumen && (() => {
+          const parseFecha = (fechaStr) => {
+            if (!fechaStr) return null;
+            const [year, month, day] = fechaStr.split("-");
+            return new Date(year, month - 1, day); // mes 0-11 en JS
+          };
+  
+          const fechaInicioObj = parseFecha(fechaInicio);
+          const fechaFinObj = parseFecha(fechaFin);
+  
+          const dias = Math.ceil((fechaFinObj - fechaInicioObj) / (1000 * 60 * 60 * 24)) + 1;
+  
+          let granularidad;
+          if (dias <= 7) granularidad = "dia";
+          else if (dias <= 35) granularidad = "semana";
+          else if (dias <= 120) granularidad = "mes";
+          else granularidad = "trimestre";
+  
+          const graficoData = agruparMovimientos(balanceData.movimientos, granularidad, fechaInicioObj, fechaFinObj);
+  
+          return (
+            <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
+              <div className="panel-movimientos" onClick={(e) => e.stopPropagation()}>
+                <div className="panel-header">
+                  <h2>Resumen de Ganancias</h2>
+                  <button
+                    className="cerrar-panel"
+                    onClick={() => setModalBalanceAbierto(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+  
+                <div className="panel-contenido">
+                  <div className="balance-resumen-content">
+                    {/* <div className="conceptos-resumen">
+                        {balanceData.resumen.conceptos.map((concepto, index) => (
+                          <div key={concepto.id || index} className="concepto-item">
+                            <h3 className="concepto-nombre">{concepto.nombre}</h3>
+                            <div className="concepto-detalles">
+                              {concepto.ingresos > 0 && (
+                                <div className="concepto-linea">
+                                  <span>Ingresos</span>
+                                  <span className="monto-positivo">{formatCurrency(concepto.ingresos)}</span>
+                                </div>
+                              )}
+                              {concepto.egresos > 0 && (
+                                <div className="concepto-linea">
+                                  <span>Egresos</span>
+                                  <span className="monto-negativo">{formatCurrency(concepto.egresos)}</span>
+                                </div>
+                              )}
+                              <div className="concepto-fechas">
+                                {concepto.fechas.slice(0, 3).map((fecha, i) => (
+                                  <span key={i} className="fecha-item">{fecha}</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div> */}
+  
+                    <div className="totales-grid">
+                      <div className="resumen-totales ingresos">
+                        <div className="total-linea">
+                          <span className="total-label">TOTAL INGRESOS:</span>
+                          <span className="total-monto-positivo">{formatCurrency(balanceData.resumen.totalIngresos)}</span>
+                        </div>
+                      </div>
+                      <div className="resumen-totales egresos">
+                        <div className="total-linea">
+                          <span className="total-label">TOTAL EGRESOS:</span>
+                          <span className="total-monto-negativo">{formatCurrency(balanceData.resumen.totalEgresos)}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="fecha-input-group">
-                    <label>Fecha de Fin</label>
-                    <div className="fecha-input-container">
-                      <input
-                        type="date"
-                        value={fechaFin}
-                        onChange={(e) => setFechaFin(e.target.value)}
-                        className="fecha-input"
-                        placeholder="DD/MM/AAAA"
-                      />
+  
+                    <div className="resumen-tendencias">
+                      <h3 className="tendencias-titulo">Tendencias:</h3>
+                      <div className="tendencias-content">
+                        <span className={`tendencia ${balanceData.resumen.tendencia.toLowerCase()}`}>
+                          {balanceData.resumen.tendencia}
+                        </span>
+                        <div className="ahorro-linea">
+                          <span>Balance</span>
+                          <span className={`ahorro-monto ${balanceData.resumen.ahorro >= 0 ? 'positivo' : 'negativo'}`}>
+                            {formatCurrency(balanceData.resumen.ahorro)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+  
+                    <div style={{ width: "100%", height: 300, minHeight: 300, marginTop: "20px" }}>
+                      <BalanceChart data={graficoData} />
+                    </div>
+  
                   </div>
                 </div>
-              </>
-            )}
+              </div>
+            </div>
+          )
+        })()}
+  
+        <div className="balance__header">
+          <h1>Balance</h1>
+        </div>
+  
+        <div className="balance-resumen">
+          <div className="resumen-card">
+            <h2>Resumen Mensual</h2>
+  
+            <div className="conceptos-grid">
+              <div className="conceptos-columna">
+                <h3>Ingresos : {formatCurrency(totalIngresos)}</h3>
+                <ul>
+                  {topIngresos.map((concepto, index) => (
+                    <li key={concepto.id || index}>
+                      • {concepto.nombre}
+                      <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
+                    </li>
+                  ))}
+                  {topIngresos.length === 0 && totalIngresos > 0 && (
+                    <li>• No se pudieron agrupar los ingresos por concepto</li>
+                  )}
+                  {topIngresos.length === 0 && totalIngresos === 0 && (
+                    <li>• No hay ingresos registrados</li>
+                  )}
+                </ul>
+              </div>
+              <div className="conceptos-columna">
+                <h3>Egresos : {formatCurrency(totalEgresos)}</h3>
+                <ul>
+                  {topEgresos.map((concepto, index) => (
+                    <li key={concepto.id || index}>
+                      • {concepto.nombre}
+                      <span className="monto-concepto">{formatCurrency(concepto.total)}</span>
+                    </li>
+                  ))}
+                  {topEgresos.length === 0 && totalEgresos > 0 && (
+                    <li>• No se pudieron agrupar los egresos por concepto</li>
+                  )}
+                  {topEgresos.length === 0 && totalEgresos === 0 && (
+                    <li>• No hay egresos registrados</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+  
+            <div className="container-actions">
+              <button
+                className="btn-ver-movimientos"
+                onClick={abrirPanelMovimientos}
+              >
+                Ver Movimientos
+              </button>
+              <div className="resumen-totales">
+                <div className="total-item">
+                  <span>Total Balance:</span>
+                  <span className="total-monto">{formatCurrency(totalBalance)}</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="balance-actions">
-            <button
-              className="btn-generar-balance"
-              onClick={generarBalance}
-              disabled={generandoBalance}
-            >
-              {generandoBalance ? 'Generando...' : 'Generar Balance'}
-            </button>
+  
+        </div>
+  
+        <div className="balance-personalizado">
+          <div className="personalizado-card">
+            <h2>Balance Personalizado</h2>
+  
+            <div className="filtros-section">
+              <div className="filtro-group">
+                <label>Selecciona tipo de balance</label>
+                <select
+                  value={tipoBalance}
+                  onChange={(e) => setTipoBalance(e.target.value)}
+                  className="select-filtro"
+                >
+                  <option value="">Seleccionar</option>
+                  <option value="personal">Personal</option>
+                  <option value="familiar">Familiar</option>
+                </select>
+              </div>
+  
+              <div className="filtro-group">
+                <label>Selecciona el período</label>
+                <select
+                  value={periodo}
+                  className="select-filtro"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPeriodo(value);
+  
+                    const hoy = new Date();
+                    const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()); // hora 00:00
+  
+                    let inicio = null;
+                    let fin = hoyLocal;
+  
+                    switch (value) {
+                      case "hoy":
+                        inicio = new Date(hoyLocal);
+                        break;
+  
+                      case "7dias":
+                        inicio = new Date(hoyLocal);
+                        inicio.setDate(hoyLocal.getDate() - 6);
+                        break;
+  
+                      case "30dias":
+                        inicio = new Date(hoyLocal);
+                        inicio.setDate(hoyLocal.getDate() - 29);
+                        break;
+  
+                      case "mes_actual":
+                        inicio = new Date(hoyLocal.getFullYear(), hoyLocal.getMonth(), 1);
+                        break;
+  
+                      case "año_actual":
+                        inicio = new Date(hoyLocal.getFullYear(), 0, 1);
+                        break;
+  
+                      case "personalizado":
+                        return;
+                    }
+  
+  
+                    setFechaInicio(inicio.toISOString().split("T")[0]);
+                    setFechaFin(fin.toISOString().split("T")[0]);
+                  }}
+                >
+                  <option value="hoy">Hoy</option>
+                  <option value="7dias">Últimos 7 días</option>
+                  <option value="30dias">Últimos 30 días</option>
+                  <option value="mes_actual">Mes actual</option>
+                  <option value="año_actual">Año actual</option>
+                  <option value="personalizado">Personalizado</option>
+                </select>
+              </div>
+              {periodo === "personalizado" && (
+                <>
+                  <div className="fechas-group">
+                    <div className="fecha-input-group">
+                      <label>Fecha de Inicio</label>
+                      <div className="fecha-input-container">
+                        <input
+                          type="date"
+                          value={fechaInicio}
+                          onChange={(e) => setFechaInicio(e.target.value)}
+                          className="fecha-input"
+                          placeholder="DD/MM/AAAA"
+                        />
+                      </div>
+                    </div>
+  
+                    <div className="fecha-input-group">
+                      <label>Fecha de Fin</label>
+                      <div className="fecha-input-container">
+                        <input
+                          type="date"
+                          value={fechaFin}
+                          onChange={(e) => setFechaFin(e.target.value)}
+                          className="fecha-input"
+                          placeholder="DD/MM/AAAA"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+  
+            <div className="balance-actions">
+              <button
+                className="btn-generar-balance"
+                onClick={generarBalance}
+                disabled={generandoBalance}
+              >
+                {generandoBalance ? 'Generando...' : 'Generar Balance'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export default Balance;
+    );
+  };
+  
+  export default Balance;
