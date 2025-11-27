@@ -80,10 +80,10 @@ const RegistroDiario = () => {
     const cargarResumen = async () => {
       if (!usuarioId) return;
 
-      const fechaHoy = new Date().toISOString().slice(0, 10);
+      const fechaHoy = new Date().toLocaleDateString('en-CA');
       try {
-        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', fechaHoy);
-        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', fechaHoy);
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'ingreso', { fecha: fechaHoy });
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuarioId, 'egreso', { fecha: fechaHoy });
         const balance = Math.round((ingresos - egresos)* 100) / 100;
         setResumenDia({ ingresos: ingresos || 0, egresos: egresos || 0 , balance: balance || 0 });
       } catch (error) {

@@ -36,8 +36,8 @@ const Dashboard = () => { // VIEW-008
         setMovimientos(movs);
 
         const hoy = new Date().toLocaleDateString('en-CA');
-        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "ingreso", hoy);
-        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "egreso", hoy);
+        const ingresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "ingreso", { fecha: hoy });
+        const egresos = await gestorMovimientos.obtenerTotalPorTipo(usuario.id, "egreso", { fecha: hoy });
 
         const ahorro = Math.round((ingresos - egresos)* 100) / 100;
 
