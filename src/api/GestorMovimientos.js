@@ -3,12 +3,12 @@
  * GestorMovimientos – Gestión de movimientos financieros.
  *
  * Funcionalidades:
- * - ingresos
- * - egresos
- * - filtrado
- * - balance
- * - totales
- * - análisis por conceptos
+ * - Registro de ingresos
+ * - Registro de egresos
+ * - Filtrado de movimientos
+ * - Cálculo de balance
+ * - Obtención de totales
+ * - Análisis por concepto
  *
  */
 

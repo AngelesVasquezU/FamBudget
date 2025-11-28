@@ -17,9 +17,6 @@
  * - GestorConceptos
  * - GestorMetas
  *
- * La vista se centra únicamente en manejar estados del formulario
- * y eventos del usuario. Toda la lógica de datos y operaciones con
- * la base de datos se delega a los gestores correspondientes.
  */
 
 
