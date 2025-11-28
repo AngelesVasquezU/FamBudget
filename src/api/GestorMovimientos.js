@@ -483,28 +483,4 @@ export class GestorMovimientos {
       throw err;
     }
   }
-
-  // MGES004-10 — Eliminar Movimiento
-  /**
-   * Elimina un movimiento del sistema.
-   *
-   * @param {string} movimientoId
-   * @returns {Promise<{success: boolean}>}
-   */
-  async eliminarMovimiento(movimientoId) {
-    try {
-      const { error } = await this.supabase
-        .from('movimientos')
-        .delete()
-        .eq('id', movimientoId);
-
-      if (error) throw error;
-
-      return { success: true };
-
-    } catch (err) {
-      console.error("ERROR en eliminarMovimiento:", err);
-      throw err;
-    }
-  }
 }
