@@ -49,19 +49,25 @@ export class GestorFamilia { // GES-002
      * @returns {Promise<Object|null>} Objeto familia o null si no pertenece a ninguna.
      * @throws Error si ocurre un problema en la consulta.
      */
+
     async obtenerMiFamilia() {
         const user = await this.gestorUsuario.obtenerUsuario();
-        if (!user || !user.familia_id) return null;
+        if (!user) throw new Error("No hay usuario autenticado");
 
-        const { data, error } = await this.supabase
-            .from('familias')
-            .select('*')
-            .eq('id', user.familia_id)
-            .single();
+        const { data, error } = await this.supabase.rpc("obtener_mi_familia", {
+            p_usuario_id: user.id
+        });
 
         if (error) throw error;
-        return data;
+
+        if (data?.error) {
+            console.warn("obtener_mi_familia:", data.error);
+            return null;
+        }
+
+        return data.familia;
     }
+
 
     // ============================================================
     // MGES002-2 — Obtener Miembros de la Familia
@@ -75,14 +81,21 @@ export class GestorFamilia { // GES-002
      * @throws Error si ocurre un fallo en la consulta.
      */
     async obtenerMiembros(familia_id) {
-        const { data, error } = await this.supabase
-            .from('usuarios')
-            .select('id, nombre, correo, rol, parentesco')
-            .eq('familia_id', familia_id);
+        const { data, error } = await this.supabase.rpc(
+            "obtener_miembros_familia",
+            { p_familia_id: familia_id }
+        );
 
         if (error) throw error;
-        return data;
+
+        if (data?.error) {
+            console.warn("obtener_miembros_familia:", data.error);
+            return [];
+        }
+
+        return data.miembros || [];
     }
+
 
     // ============================================================
     // MGES002-3 — Crear Familia
@@ -100,23 +113,20 @@ export class GestorFamilia { // GES-002
         const user = await this.gestorUsuario.obtenerUsuario();
         if (!user) throw new Error("No hay usuario autenticado");
 
-        const { data: familia, error: errorFamilia } = await this.supabase
-            .from('familias')
-            .insert([{ nombre }])
-            .select()
-            .single();
+        const { data, error } = await this.supabase.rpc("crear_familia", {
+            p_nombre: nombre,
+            p_usuario_id: user.id
+        });
 
-        if (errorFamilia) throw errorFamilia;
+        if (error) throw error;
 
-        const { error: errorUpdate } = await this.supabase
-            .from('usuarios')
-            .update({ familia_id: familia.id })
-            .eq('id', user.id);
+        if (data?.error) {
+            throw new Error(data.error);
+        }
 
-        if (errorUpdate) throw errorUpdate;
-
-        return familia;
+        return data.familia;
     }
+
 
     // ============================================================
     // MGES002-4 — Agregar Miembro
@@ -135,55 +145,27 @@ export class GestorFamilia { // GES-002
      * @returns {Promise<boolean>} true si la operación fue exitosa.
      */
     async agregarMiembro(familia_id, correo) {
-        const { data: usuario, error: errorUser } = await this.supabase
-            .from('usuarios')
-            .select('id, rol, familia_id')
-            .eq('correo', correo)
-            .single();
-
-        if (errorUser || !usuario) throw new Error('Usuario no encontrado');
-
-        if (usuario.rol === 'Administrador') {
-            throw new Error('No puedes agregar un administrador al grupo familiar');
-        }
-
-        if (usuario.familia_id && usuario.familia_id !== familia_id) {
-            throw new Error('Este usuario ya pertenece a otra familia');
-        }
-
-        const { error } = await this.supabase
-            .from('usuarios')
-            .update({ familia_id })
-            .eq('id', usuario.id);
+        const { data, error } = await this.supabase.rpc(
+            "agregar_miembro_familia",
+            {
+                p_familia_id: familia_id,
+                p_correo: correo
+            }
+        );
 
         if (error) throw error;
 
-        return true;
+        if (data?.error) {
+            // El error de negocio viene desde la función SQL
+            throw new Error(data.error);
+        }
+
+        // data.miembro contiene el usuario actualizado
+        return data;
     }
 
     // ============================================================
-    // MGES002-5 — Actualizar Parentesco
-    // ============================================================
-
-    /**
-     * Actualiza el parentesco de un usuario dentro de una familia.
-     *
-     * @param {string} usuario_id - ID del usuario.
-     * @param {string} nuevoParentesco - Nuevo parentesco.
-     * @returns {Promise<boolean>}
-     */
-    async actualizarParentesco(usuario_id, nuevoParentesco) {
-        const { error } = await this.supabase
-            .from('usuarios')
-            .update({ parentesco: nuevoParentesco })
-            .eq('id', usuario_id);
-
-        if (error) throw error;
-        return true;
-    }
-
-    // ============================================================
-    // MGES002-6 — Eliminar Miembro
+    // MGES002-5 — Eliminar Miembro
     // ============================================================
 
     /**
@@ -194,23 +176,26 @@ export class GestorFamilia { // GES-002
      * @returns {Promise<boolean>}
      */
     async eliminarMiembro(usuarioId) {
-        const currentUserId = await this.gestorUsuario.obtenerIdUsuario();
+        const adminId = await this.gestorUsuario.obtenerIdUsuario();
+        if (!adminId) throw new Error("No se pudo identificar al usuario actual");
 
-        if (usuarioId === currentUserId) {
-            throw new Error('No puedes eliminarte a ti misma como administradora');
-        }
-
-        const { error } = await this.supabase
-            .from('usuarios')
-            .update({ familia_id: null, parentesco: null })
-            .eq('id', usuarioId);
+        const { data, error } = await this.supabase.rpc("eliminar_miembro_familia", {
+            p_usuario_id: usuarioId,
+            p_admin_id: adminId
+        });
 
         if (error) throw error;
-        return true;
+
+        if (data?.error) {
+            throw new Error(data.error);
+        }
+
+        return data;
     }
 
+
     // ============================================================
-    // MGES002-7 — Transferir Rol de Administrador
+    // MGES002-6 — Transferir Rol de Administrador
     // ============================================================
 
     /**
@@ -222,36 +207,24 @@ export class GestorFamilia { // GES-002
      * @param {string} adminActualId - ID del administrador actual.
      * @returns {Promise<boolean>}
      */
-    async cambiarRolAdmin(familia_id, nuevoAdminId, adminActualId) {
-        const { data: miembro, error: errorMiembro } = await this.supabase
-            .from("usuarios")
-            .select("familia_id, rol")
-            .eq("id", nuevoAdminId)
-            .single();
+    async cambiarRolAdmin(familia_id, nuevoAdminId) {
+        const adminActualId = await this.gestorUsuario.obtenerIdUsuario();
+        if (!adminActualId) throw new Error("No se pudo identificar al usuario actual");
 
-        if (errorMiembro || !miembro) throw new Error("Miembro no encontrado");
-        if (miembro.familia_id !== familia_id)
-            throw new Error("El usuario no pertenece a esta familia");
+        const { data, error } = await this.supabase.rpc("cambiar_admin_familia", {
+            p_familia_id: familia_id,
+            p_nuevo_admin_id: nuevoAdminId,
+            p_admin_actual_id: adminActualId
+        });
 
-        // Asignar nuevo administrador
-        const { error: err1 } = await this.supabase
-            .from("usuarios")
-            .update({ rol: "Administrador" })
-            .eq("id", nuevoAdminId);
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
 
-        // Degradar admin actual
-        const { error: err2 } = await this.supabase
-            .from("usuarios")
-            .update({ rol: "Miembro familiar" })
-            .eq("id", adminActualId);
-
-        if (err1 || err2) throw new Error("Error al cambiar el rol");
-
-        return true;
+        return data;
     }
 
     // ============================================================
-    // MGES002-8 — Eliminar Familia
+    // MGES002-7 — Eliminar Familia
     // ============================================================
 
     /**
@@ -265,39 +238,17 @@ export class GestorFamilia { // GES-002
      * @returns {Promise<boolean>}
      */
     async eliminarFamilia() {
-        const user = await this.gestorUsuario.obtenerUsuario();
-        if (!user) throw new Error("No hay usuario autenticado");
-        if (!user.familia_id) throw new Error("No perteneces a ninguna familia");
+        const adminId = await this.gestorUsuario.obtenerIdUsuario();
+        if (!adminId) throw new Error("No se pudo identificar al usuario");
 
-        if (user.rol !== "Administrador") {
-            throw new Error("Solo el administrador puede eliminar la familia");
-        }
+        const { data, error } = await this.supabase.rpc("eliminar_familia_completa", {
+            p_admin_id: adminId
+        });
 
-        const familiaId = user.familia_id;
-
-        // Limpiar miembros excepto administrador
-        const { error: errorMiembros } = await this.supabase
-            .from("usuarios")
-            .update({ familia_id: null, parentesco: null })
-            .eq("familia_id", familiaId)
-            .neq("rol", "Administrador");
-
-        if (errorMiembros) throw errorMiembros;
-
-        // Eliminar familia
-        const { error: errorFamilia } = await this.supabase
-            .from("familias")
-            .delete()
-            .eq("id", familiaId);
-
-        if (errorFamilia) throw errorFamilia;
-
-        // Limpiar al admin
-        await this.supabase
-            .from("usuarios")
-            .update({ familia_id: null, parentesco: null })
-            .eq("id", user.id);
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
 
         return true;
     }
+
 }
