@@ -279,36 +279,38 @@ export class GestorMovimientos {
     }
   }
 
-  // MGES004-6 — Actualizar Movimiento
+  // MGES004-6 — Actualizar Movimiento (vía RPC)
   /**
-   * Actualiza campos editables de un movimiento:
+   * Actualiza un movimiento mediante la función RPC `actualizar_movimiento`.
+   *
+   * Puede actualizar:
    * - monto
    * - fecha
    * - comentario
-   * 
-   * @param {string} movimientoId
+   * Y opcionalmente:
+   * - meta asociada (metaId)
+   * - monto destinado a la meta (montoMeta)
+   *
+   * @param {string} movimientoId - ID del movimiento a actualizar.
    * @param {Object} datosActualizados
+   * @param {number|string} [datosActualizados.monto]
+   * @param {string}        [datosActualizados.fecha]      - YYYY-MM-DD
+   * @param {string|null}   [datosActualizados.comentario]
    *
    * @returns {Promise<Object>} Movimiento actualizado.
    */
   async actualizarMovimiento(movimientoId, datosActualizados) {
     try {
-      const { monto, fecha, comentario } = datosActualizados;
+      const { monto = null, fecha = null, comentario = null } = datosActualizados;
 
-      const actualizacion = {};
-      if (monto !== undefined) actualizacion.monto = parseFloat(monto);
-      if (fecha !== undefined) actualizacion.fecha = fecha;
-      if (comentario !== undefined) actualizacion.comentario = comentario;
-
-      const { data, error } = await this.supabase
-        .from('movimientos')
-        .update(actualizacion)
-        .eq('id', movimientoId)
-        .select()
-        .single();
+      const { data, error } = await this.supabase.rpc("actualizar_movimiento", {
+        p_movimiento_id: movimientoId,
+        p_monto: monto !== null ? parseFloat(monto) : null,
+        p_fecha: fecha,
+        p_comentario: comentario
+      });
 
       if (error) throw error;
-
       return data;
 
     } catch (err) {

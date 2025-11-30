@@ -1,28 +1,19 @@
+// GES-003
 /**
  * GestorMetas
- * ------------
+ * 
  * Módulo encargado de administrar todo lo relacionado a las metas financieras:
  * - Creación, edición y eliminación de metas
  * - Registro de aportes de ahorro
  * - Validación de saldos
  * - Actualización de progreso de metas
  * - Obtención de metas personales y familiares
- *
- * Identificador del módulo: GES-003
- *
- * Este gestor es clave para la administración del ahorro, pues interactúa con:
- * - la tabla `metas`
- * - la tabla `usuarios`
- * - la tabla `ahorro`
- *
- * Cada operación incluye validaciones y actualizaciones necesarias para
- * asegurar consistencia en los montos ahorrados y el saldo disponible.
  */
 
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('es-PE', {
-    style: 'currency',
-    currency: 'PEN'
+  return new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: "PEN"
   }).format(amount);
 };
 
@@ -39,53 +30,27 @@ export class GestorMetas { // GES-003
     this.gestorUsuario = gestorUsuario;
   }
 
-  // ============================================================
   // MGES003-1 — Obtener metas visibles por usuario
-  // ============================================================
-
   /**
-   * Obtiene todas las metas visibles para un usuario:
-   * - sus metas personales
-   * - metas familiares (si pertenece a una familia)
+   * Obtiene todas las metas visibles para un usuario.
+   * Esta función llama directamente al RPC:
+   *     obtener_metas(usuario_id_input)
+   *
+   * Regresa:
+   * - Metas personales
+   * - Metas familiares (si el usuario pertenece a una familia)
    *
    * @param {string} usuarioId - ID del usuario.
    * @returns {Promise<Array>} Lista de metas visibles.
    */
   async obtenerMetas(usuarioId) {
     try {
-      const { data: usuario, error: errorUsuario } = await this.supabase
-        .from("usuarios")
-        .select("familia_id")
-        .eq("id", usuarioId)
-        .single();
-
-      if (errorUsuario) throw errorUsuario;
-
-      const familiaId = usuario?.familia_id || null;
-
-      let query = this.supabase
-        .from("metas")
-        .select(`
-          *,
-          usuarios:usuario_id(nombre)
-        `);
-
-      // Si tiene familia → mostrar metas personales y familiares
-      if (familiaId) {
-        query = query.or(
-          `usuario_id.eq.${usuarioId},familia_id.eq.${familiaId}`
-        );
-      } else {
-        query = query.eq("usuario_id", usuarioId);
-      }
-
-      const { data, error } = await query.order("fecha_creacion", {
-        ascending: false,
+      const { data, error } = await this.supabase.rpc("obtener_metas", {
+        usuario_id_input: usuarioId
       });
 
       if (error) throw error;
-
-      return data;
+      return data || [];
 
     } catch (error) {
       console.error("Error en obtenerMetas:", error);
@@ -93,227 +58,120 @@ export class GestorMetas { // GES-003
     }
   }
 
-  // ============================================================
   // MGES003-2 — Crear una nueva meta
-  // ============================================================
-
   /**
-   * Crea una nueva meta de ahorro.
+   * Crea una nueva meta utilizando el RPC:
+   *     crear_meta(...)
    *
-   * Puede ser:
-   * - Personal → usuario_id se llena
-   * - Familiar → familia_id se llena
-   *
-   * @param {Object} params
-   * @param {string} params.nombre
-   * @param {number} params.monto_objetivo
-   * @param {string} params.fecha_limite - YYYY-MM-DD
-   * @param {string|null} params.familia_id
-   * @param {string|null} params.usuario_id
-   * @param {boolean} params.es_familiar
-   *
+   * @param {Object} params - Parámetros de creación.
    * @returns {Promise<Object>} Meta creada.
    */
-  async crearMeta({ nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar = false }) {
+  async crearMeta({ nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar }) {
     try {
-      const { data, error } = await this.supabase
-        .from("metas")
-        .insert([{
-          nombre,
-          monto_objetivo,
-          fecha_limite,
-          familia_id,
-          usuario_id,
-          es_familiar,
-          monto_actual: 0
-        }])
-        .select()
-        .single();
+      const { data, error } = await this.supabase.rpc("crear_meta", {
+        nombre,
+        monto_objetivo,
+        fecha_limite,
+        familia_id,
+        usuario_id,
+        es_familiar
+      });
 
       if (error) throw error;
-
       return data;
 
     } catch (error) {
-      console.error('Error en crearMeta:', error);
+      console.error("Error en crearMeta:", error);
       throw error;
     }
   }
 
-  // ============================================================
   // MGES003-3 — Editar meta existente
-  // ============================================================
-
   /**
-   * Edita una meta existente.
+   * Edita una meta a través del RPC:
+   *     editar_meta(...)
    *
-   * Si se convierte en meta familiar o personal,
-   * actualiza correctamente:
-   * - usuario_id
-   * - familia_id
+   * El usuario actual se obtiene desde GestorUsuario.
    *
    * @param {string} id - ID de la meta.
-   * @param {Object} params
-   * @param {string} params.nombre
-   * @param {number} params.monto_objetivo
-   * @param {string} params.fecha_limite
-   * @param {boolean} params.es_familiar
-   *
+   * @param {Object} params - Datos a actualizar.
    * @returns {Promise<Object>} Meta actualizada.
    */
   async editarMeta(id, { nombre, monto_objetivo, fecha_limite, es_familiar }) {
     try {
-      const user_id = await this.gestorUsuario.obtenerIdUsuario();
-      if (!user_id) throw new Error("No se pudo obtener el ID del usuario");
+      const usuario_id = await this.gestorUsuario.obtenerIdUsuario();
+      if (!usuario_id) throw new Error("No se pudo obtener el ID del usuario");
 
-      const { data: usuario, error: errorUsuario } = await this.supabase
-        .from('usuarios')
-        .select('familia_id')
-        .eq('id', user_id)
-        .single();
-
-      if (errorUsuario) throw errorUsuario;
-      if (!usuario) throw new Error('Usuario no encontrado');
-
-      const familia_id = usuario.familia_id;
-
-      const updateData = {
-        nombre,
-        monto_objetivo,
-        fecha_limite,
-        es_familiar,
-        familia_id: es_familiar ? familia_id : null,
-        usuario_id: es_familiar ? null : user_id
-      };
-
-      const { data, error } = await this.supabase
-        .from("metas")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
+      const { data, error } = await this.supabase.rpc("editar_meta", {
+        p_id: id,
+        p_nombre: nombre,
+        p_monto_objetivo: monto_objetivo,
+        p_fecha_limite: fecha_limite,
+        p_es_familiar: es_familiar,
+        p_usuario_id: usuario_id
+      });
 
       if (error) throw error;
-
       return data;
 
     } catch (error) {
-      console.error('Error en editarMeta:', error);
+      console.error("Error en editarMeta:", error);
       throw error;
     }
   }
 
-  // ============================================================
   // MGES003-4 — Eliminar meta
-  // ============================================================
-
   /**
-   * Elimina una meta del sistema.
+   * Elimina una meta por su ID mediante RPC:
+   *     eliminar_meta(id)
    *
-   * ⚠ Importante: No elimina registros de ahorro asociados.
+   * No elimina registros de ahorro relacionados.
    *
    * @param {string} id - ID de la meta.
    * @returns {Promise<boolean>}
    */
   async eliminarMeta(id) {
-    const { error } = await this.supabase
-      .from("metas")
-      .delete()
-      .eq("id", id);
+    try {
+      const { data, error } = await this.supabase.rpc("eliminar_meta", {
+        meta_id: id
+      });
 
-    if (error) throw error;
+      if (error) throw error;
+      return data === true;
 
-    return true;
+    } catch (error) {
+      console.error("Error en eliminarMeta:", error);
+      throw error;
+    }
   }
 
-  // ============================================================
-  // MGES003-5 — Agregar ahorro (aporte)
-  // ============================================================
-
+  // MGES003-5 — Agregar ahorro
   /**
-   * Registra un aporte a una meta, actualizando:
-   * - monto_actual de la meta
-   * - saldo_disponible del usuario
-   * - registro en la tabla ahorro
+   * Registra un aporte y actualiza:
+   * - meta.monto_actual
+   * - usuarios.saldo_disponible
+   * - tabla ahorro
    *
-   * Incluye validaciones:
-   * - que haya saldo suficiente
-   * - que no supere la meta
+   * Esta operación se realiza COMPLETAMENTE en el RPC:
+   *     agregar_ahorro(...)
    *
    * @param {string} metaId
    * @param {number} monto
    * @param {string} usuarioId
    * @param {string|null} movimientoId
-   *
-   * @returns {Promise<Object>} Información del nuevo estado de la meta.
+   * @returns {Promise<Object>}
    */
   async agregarAhorro(metaId, monto, usuarioId, movimientoId = null) {
     try {
-      if (!metaId || !usuarioId || !monto || monto <= 0) {
-        throw new Error("Parámetros inválidos para el aporte");
-      }
+      const { data, error } = await this.supabase.rpc("agregar_ahorro", {
+        p_meta_id: metaId,
+        p_monto: monto,
+        p_usuario_id: usuarioId,
+        p_movimiento_id: movimientoId
+      });
 
-      const saldoDisponible = await this.obtenerSaldoDisponible(usuarioId);
-
-      if (monto > saldoDisponible) {
-        throw new Error(
-          `Ingresos insuficientes. Disponible: ${formatCurrency(saldoDisponible)}`
-        );
-      }
-
-      const { data: meta, error: metaError } = await this.supabase
-        .from("metas")
-        .select("monto_actual, monto_objetivo, nombre")
-        .eq("id", metaId)
-        .single();
-
-      if (metaError) throw new Error("Meta no encontrada");
-
-      const nuevoMonto = parseFloat(meta.monto_actual) + parseFloat(monto);
-
-      if (nuevoMonto > meta.monto_objetivo) {
-        throw new Error(
-          `El aporte excede el objetivo. Máximo permitido: ${formatCurrency(
-            meta.monto_objetivo - meta.monto_actual
-          )}`
-        );
-      }
-
-      // Actualizar meta
-      const { error: updateMetaError } = await this.supabase
-        .from("metas")
-        .update({ monto_actual: nuevoMonto })
-        .eq("id", metaId);
-
-      if (updateMetaError) throw updateMetaError;
-
-      // Actualizar saldo disponible
-      const nuevoSaldo = saldoDisponible - monto;
-
-      const { error: updateSaldoError } = await this.supabase
-        .from("usuarios")
-        .update({ saldo_disponible: nuevoSaldo })
-        .eq("id", usuarioId);
-
-      if (updateSaldoError) throw updateSaldoError;
-
-      // Registrar aporte
-      const { error: aporteError } = await this.supabase
-        .from("ahorro")
-        .insert([{
-          meta_id: metaId,
-          movimiento_id: movimientoId,
-          monto: parseFloat(monto),
-        }]);
-
-      if (aporteError) throw aporteError;
-
-      return {
-        exito: true,
-        nuevoSaldo,
-        nuevoMonto,
-        mensaje: "Aporte registrado correctamente",
-      };
+      if (error) throw error;
+      return data;
 
     } catch (error) {
       console.error("Error en agregarAhorro:", error);
@@ -321,80 +179,50 @@ export class GestorMetas { // GES-003
     }
   }
 
-  // ============================================================
-  // MGES003-6 — Obtener saldo disponible del usuario
-  // ============================================================
-
+  // MGES003-6 — Obtener saldo disponible
   /**
-   * Obtiene el saldo disponible del usuario para asignar a metas.
-   *
-   * Este campo se actualiza cada vez que un ingreso se modifica o
-   * se asigna dinero a una meta.
+   * Obtiene el saldo disponible de un usuario.
+   * RPC utilizado:
+   *     obtener_saldo_disponible(usuario_id_input)
    *
    * @param {string} usuarioId
-   * @returns {Promise<number>} Saldo actual.
+   * @returns {Promise<number>}
    */
   async obtenerSaldoDisponible(usuarioId) {
     try {
-      const { data, error } = await this.supabase
-        .from("usuarios")
-        .select("saldo_disponible")
-        .eq("id", usuarioId)
-        .single();
+      const { data, error } = await this.supabase.rpc("obtener_saldo_disponible", {
+        usuario_id_input: usuarioId
+      });
 
       if (error) throw error;
+      return parseFloat(data || 0);
 
-      return parseFloat(data?.saldo_disponible) || 0;
-
-    } catch (err) {
-      console.error("Error al obtener saldo disponible:", err);
-      throw new Error("No se pudo obtener el saldo disponible del usuario");
+    } catch (error) {
+      console.error("Error en obtenerSaldoDisponible:", error);
+      throw error;
     }
   }
 
-  // ============================================================
-  // MGES003-7 — Obtener aportes de una meta
-  // ============================================================
-
+  // MGES003-7 — Obtener aportes por meta
   /**
-   * Obtiene todos los aportes registrados a una meta.
-   *
-   * Incluye JOINs con:
-   * - movimientos
-   * - usuarios
+   * Obtiene todos los aportes de una meta (con movimientos + usuario).
+   * RPC:
+   *     obtener_aportes_por_meta(meta_id_input)
    *
    * @param {string} metaId
-   * @returns {Promise<Array>} Lista de aportes.
+   * @returns {Promise<Array>}
    */
   async obtenerAportesPorMeta(metaId) {
     try {
-      const { data, error } = await this.supabase
-        .from("ahorro")
-        .select(`
-          id,
-          monto,
-          fecha_aporte,
-          movimiento:movimiento_id (
-            id,
-            monto,
-            tipo,
-            fecha,
-            usuario:usuario_id (
-              id,
-              nombre,
-              correo
-            )
-          )
-        `)
-        .eq("meta_id", metaId)
-        .order("fecha_aporte", { ascending: false });
+      const { data, error } = await this.supabase.rpc("obtener_aportes_por_meta", {
+        meta_id_input: metaId
+      });
 
       if (error) throw error;
-
-      return data;
+      return data || [];
 
     } catch (error) {
-      console.error("Error en obtenerAportes:", error);
+      console.error("Error en obtenerAportesPorMeta:", error);
       throw error;
     }
   }
