@@ -1,25 +1,28 @@
 // GES-004
 /**
- * GestorMovimientos
- * -----------------
- * Módulo responsable de manejar todos los procesos relacionados con los
- * movimientos financieros de un usuario o familia. Centraliza la interacción
- * con la base de datos mediante funciones RPC y consultas directas optimizadas.
- *
- * FUNCIONES PRINCIPALES:
- * - Registrar ingresos y egresos (crear_movimiento)
- * - Consultar movimientos con distintos niveles de detalle
- * - Calcular totales y balances
- * - Obtener información combinada (movimientos + conceptos + usuario)
- * - Actualizar movimientos existentes manteniendo la integridad del saldo
+ * GES-004 — GestorMovimientos
+ * 
+ * Gestión completa de movimientos financieros (ingresos y egresos) del usuario y su familia.
+ * Centraliza el registro, consulta, actualización y análisis de transacciones financieras,
+ * manteniendo la integridad del saldo y la relación con conceptos y metas.
+ * 
+ * Funciones clave:
+ * - Registrar ingresos y egresos con o sin aportes a metas
+ * - Consultar movimientos con filtros avanzados (fecha, tipo, concepto)
+ * - Calcular totales y balances por período
+ * - Actualizar movimientos existentes recalculando saldos
+ * - Obtener resúmenes estadísticos por conceptos
+ * - Generar análisis de movimientos con información detallada
  */
 
 export class GestorMovimientos {
 
   /**
-   * @param {SupabaseClient} supabase - Cliente Supabase
-   * @param {GestorMetas} gestorMetas - Gestor de metas
-   * @param {GestorUsuario} gestorUsuario - Gestor de usuario/familia
+   * Crea una instancia del GestorMovimientos.
+   *
+   * @param {Object} supabase - Cliente de Supabase para operaciones de base de datos.
+   * @param {Object} gestorMetas - Instancia del GestorMetas para operaciones relacionadas con metas.
+   * @param {Object} gestorUsuario - Instancia del GestorUsuario para obtener datos del usuario.
    */
   constructor(supabase, gestorMetas, gestorUsuario) {
     this.supabase = supabase;
@@ -27,22 +30,26 @@ export class GestorMovimientos {
     this.gestorUsuario = gestorUsuario;
   }
 
-  // MGES004-1 — Crear Movimiento
+  // MGES004-1
   /**
    * Registra un nuevo movimiento financiero.
+   * 
+   * Se usa para: Crear ingresos o egresos desde formularios de registro.
+   * Actualiza automáticamente el saldo disponible del usuario y puede registrar aportes a metas.
    *
-   * Esta acción se delega totalmente a la función RPC `crear_movimiento`,
-   * la cual se encarga internamente de:
-   * - Validar el tipo de movimiento (ingreso o egreso).
-   * - Verificar saldo disponible (en caso de egresos o aportes).
-   * - Insertar el movimiento en la tabla `movimientos`.
-   * - Descontar o incrementar el saldo disponible del usuario.
-   * - Registrar aportes a metas si se proporcionan `metaId` y `montoMeta`.
-   *
-   * @param {Object} params - Datos del movimiento.
-   * @returns {Promise<string>} ID del nuevo movimiento.
+   * @async
+   * @param {Object} params - Datos del movimiento a crear.
+   * @param {string} params.usuarioId - ID del usuario que realiza el movimiento.
+   * @param {string} params.conceptoId - ID del concepto asociado.
+   * @param {"ingreso"|"egreso"} params.tipo - Tipo de movimiento.
+   * @param {number} params.monto - Monto del movimiento.
+   * @param {string} [params.comentario] - Comentario opcional.
+   * @param {string} params.fecha - Fecha del movimiento.
+   * @param {string} [params.metaId] - ID de la meta para aporte (opcional).
+   * @param {number} [params.montoMeta] - Monto a aportar a la meta (opcional).
+   * @returns {Promise<string>} ID del movimiento creado.
+   * @throws {Error} Si falla la creación del movimiento.
    */
-
   async crearMovimiento({ usuarioId, conceptoId, tipo, monto, comentario, fecha, metaId, montoMeta }) {
     const { data, error } = await this.supabase.rpc("crear_movimiento", {
       p_usuario_id: usuarioId,
@@ -59,22 +66,22 @@ export class GestorMovimientos {
     return data;
   }
 
-  // MGES004-2 — Total por Tipo
+  // MGES004-2
   /**
-   * Obtiene la suma total de dinero correspondiente a un tipo de movimiento:
-   * INGRESO o EGRESO.
+   * Calcula el total de movimientos por tipo.
+   * 
+   * Se usa para: Mostrar totales de ingresos o egresos en dashboards y reportes.
    *
-   * Flujo:
-   * 1. Se consultan los montos relacionados (via SELECT RPC o query simple).
-   * 2. Se aplica el filtro solicitado: fecha exacta o mes/año.
-   * 3. El cálculo final (suma) se hace en el cliente para asegurar precisión.
-   *
-   * @param {string} usuarioId - Usuario propietario de los movimientos.
-   * @param {"ingreso"|"egreso"} tipo - Tipo de movimiento a sumar.
-   * @param {Object} [opciones] - Filtros opcionales de tiempo.
-   * @returns {Promise<number>} Total sumado con dos decimales.
+   * @async
+   * @param {string} usuarioId - ID del usuario.
+   * @param {"ingreso"|"egreso"} tipo - Tipo de movimiento a totalizar.
+   * @param {Object} [opciones] - Filtros opcionales de período.
+   * @param {string} [opciones.fecha] - Fecha específica.
+   * @param {number} [opciones.mes] - Mes a filtrar (1-12).
+   * @param {number} [opciones.año] - Año a filtrar.
+   * @returns {Promise<number>} Total calculado con dos decimales.
+   * @throws {Error} Si falla la consulta.
    */
-
   async obtenerTotalPorTipo(usuarioId, tipo, opciones = {}) {
     const { fecha = null, mes = null, año = null } = opciones;
 
@@ -93,21 +100,22 @@ export class GestorMovimientos {
     return Math.round(total * 100) / 100;
   }
 
-  // MGES004-3 — Movimientos del Usuario
+  // MGES004-3
   /**
-   * Recupera los movimientos de un usuario y permite paginarlos,
-   * filtrarlos por mes/año y ordenar por fecha.
+   * Obtiene los movimientos de un usuario con paginación y filtros.
+   * 
+   * Se usa para: Listar historial de movimientos en pantallas principales.
    *
-   * Retorna también el concepto asociado mediante JOIN.
-   *
-   * Útil para:
-   * - Historial del usuario
-   * - Paginación de movimientos
-   * - Listas filtradas rápidamente sin costosos joins adicionales
-   *
-   * @returns {Promise<Array>} Lista de movimientos del usuario.
+   * @async
+   * @param {string} usuarioId - ID del usuario.
+   * @param {Object} [opciones] - Opciones de consulta.
+   * @param {number} [opciones.limit=50] - Cantidad máxima de resultados.
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden por fecha.
+   * @param {number} [opciones.mes] - Filtrar por mes (1-12).
+   * @param {number} [opciones.año] - Filtrar por año.
+   * @returns {Promise<Array>} Array de movimientos con información del concepto.
+   * @throws {Error} Si falla la consulta.
    */
-
   async obtenerMovimientosUsuario(usuarioId, opciones = {}) {
     const {
       limit = 50,
@@ -130,18 +138,21 @@ export class GestorMovimientos {
     return data || [];
   }
 
-  // MGES004-4 — Balance entre Fechas
+  // MGES004-4
   /**
-   * Obtiene todos los movimientos dentro de un rango de fechas y calcula:
-   * - Total de ingresos
-   * - Total de egresos
-   * - Balance final
+   * Calcula el balance financiero en un rango de fechas.
+   * 
+   * Se usa para: Generar reportes de período y análisis de flujo de efectivo.
+   * Puede obtener movimientos personales o familiares según el tipo especificado.
    *
-   * También permite modo:
-   * - PERSONAL → Solo movimientos del usuario
-   * - FAMILIAR → Movimientos de todos los miembros de la familia
-   *
-   * @returns {Promise<Object>} Movimientos + totales acumulados.
+   * @async
+   * @param {Object} params - Parámetros de consulta.
+   * @param {string} params.fechaInicio - Fecha inicial del rango.
+   * @param {string} params.fechaFin - Fecha final del rango.
+   * @param {string} params.tipo - Tipo de reporte (personal/familiar).
+   * @param {string} params.usuarioId - ID del usuario.
+   * @returns {Promise<Object>} Objeto con movimientos y totales calculados (ingresos, egresos, balance).
+   * @throws {Error} Si falla la consulta.
    */
   async obtenerBalanceEntreFechas({ fechaInicio, fechaFin, tipo, usuarioId }) {
     const { data, error } = await this.supabase.rpc("movimientos_rango_fechas", {
@@ -173,19 +184,20 @@ export class GestorMovimientos {
     };
   }
 
-
-  // MGES004-5 — Movimientos con Conceptos
+  // MGES004-5
   /**
-   * Obtiene movimientos del usuario junto con los metadatos completos 
-   * de su concepto asociado.
+   * Obtiene movimientos con información completa de sus conceptos.
+   * 
+   * Se usa para: Generar reportes por categoría y análisis de gastos detallados.
    *
-   * Resulta útil para:
-   * - Graficar gastos por categoría
-   * - Listados detallados con etiquetas de concepto
-   *
-   * @returns {Promise<Array>} Movimientos con información descriptiva.
+   * @async
+   * @param {string} usuarioId - ID del usuario.
+   * @param {Object} [opciones] - Opciones de consulta.
+   * @param {number} [opciones.limit=100] - Cantidad máxima de resultados.
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden por fecha.
+   * @returns {Promise<Array>} Array de movimientos con metadatos del concepto.
+   * @throws {Error} Si falla la consulta.
    */
-
   async obtenerMovimientosConConceptos(usuarioId, opciones = {}) {
     const { limit = 100, ordenar = "desc" } = opciones;
     const asc = ordenar === "asc";
@@ -200,19 +212,22 @@ export class GestorMovimientos {
     return data || [];
   }
 
-  // MGES004-6 — Actualizar Movimiento
+  // MGES004-6
   /**
-   * Actualiza campos editables de un movimiento:
-   * - monto
-   * - fecha
-   * - comentario
+   * Actualiza un movimiento existente.
+   * 
+   * Se usa para: Editar movimientos desde formularios de corrección.
+   * Recalcula automáticamente el impacto en el saldo disponible del usuario.
    *
-   * Esta operación se delega a la RPC `actualizar_movimiento`, que garantiza:
-   * - Recalcular y aplicar la diferencia sobre el saldo disponible del usuario.
-   *
-   * @returns {Promise<Object>} Movimiento actualizado desde la BD.
+   * @async
+   * @param {string} movimientoId - ID del movimiento a actualizar.
+   * @param {Object} datosActualizados - Campos a modificar.
+   * @param {number} [datosActualizados.monto] - Nuevo monto.
+   * @param {string} [datosActualizados.fecha] - Nueva fecha.
+   * @param {string} [datosActualizados.comentario] - Nuevo comentario.
+   * @returns {Promise<Object>} Movimiento actualizado.
+   * @throws {Error} Si falla la actualización.
    */
-
   async actualizarMovimiento(movimientoId, datosActualizados) {
     try {
       const { monto = null, fecha = null, comentario = null } = datosActualizados;
@@ -234,21 +249,23 @@ export class GestorMovimientos {
     }
   }
 
-  // MGES004-7 — Filtro Avanzado
+  // MGES004-7
   /**
-   * Devuelve movimientos aplicando múltiples filtros:
-   * - varios usuarios
-   * - un concepto específico
-   * - rango de fechas
-   * - orden dinámico
-   * - límite de registros
+   * Aplica filtros avanzados para búsqueda de movimientos.
+   * 
+   * Se usa para: Análisis familiar y búsquedas específicas en el historial financiero.
    *
-   * Este método se usa en vistas avanzadas como análisis familiar
-   * o búsquedas detalladas del historial financiero.
-   *
-   * @returns {Promise<Array>} Lista de movimientos filtrados.
+   * @async
+   * @param {Object} [opciones] - Filtros de búsqueda.
+   * @param {Array<string>} [opciones.usuariosIds] - IDs de usuarios a incluir (requerido).
+   * @param {string} [opciones.conceptoId] - ID del concepto a filtrar.
+   * @param {string} [opciones.fechaInicio] - Fecha inicial del rango.
+   * @param {string} [opciones.fechaFin] - Fecha final del rango.
+   * @param {"asc"|"desc"} [opciones.ordenar="desc"] - Orden por fecha.
+   * @param {number} [opciones.limit] - Límite de resultados.
+   * @returns {Promise<Array>} Array de movimientos filtrados con conceptos, usuarios y aportes.
+   * @throws {Error} Si no se proporcionan IDs de usuarios o falla la consulta.
    */
-
   async obtenerMovimientosFiltrados(opciones = {}) {
     try {
       const {
@@ -264,26 +281,20 @@ export class GestorMovimientos {
         throw new Error("Se requiere al menos un ID de usuario");
       }
 
-      let query = this.supabase
-        .from('movimientos')
-        .select(`
-          *,
-          conceptos:concepto_id(*),
-          usuarios:usuario_id(nombre),
-          ahorro:ahorro(monto)
-        `)
-        .in('usuario_id', usuariosIds)
-        .order('fecha', { ascending: ordenar === "asc" });
+      const { data, error } = await this.supabase.rpc(
+        "filtrar_movimientos_avanzado",
+        {
+          p_usuarios_ids: usuariosIds,
+          p_concepto_id: conceptoId,
+          p_fecha_inicio: fechaInicio,
+          p_fecha_fin: fechaFin,
+          p_asc: ordenar === "asc",
+          p_limit: limit
+        }
+      );
 
-      if (conceptoId) query = query.eq('concepto_id', conceptoId);
-      if (fechaInicio) query = query.gte('fecha', fechaInicio);
-      if (fechaFin) query = query.lte('fecha', fechaFin);
-      if (limit) query = query.limit(limit);
-
-      const { data: movimientos, error } = await query;
       if (error) throw error;
-
-      return movimientos || [];
+      return data || [];
 
     } catch (err) {
       console.error("ERROR en obtenerMovimientosFiltrados:", err);
@@ -291,19 +302,21 @@ export class GestorMovimientos {
     }
   }
 
-  // MGES004-8 — Resumen por Conceptos
-  /**
-   * Construye un resumen estadístico basado en conceptos:
-   * - Top 3 de ingresos más frecuentes
-   * - Top 3 de egresos más altos
-   * - Listado completo ordenado por monto total acumulado
-   *
-   *
-   * @returns {Promise<Object>} Resumen estadístico por conceptos.
-   */
 
+  // MGES004-8
+  /**
+   * Genera un resumen estadístico agrupado por conceptos.
+   * 
+   * Se usa para: Dashboards y reportes visuales de gastos por categoría.
+   *
+   * @async
+   * @param {string} usuarioId - ID del usuario.
+   * @param {Object} [opciones] - Filtros de período.
+   * @param {number} [opciones.mes] - Filtrar por mes (1-12).
+   * @param {number} [opciones.año] - Filtrar por año.
+   * @returns {Promise<Object>} Resumen con top 3 de ingresos/egresos y listados completos ordenados.
+   */
   async calcularResumenConceptos(usuarioId, opciones = {}) {
-    // Se queda igual, solo lógica en JS
     let movimientos = await this.obtenerMovimientosConConceptos(usuarioId);
 
     const { mes = null, año = null } = opciones;
@@ -348,20 +361,17 @@ export class GestorMovimientos {
     };
   }
 
-  // MGES004-9 — Movimiento por ID
+  // MGES004-9
   /**
-   * Recupera un movimiento específico por su ID, incorporando:
-   * - información del concepto
-   * - nombre del usuario propietario
+   * Obtiene un movimiento específico por su ID.
+   * 
+   * Se usa para: Pantallas de detalle y formularios de edición de movimientos.
    *
-   * Útil para:
-   * - pantallas de detalle
-   * - edición y vistas específicas
-   *
-   * @param {string} movimientoId - ID del movimiento buscado.
-   * @returns {Promise<Object>} Movimiento con datos relacionados.
+   * @async
+   * @param {string} movimientoId - ID del movimiento a consultar.
+   * @returns {Promise<Object>} Movimiento con información del concepto y usuario propietario.
+   * @throws {Error} Si falla la consulta.
    */
-
   async obtenerMovimientoPorId(movimientoId) {
     const { data, error } = await this.supabase.rpc("movimiento_por_id", {
       p_movimiento_id: movimientoId

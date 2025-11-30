@@ -11,16 +11,19 @@ const Conceptos = () => { // VIEW-
   const fetchConcepts = async () => {
     try {
       const data = await gestorConceptos.obtenerConceptos();
-      setConcepts(data || []);
+      const lista = Array.isArray(data) 
+        ? data 
+        : (data?.conceptos || data?.data || []);
+      setConcepts(lista);
     } catch (error) {
       console.error('Error fetching concepts:', error);
     }
   };
-
+  
   useEffect(() => {
     fetchConcepts();
   }, []);
-
+  
   useEffect(() => { 
     if (selectedConceptId) {
       const concept = concepts.find(c => c.id === selectedConceptId);
@@ -29,7 +32,7 @@ const Conceptos = () => { // VIEW-
       setFormData({ nombre: '', tipo: 'ingreso', periodo: 'diario' });
     }
   }, [selectedConceptId, concepts]);
-
+  
   // MVIEW006-1
   // Maneja el cambio en los campos del formulario.
   const handleChange = (e) => {

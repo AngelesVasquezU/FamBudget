@@ -174,7 +174,12 @@ const Balance = () => {
     try {
       // Cargar lista completa de conceptos usando gestor
       const todosConceptos = await gestorConceptos.obtenerConceptos();
-      setConceptos(todosConceptos || []);
+      console.log("Conceptos obtenidos:", todosConceptos);
+      const lista = Array.isArray(todosConceptos)
+        ? todosConceptos
+        : (todosConceptos?.conceptos || []);
+
+      setConceptos(lista);
 
       await cargarTodosLosMovimientos();
 
@@ -745,8 +750,13 @@ const Balance = () => {
     try {
       // Obtener usuarios de la familia
       const usuariosFamilia = await gestorUsuario.obtenerUsuariosDeMiFamilia();
-      const idsFamilia = usuariosFamilia.map(u => u.id);
+      let idsFamilia = usuariosFamilia.map(u => u.id);
 
+      if (!usuariosFamilia || usuariosFamilia.length === 0) {
+        idsFamilia = [user.id];
+      } else {
+        idsFamilia = usuariosFamilia.map(u => u.id);
+      }
       // Determinar filtro temporal
       const filtroAAplicar = forzarFiltro !== null ? forzarFiltro : filtroTiempo;
 
@@ -772,7 +782,7 @@ const Balance = () => {
       }
 
       const movimientos = await gestorMovimientos.obtenerMovimientosFiltrados(opciones);
-
+      console.log('Opciones de carga de movimientos:', opciones);
       console.log('Movimientos encontrados:', movimientos);
       setMovimientosConcepto(movimientos || []);
 
@@ -945,15 +955,15 @@ const Balance = () => {
                           <tbody>
                             {movimientosConcepto.map(movimiento => (
                               <tr key={movimiento.id}>
-                                <td>{movimiento.usuarios?.nombre || 'Usuario'}</td>
+                                <td>{movimiento.usuario?.nombre || 'Usuario'}</td>
                                 <td>{movimiento.fecha}</td>
                                 <td className={movimiento.conceptos?.tipo === 'egreso' ? 'negativo' : 'positivo'}>
                                   {movimiento.conceptos?.tipo === 'egreso' ? '-' : '+'}
                                   {formatCurrency(movimiento.monto)}
                                 </td>
                                 <td>
-                                  {movimiento.ahorro && movimiento.ahorro.length > 0
-                                    ? formatCurrency(movimiento.ahorro[0].monto)
+                                  {movimiento.aporte
+                                    ? formatCurrency(movimiento.aporte.monto)
                                     : 'S/.0.00'
                                   }
                                 </td>

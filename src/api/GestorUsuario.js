@@ -1,20 +1,25 @@
 // GES-005
 /**
- * GestorUsuario – Gestión de usuarios en la tabla "usuarios".
- *
- * Funcionalidades:
- *  - Obtener el ID interno del usuario (tabla "usuarios")
- *  - Recuperar su información completa
- *  - Listar miembros de su misma familia
- *
- * Toda la información del usuario autenticado se obtiene a través
- * del GestorAuth.
+ * GES-005 — GestorUsuario
+ * 
+ * Gestión de usuarios registrados en la tabla "usuarios".
+ * Provee operaciones para consultar y actualizar información del usuario autenticado
+ * y miembros de su familia.
+ * 
+ * Funciones clave:
+ * - Obtener ID interno del usuario desde auth_id
+ * - Recuperar información completa del usuario
+ * - Listar miembros de la misma familia
+ * - Actualizar datos del usuario
  */
 
 export class GestorUsuario {
 
   /**
-   * @param {Object} supabase - Instancia del cliente de Supabase.
+   * Crea una instancia del GestorUsuario.
+   * 
+   * @param {Object} supabase - Cliente de Supabase para operaciones de base de datos.
+   * @param {Object} gestorAuth - Instancia del GestorAuth para obtener datos de autenticación.
    */
   constructor(supabase, gestorAuth) {
     this.supabase = supabase;
@@ -23,119 +28,99 @@ export class GestorUsuario {
 
   // MGES005-1
   /**
-   * Obtiene el ID interno del usuario en la tabla "usuarios"
-   * a partir del auth_id de Supabase Authentication.
-   *
+   * Obtiene el ID interno del usuario en la tabla "usuarios".
+   * 
+   * Se usa para: Obtener el identificador numérico del usuario a partir de su auth_id.
+   * 
    * @async
-   * @returns {Promise<number|null>} ID del usuario o null si no existe.
+   * @returns {Promise<number|null>} ID del usuario o null si no existe o no está autenticado.
    */
   async obtenerIdUsuario() {
-    try {
-      const { data: authData } = await this.gestorAuth.getUser();
-      const authId = authData?.user?.id;
+    const { data: authData } = await this.gestorAuth.getUser();
+    const authId = authData?.user?.id;
+    if (!authId) return null;
 
-      if (!authId) return null;
+    const { data, error } = await this.supabase.rpc("obtener_id_usuario", {
+      p_auth_id: authId
+    });
 
-      const { data: usuario, error: usuarioError } = await this.supabase
-        .from("usuarios")
-        .select("id")
-        .eq("auth_id", authId)
-        .single();
-
-      if (usuarioError || !usuario) return null;
-
-      return usuario.id;
-
-    } catch (err) {
-      console.error("GestorUsuario error:", err);
-      return null;
-    }
-  }
-
-  // MGES005-2
-  /**
-   * Retorna el registro completo del usuario en la tabla "usuarios",
-   * basado en el auth_id del usuario autenticado.
-   *
-   * @async
-   * @returns {Promise<Object|null>} Información del usuario o null si no existe.
-   */
-  async obtenerUsuario() {
-    try {
-      const { data: authData } = await this.gestorAuth.getUser();
-      const authId = authData?.user?.id;
-
-      if (!authId) return null;
-
-      const { data: usuario, error: usuarioError } = await this.supabase
-        .from("usuarios")
-        .select("*")
-        .eq("auth_id", authId)
-        .single();
-
-      if (usuarioError || !usuario) return null;
-
-      return usuario;
-
-    } catch (err) {
-      console.error("GestorUsuario error:", err);
-      return null;
-    }
-  }
-
-  // MGES005-3
-  /**
-   * Obtiene la lista de usuarios que pertenecen a la misma familia
-   * que el usuario actualmente autenticado.
-   *
-   * @async
-   * @returns {Promise<Array>} Lista de miembros de la familia.
-   */
-  async obtenerUsuariosDeMiFamilia() {
-    const user = await this.obtenerUsuario();
-    if (!user || !user.familia_id) return [];
-
-    const { data, error } = await this.supabase
-      .from("usuarios")
-      .select("id, nombre, correo, rol")
-      .eq("familia_id", user.familia_id);
-
-    if (error) throw error;
-
+    if (error) return null;
     return data;
   }
 
-  // MGES005-4 — Actualizar Usuario
+
+  // MGES005-2
   /**
-   * Actualiza los datos del usuario en la tabla "usuarios".
-   *
+   * Obtiene el registro completo del usuario autenticado.
+   * 
+   * Se usa para: Consultar toda la información del perfil del usuario actual.
+   * 
+   * @async
+   * @returns {Promise<Object|null>} Objeto con los datos del usuario o null si no existe.
+   */
+  async obtenerUsuario() {
+    const { data: authData } = await this.gestorAuth.getUser();
+    const authId = authData?.user?.id;
+
+    if (!authId) return null;
+
+    const { data, error } = await this.supabase.rpc("obtener_usuario", {
+      p_auth_id: authId
+    });
+
+    if (error) return null;
+    return data;
+  }
+
+
+  // MGES005-3
+  /**
+   * Lista todos los usuarios que pertenecen a la familia del usuario autenticado.
+   * 
+   * Se usa para: Mostrar miembros del grupo familiar en interfaces de gestión familiar.
+   * 
+   * @async
+   * @returns {Promise<Array>} Array de objetos usuario de la misma familia.
+   * @throws {Error} Si ocurre un error en la consulta.
+   */
+  async obtenerUsuariosDeMiFamilia() {
+    const user = await this.obtenerUsuario();
+    if (!user?.familia_id) return [];
+
+    const { data, error } = await this.supabase.rpc("obtener_usuarios_de_familia", {
+      p_familia_id: user.familia_id
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
+  // MGES005-4
+  /**
+   * Actualiza los datos de un usuario específico.
+   * 
+   * Se usa para: Modificar información del perfil como nombre o parentesco.
+   * 
+   * @async
    * @param {number|string} usuarioId - ID del usuario a actualizar.
-   * @param {Object} datos - Campos a actualizar.
+   * @param {Object} datos - Objeto con los campos a modificar.
    * @param {string} [datos.nombre] - Nuevo nombre del usuario.
-   * @param {string} [datos.parentesco] - Nuevo parentesco.
-   *
-   * @returns {Promise<Object>} Usuario actualizado.
-   * @throws {Error} Si ocurre un error al actualizar.
+   * @param {string} [datos.parentesco] - Nuevo parentesco del usuario.
+   * @returns {Promise<Object>} Usuario actualizado con los nuevos datos.
+   * @throws {Error} Si ocurre un error en la actualización.
    */
   async actualizarUsuario(usuarioId, datos) {
-    try {
-      const { data, error } = await this.supabase
-        .from("usuarios")
-        .update({
-          nombre: datos.nombre?.trim(),
-          parentesco: datos.parentesco?.trim()
-        })
-        .eq("id", usuarioId)
-        .select()
-        .single();
+    const { nombre, parentesco } = datos;
 
-      if (error) throw error;
-      return data;
+    const { data, error } = await this.supabase.rpc("actualizar_usuario", {
+      p_usuario_id: usuarioId,
+      p_nombre: nombre || null,
+      p_parentesco: parentesco || null
+    });
 
-    } catch (err) {
-      console.error("GestorUsuario.actualizarUsuario error:", err);
-      throw err;
-    }
+    if (error) throw error;
+    return data;
   }
+
 
 }
