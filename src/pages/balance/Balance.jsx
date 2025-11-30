@@ -332,13 +332,15 @@ const Balance = () => {
         tipo: tipoBalance,
         usuarioId: userId
       });
-
+      
+      console.log("Balance obtenido:", balance);
+      
       // Procesamiento de movimientos por concepto
       const conceptosMap = {};
       balance.movimientos.forEach(m => {
-        const conceptoId = m.concepto_id || m.id;
-        const nombre = m.conceptos?.nombre || m.concepto || 'Sin concepto';
-        const tipo = m.conceptos?.tipo || m.tipo;
+        const conceptoId = m.concepto.id || m.id;
+        const nombre = m.concepto?.nombre || m.concepto || 'Sin concepto';
+        const tipo = m.concepto?.tipo || m.tipo;
         const monto = Number(m.monto);
         const fecha = m.fecha?.split('T')[0];
 
@@ -365,10 +367,10 @@ const Balance = () => {
       const totalFamiliarEgresos = balance.totales.egresos || 0;
 
       balance.movimientos.forEach(m => {
-        const usuario = m.usuarios?.nombre || "Desconocido";
+        const usuario = m.usuario?.nombre || "Desconocido";
         const monto = Number(m.monto);
         const tipo = m.tipo;
-        const concepto = m.conceptos?.nombre || "Sin concepto";
+        const concepto = m.concepto?.nombre || "Sin concepto";
 
         if (!usuariosMap[usuario]) {
           usuariosMap[usuario] = {
@@ -377,8 +379,8 @@ const Balance = () => {
             egresos: 0,
             total: 0,
             movimientos: [],
-            topConcepto: {},     // almacenamos sumatoria por concepto
-            participacion: 0,     // % del total familiar
+            topConcepto: {},  
+            participacion: 0,
             topConceptoNombre: "",
             topConceptoMonto: 0
           };
@@ -732,7 +734,7 @@ const Balance = () => {
   /**
    * MVIEW005-11
    * Función base para cargar movimientos con filtros usando el gestor
-   * @param {Object} filtrosAdicionales - Filtros específicos (ej: {concepto_id: 123})
+   * @param {Object} filtrosAdicionales - Filtros específicos
    * @param {string|null} forzarFiltro - Filtro temporal a forzar
    */
   const cargarMovimientosBase = async (filtrosAdicionales = {}, forzarFiltro = null) => {
@@ -1106,7 +1108,8 @@ const Balance = () => {
             const [year, month, day] = fechaStr.split("-");
             return new Date(year, month - 1, day); // mes 0-11 en JS
           };
-  
+          console.log("Balance Data:", balanceData);
+
           const fechaInicioObj = parseFecha(fechaInicio);
           const fechaFinObj = parseFecha(fechaFin);
   
@@ -1119,7 +1122,6 @@ const Balance = () => {
           else granularidad = "trimestre";
   
           const graficoData = agruparMovimientos(balanceData.movimientos, granularidad, fechaInicioObj, fechaFinObj);
-  
           return (
             <div className="panel-movimientos-overlay" onClick={() => setModalBalanceAbierto(false)}>
               <div className="panel-movimientos" onClick={(e) => e.stopPropagation()}>

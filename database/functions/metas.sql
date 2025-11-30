@@ -62,32 +62,27 @@ $$;
 --   UUID → ID de la meta creada.
 -- =====================================================================
 
-CREATE OR REPLACE FUNCTION crear_meta(
-    p_nombre TEXT,
-    p_monto_objetivo NUMERIC,
-    p_fecha_limite DATE,
-    p_usuario_id UUID,
-    p_familia_id UUID,
-    p_es_familiar BOOLEAN
+create or replace function crear_meta(
+  nombre text,
+  monto_objetivo numeric,
+  fecha_limite date,
+  familia_id uuid,
+  usuario_id uuid,
+  es_familiar boolean
 )
-RETURNS UUID
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_meta_id UUID;
-BEGIN
-    INSERT INTO metas (
-        nombre, monto_objetivo, fecha_limite,
-        usuario_id, familia_id, es_familiar, monto_actual
-    )
-    VALUES (
-        p_nombre, p_monto_objetivo, p_fecha_limite,
-        p_usuario_id, p_familia_id, p_es_familiar, 0
-    )
-    RETURNING id INTO v_meta_id;
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  nueva_meta jsonb;
+begin
+  insert into metas(nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar, monto_actual)
+  values(nombre, monto_objetivo, fecha_limite, familia_id, usuario_id, es_familiar, 0)
+  returning row_to_json(metas) into nueva_meta;
 
-    RETURN v_meta_id;
-END;
+  return nueva_meta;
+end
 $$;
 
 -- =====================================================================

@@ -116,7 +116,7 @@ const Dashboard = () => { // VIEW-008
               {movimientos.slice(0, 4).map(m => (
                 <tr key={m.id}>
                   <td>{m.comentario || "Sin descripcion"} </td>
-                  <td>{m.conceptos.nombre}</td>
+                  <td>{m.concepto_nombre}</td>
                   <td>{m.fecha}</td>
                   <td className={m.tipo === "egreso" ? "negativo" : "positivo"}>
                     {m.tipo === "egreso" ? "-" : "+"} S/. {m.monto}
